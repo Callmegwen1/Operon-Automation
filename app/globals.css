@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-op-bg text-op-body font-inter antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-manrope;
+  }
+}
+
+@layer components {
+  .container-wide {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .section-pad {
+    @apply py-16 md:py-24;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 bg-op-blue text-white font-semibold font-inter
+           px-6 py-3 rounded-lg text-sm transition-all duration-200
+           hover:bg-blue-700 active:scale-95 focus-visible:outline-none focus-visible:ring-2
+           focus-visible:ring-op-blue focus-visible:ring-offset-2;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 bg-white text-op-navy font-semibold font-inter
+           border border-op-border px-6 py-3 rounded-lg text-sm transition-all duration-200
+           hover:border-op-blue hover:text-op-blue active:scale-95 focus-visible:outline-none
+           focus-visible:ring-2 focus-visible:ring-op-blue focus-visible:ring-offset-2;
+  }
+
+  .btn-outline-white {
+    @apply inline-flex items-center justify-center gap-2 bg-transparent text-white font-semibold font-inter
+           border border-white/40 px-6 py-3 rounded-lg text-sm transition-all duration-200
+           hover:bg-white/10 active:scale-95;
+  }
+
+  .card {
+    @apply bg-op-card rounded-xl border border-op-border shadow-card p-6;
+  }
+
+  .card-hover {
+    @apply card transition-shadow duration-200 hover:shadow-card-hover;
+  }
+
+  .badge-amber {
+    @apply inline-flex items-center gap-1 bg-amber-50 text-op-amber border border-amber-200
+           text-xs font-semibold font-inter px-2.5 py-1 rounded-full;
+  }
+
+  .badge-green {
+    @apply inline-flex items-center gap-1 bg-green-50 text-op-green border border-green-200
+           text-xs font-semibold font-inter px-2.5 py-1 rounded-full;
+  }
+
+  .badge-blue {
+    @apply inline-flex items-center gap-1 bg-blue-50 text-op-blue border border-blue-200
+           text-xs font-semibold font-inter px-2.5 py-1 rounded-full;
+  }
+
+  .badge-red {
+    @apply inline-flex items-center gap-1 bg-red-50 text-op-red border border-red-200
+           text-xs font-semibold font-inter px-2.5 py-1 rounded-full;
+  }
+}
