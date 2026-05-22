@@ -1,8 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronRight, ChevronLeft, Loader2 } from 'lucide-react'
+import { calculateSubScores } from '@/lib/scanner/subscores'
+import type { WebsiteAnalysis } from '@/lib/scanner/types'
 
 interface FormData {
   businessName: string
@@ -90,13 +92,16 @@ export default function ScannerForm() {
     biggestProblem: '', email: '',
   })
 
+  // Website analysis runs in the background while user fills later steps
+  const analysisRef = useRef<Promise<WebsiteAnalysis | null> | null>(null)
+
   const set = (key: keyof FormData, value: string) => {
     setData((d) => ({ ...d, [key]: value }))
     setErrors((e) => ({ ...e, [key]: '' }))
   }
 
   const validateStep = (): boolean => {
-    const required = steps[step].fields as (keyof FormData)[]
+    const required = steps[step].fields.filter((f) => f !== 'websiteUrl') as (keyof FormData)[]
     const newErrors: Partial<FormData> = {}
     required.forEach((f) => {
       if (!data[f]) newErrors[f] = 'This field is required'
@@ -110,6 +115,16 @@ export default function ScannerForm() {
 
   const next = () => {
     if (!validateStep()) return
+    // Start website analysis in the background while user fills remaining steps
+    if (step === 0 && data.websiteUrl) {
+      analysisRef.current = fetch('/api/scanner/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: data.websiteUrl }),
+      })
+        .then((r) => r.json() as Promise<WebsiteAnalysis>)
+        .catch(() => null)
+    }
     setStep((s) => s + 1)
   }
 
@@ -118,14 +133,27 @@ export default function ScannerForm() {
   const submit = async () => {
     if (!validateStep()) return
     setLoading(true)
-    const score = calculateScore(data)
-    const id = Date.now().toString()
-    const scanPayload = { ...data, score, date: new Date().toISOString() }
 
-    // Save to localStorage for results display
+    const score = calculateScore(data)
+    const subScores = calculateSubScores(data)
+
+    // Await website analysis with a 3-second cap so submit never hangs
+    let websiteAnalysis: WebsiteAnalysis | null = null
+    if (analysisRef.current) {
+      const cap = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000))
+      websiteAnalysis = await Promise.race([analysisRef.current, cap])
+    }
+
+    const id = Date.now().toString()
+    const scanPayload = {
+      ...data,
+      score,
+      subScores,
+      websiteAnalysis,
+      date: new Date().toISOString(),
+    }
     localStorage.setItem(`scan_${id}`, JSON.stringify(scanPayload))
 
-    // Send to backend (notify Leo + email results to prospect)
     try {
       await fetch('/api/scanner/submit', {
         method: 'POST',
@@ -133,7 +161,6 @@ export default function ScannerForm() {
         body: JSON.stringify({ scanData: data, score }),
       })
     } catch {
-      // Non-blocking — results page still works via localStorage
       console.error('Scanner submit failed')
     }
 
@@ -173,7 +200,7 @@ export default function ScannerForm() {
             {errors.businessName && <p className="text-xs text-op-red mt-1">{errors.businessName}</p>}
           </div>
           <div>
-            <label className="block text-sm font-semibold text-op-navy mb-1.5">Website URL</label>
+            <label className="block text-sm font-semibold text-op-navy mb-1.5">Website URL <span className="text-op-muted font-normal">(optional — enables live website analysis)</span></label>
             <input className={inputClass('websiteUrl')} placeholder="e.g. www.smithsplumbing.com" value={data.websiteUrl} onChange={(e) => set('websiteUrl', e.target.value)} />
           </div>
           <div>

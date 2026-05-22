@@ -11,17 +11,23 @@ import {
   BarChart2,
   Users,
   CheckCircle2,
+  XCircle,
   ArrowRight,
   TrendingUp,
   Loader2,
   Zap,
+  Globe,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { calculateSubScores } from '@/lib/scanner/subscores'
+import { getBenchmark } from '@/lib/scanner/benchmarks'
+import type { SubScore, WebsiteAnalysis } from '@/lib/scanner/types'
 
 interface ScanData {
   businessName: string
   industry: string
   cityState: string
+  websiteUrl?: string
   runsAds: string
   usesCrm: string
   manualFollowUp: string
@@ -29,6 +35,8 @@ interface ScanData {
   tracksLeadSource: string
   biggestProblem: string
   score: number
+  subScores?: SubScore[]
+  websiteAnalysis?: WebsiteAnalysis | null
 }
 
 interface Leak {
@@ -144,6 +152,17 @@ const DEMO: ScanData = {
   score: 68,
 }
 
+const SITE_CHECKS: { key: keyof WebsiteAnalysis; label: string; tip?: string }[] = [
+  { key: 'hasHttps',        label: 'Secure HTTPS connection',     tip: 'Affects trust and Google ranking.' },
+  { key: 'loadsFast',       label: 'Loads in under 3 seconds',    tip: 'Slow sites lose ~53% of mobile visitors.' },
+  { key: 'hasPhoneNumber',  label: 'Phone number visible',        tip: 'Customers want a direct line.' },
+  { key: 'hasContactForm',  label: 'Contact form detected',       tip: 'Captures leads 24/7 without a phone call.' },
+  { key: 'hasCallToAction', label: 'Clear call-to-action',        tip: 'Tells visitors what to do next.' },
+  { key: 'hasChatWidget',   label: 'Live chat widget',            tip: 'Engages visitors in real time.' },
+  { key: 'hasSocialProof',  label: 'Reviews / testimonials',      tip: 'Social proof increases conversions by 34%.' },
+  { key: 'hasBookingWidget',label: 'Online booking available',    tip: 'Let customers self-schedule without calling.' },
+]
+
 export default function ResultsDisplay() {
   const params = useSearchParams()
   const id = params.get('id')
@@ -154,7 +173,6 @@ export default function ResultsDisplay() {
 
   useEffect(() => {
     const init = async () => {
-      // Load scan data
       let scanData: ScanData | null = null
       if (id) {
         const raw = localStorage.getItem(`scan_${id}`)
@@ -165,7 +183,6 @@ export default function ResultsDisplay() {
       setScan(scanData)
       setLoaded(true)
 
-      // Check auth — if logged in, auto-save this scan to their account
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
@@ -199,6 +216,12 @@ export default function ResultsDisplay() {
 
   const leaks = buildLeaks(scan)
   const sl = scoreLabel(scan.score)
+  const subScores: SubScore[] = scan.subScores ?? calculateSubScores(scan)
+  const benchmark = getBenchmark(scan.industry)
+  const websiteAnalysis = scan.websiteAnalysis ?? null
+  const passCount = websiteAnalysis
+    ? SITE_CHECKS.filter((c) => websiteAnalysis[c.key]).length
+    : 0
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -257,8 +280,107 @@ export default function ResultsDisplay() {
         </div>
       ) : null}
 
+      {/* Sub-scores by category */}
+      <div className="card mb-6">
+        <h3 className="font-bold font-manrope text-op-navy mb-1">Health by Category</h3>
+        <p className="text-xs text-op-muted mb-5">Higher bar = more revenue leaking in that area.</p>
+        <div className="flex flex-col gap-4">
+          {subScores.map(({ name, score, color, label }) => (
+            <div key={name}>
+              <div className="flex justify-between items-center mb-1.5">
+                <span className="text-sm font-medium text-op-navy">{name}</span>
+                <span className="text-xs font-semibold" style={{ color }}>{label}</span>
+              </div>
+              <div className="w-full bg-op-border rounded-full h-2">
+                <div
+                  className="h-2 rounded-full transition-all duration-700"
+                  style={{ width: `${score}%`, backgroundColor: color }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Website health check */}
+      {websiteAnalysis && (
+        <div className="card mb-6">
+          <div className="flex items-center gap-2 mb-1">
+            <Globe size={16} className="text-op-blue" />
+            <h3 className="font-bold font-manrope text-op-navy">Website Health Check</h3>
+          </div>
+          {!websiteAnalysis.accessible ? (
+            <p className="text-sm text-op-muted mt-2">
+              We couldn&apos;t reach your website to analyze it. Make sure the URL is correct and the site is publicly accessible.
+            </p>
+          ) : (
+            <>
+              <p className="text-xs text-op-muted mb-4">
+                Live analysis of your site — {passCount} of {SITE_CHECKS.length} checks passed.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {SITE_CHECKS.map(({ key, label, tip }) => {
+                  const pass = websiteAnalysis[key]
+                  return (
+                    <div
+                      key={key}
+                      className={`flex items-start gap-2.5 rounded-lg p-2.5 ${pass ? 'bg-green-50' : 'bg-red-50/60'}`}
+                    >
+                      {pass ? (
+                        <CheckCircle2 size={15} className="text-op-green shrink-0 mt-0.5" />
+                      ) : (
+                        <XCircle size={15} className="text-op-red shrink-0 mt-0.5" />
+                      )}
+                      <div>
+                        <p className={`text-xs font-medium ${pass ? 'text-op-navy' : 'text-op-muted'}`}>{label}</p>
+                        {!pass && tip && (
+                          <p className="text-xs text-op-muted/80 mt-0.5">{tip}</p>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Industry benchmarks */}
+      <div className="card mb-6 bg-op-navy text-white border-0">
+        <p className="text-xs text-white/50 font-semibold uppercase tracking-wide mb-1">Industry Benchmarks</p>
+        <h3 className="text-base font-bold font-manrope text-white mb-4">
+          {scan.industry !== 'Other' ? scan.industry : 'Your Industry'} — How Do Others Compare?
+        </h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
+          <div>
+            <p className="text-2xl font-extrabold text-op-amber">{benchmark.leadsLostToSlowFollowUp}</p>
+            <p className="text-xs text-white/60 mt-0.5 leading-snug">of leads lost to slow follow-up</p>
+          </div>
+          <div>
+            <p className="text-2xl font-extrabold text-op-amber">{benchmark.avgFirstContactTime}</p>
+            <p className="text-xs text-white/60 mt-0.5 leading-snug">avg time to first contact</p>
+          </div>
+          <div>
+            <p className="text-2xl font-extrabold text-op-amber">{benchmark.neverAskReviews}</p>
+            <p className="text-xs text-white/60 mt-0.5 leading-snug">of businesses never ask for reviews</p>
+          </div>
+          <div>
+            <p className="text-2xl font-extrabold text-op-amber">{benchmark.stat4Value}</p>
+            <p className="text-xs text-white/60 mt-0.5 leading-snug">{benchmark.stat4Label}</p>
+          </div>
+        </div>
+        <div className="border-t border-white/10 pt-4">
+          <p className="text-xs text-white/80 leading-relaxed">
+            <span className="text-op-amber font-semibold">Top opportunity: </span>
+            {benchmark.topOpportunity}
+          </p>
+        </div>
+      </div>
+
       {/* Leak cards */}
       <div className="flex flex-col gap-4 mb-10">
+        <h3 className="font-bold font-manrope text-op-navy">Your Revenue Leaks</h3>
         {leaks.map(({ icon: Icon, title, impact, description, fix, automation }, i) => (
           <div key={title} className="card border border-op-border">
             <div className="flex items-start justify-between gap-4 mb-3">
@@ -307,10 +429,10 @@ export default function ResultsDisplay() {
             'Enable the Lead Follow-Up Agent first — it typically has the fastest impact.',
             'Set up the Review Request Agent to build social proof with existing customers.',
             'Review your weekly report to track what\'s recovering over time.',
-          ].map((step, i) => (
+          ].map((s, i) => (
             <li key={i} className="flex items-start gap-3 text-sm text-op-body">
               <span className="w-5 h-5 rounded-full bg-op-blue text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{i + 1}</span>
-              {step}
+              {s}
             </li>
           ))}
         </ol>
