@@ -83,7 +83,9 @@ export default function HomePage() {
               <p className="eyebrow mb-5">Revenue Recovery System</p>
               <h1 className="text-5xl sm:text-6xl lg:text-[68px] font-extrabold font-manrope text-op-primary leading-[1.06] mb-5">
                 Find and fix the{' '}
-                <span className="text-op-amber">leaks</span>{' '}
+                <span className="text-op-amber italic underline decoration-wavy decoration-amber-300 underline-offset-4">
+                  leaks
+                </span>{' '}
                 costing you customers.
               </h1>
               <p className="text-base text-op-muted leading-relaxed mb-8 max-w-md mx-auto lg:mx-0">
@@ -116,9 +118,12 @@ export default function HomePage() {
         <div className="container-wide">
           <p className="eyebrow mb-10">The Problem</p>
           <div className="flex flex-col gap-10 max-w-3xl">
-            {problemStatements.map(({ statement, detail }) => (
+            {problemStatements.map(({ statement, detail }, i) => (
               <div key={statement} className="border-l-[3px] border-op-amber pl-6">
-                <p className="text-xl font-semibold font-manrope text-op-primary leading-snug mb-2">
+                <span className="text-[11px] font-bold tracking-[0.15em] text-op-amber block mb-2">
+                  0{i + 1}
+                </span>
+                <p className="text-2xl font-semibold font-manrope text-op-primary leading-snug mb-2">
                   {statement}
                 </p>
                 <p className="text-sm text-op-muted leading-relaxed">{detail}</p>
@@ -130,8 +135,11 @@ export default function HomePage() {
 
       {/* ─── SOCIAL PROOF ─────────────────────────────────────── */}
       <section className="bg-[#FAFAFA] border-y border-op-border py-14">
-        <div className="container-wide max-w-2xl">
-          <p className="text-lg font-manrope text-op-primary leading-relaxed mb-3">
+        <div className="container-wide max-w-2xl relative">
+          <span className="absolute -top-6 -left-2 text-[120px] font-serif leading-none text-op-amber/10 select-none pointer-events-none" aria-hidden="true">
+            &ldquo;
+          </span>
+          <p className="text-lg font-manrope text-op-primary leading-relaxed mb-3 relative">
             &ldquo;Built this because I watched good businesses lose revenue to problems they didn&apos;t know they had.&rdquo;
           </p>
           <p className="text-sm text-op-muted">
@@ -255,12 +263,13 @@ export default function HomePage() {
               <Link
                 key={label}
                 href="/industries"
-                className="flex items-center gap-2.5 px-4 py-3 rounded-lg border border-op-border bg-white hover:border-op-navy hover:text-op-navy transition-all group"
+                className="flex items-center gap-2.5 px-4 py-3 rounded-lg border border-op-border bg-white hover:border-op-navy transition-all group overflow-hidden"
               >
                 <Icon size={14} className="text-op-muted group-hover:text-op-navy transition-colors shrink-0" />
-                <span className="text-sm text-op-muted group-hover:text-op-navy transition-colors font-medium leading-tight">
+                <span className="text-sm text-op-muted group-hover:text-op-navy transition-colors font-medium leading-tight flex-1">
                   {label}
                 </span>
+                <ArrowRight size={11} className="text-op-border shrink-0 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-op-navy transition-all duration-200" />
               </Link>
             ))}
           </div>
@@ -271,7 +280,11 @@ export default function HomePage() {
       <section className="bg-op-navy section-pad">
         <div className="container-wide max-w-2xl">
           <h2 className="text-3xl md:text-[2.5rem] font-extrabold font-manrope text-white leading-tight mb-4">
-            Ready to see where your business is leaking revenue?
+            Ready to see where your business is{' '}
+            <span className="text-op-amber italic underline decoration-wavy decoration-amber-400 underline-offset-4">
+              leaking
+            </span>{' '}
+            revenue?
           </h2>
           <p className="text-white/60 mb-8 text-base">
             Your free Revenue Leak Score shows exactly where customers may be slipping away.
