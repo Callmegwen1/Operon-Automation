@@ -84,22 +84,33 @@ const industries = [
   { icon: Users,       label: 'Local Services'     },
 ]
 
-/* Proper teardrop SVG — reads as drip, not dots */
+/* Three drops cascading into a crown splash */
 function DripDrop() {
   return (
     <svg
-      className="absolute left-1/2 -translate-x-1/2 -bottom-5"
-      width="13"
-      height="17"
-      viewBox="0 0 13 17"
+      className="absolute left-1/2 -translate-x-1/2 -bottom-2"
+      width="72"
+      height="46"
+      viewBox="0 0 72 46"
       fill="none"
       aria-hidden="true"
     >
-      <path
-        d="M6.5 0 C10 4.5 13 9.5 6.5 17 C0 9.5 3 4.5 6.5 0Z"
-        fill="#D97706"
-        fillOpacity="0.75"
-      />
+      {/* Left drop — small, highest */}
+      <path d="M14 0 C15.8 3 17.5 7 14 12 C10.5 7 12.2 3 14 0Z" fill="#D97706" fillOpacity="0.45" />
+      {/* Center drop — medium */}
+      <path d="M36 4 C39 9 41.5 17 36 25 C30.5 17 33 9 36 4Z" fill="#D97706" fillOpacity="0.72" />
+      {/* Right drop — large, lowest */}
+      <path d="M58 10 C62 16 65 26 58 36 C51 26 54 16 58 10Z" fill="#D97706" fillOpacity="0.92" />
+      {/* Splash pool */}
+      <ellipse cx="38" cy="43" rx="24" ry="3.5" fill="#D97706" fillOpacity="0.16" />
+      {/* Crown spikes */}
+      <path d="M18 43 L14 36" stroke="#D97706" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.38" />
+      <path d="M38 39 L38 32" stroke="#D97706" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.5"  />
+      <path d="M57 43 L61 36" stroke="#D97706" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.38" />
+      {/* Tiny bounce drops at spike tips */}
+      <circle cx="14" cy="34" r="1.8" fill="#D97706" fillOpacity="0.3" />
+      <circle cx="38" cy="30" r="2.2" fill="#D97706" fillOpacity="0.38" />
+      <circle cx="61" cy="34" r="1.8" fill="#D97706" fillOpacity="0.3" />
     </svg>
   )
 }
@@ -118,7 +129,7 @@ export default function HomePage() {
 
               <h1 className="text-5xl sm:text-6xl lg:text-[68px] font-extrabold font-manrope text-op-primary leading-[1.06] mb-7">
                 Find and fix the{' '}
-                <span className="relative inline-block text-op-amber pb-5">
+                <span className="relative inline-block text-op-amber pb-14">
                   leaks
                   <DripDrop />
                 </span>{' '}
@@ -180,13 +191,14 @@ export default function HomePage() {
         <div className="container-wide max-w-2xl">
           <div className="flex items-start gap-5">
             {/* Real founder photo — save image to public/images/founder.jpg */}
-            <div className="shrink-0 w-16 h-16 rounded-full overflow-hidden border-2 border-op-border shadow-sm">
+            <div className="shrink-0 w-24 h-24 rounded-full overflow-hidden border-2 border-op-border shadow-sm">
               <Image
                 src="/images/founder.jpg"
                 alt="Leonardo Diaz, Founder of Operon Automation"
-                width={64}
-                height={64}
-                className="w-full h-full object-cover object-top"
+                width={96}
+                height={96}
+                className="w-full h-full object-cover"
+                style={{ objectPosition: '50% 8%' }}
               />
             </div>
 
@@ -346,7 +358,7 @@ export default function HomePage() {
         <div className="container-wide max-w-2xl">
           <h2 className="text-3xl md:text-[2.5rem] font-extrabold font-manrope text-white leading-tight mb-4">
             Ready to see where your business is{' '}
-            <span className="relative inline-block text-op-amber pb-4">
+            <span className="relative inline-block text-op-amber pb-14">
               leaking
               <DripDrop />
             </span>{' '}
