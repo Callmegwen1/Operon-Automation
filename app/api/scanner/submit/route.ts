@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 
 const N8N_WEBHOOK   = 'https://operon-n8n.znwsri.easypanel.host/webhook/form-lead'
 const RESEND_API    = 'https://api.resend.com/emails'
 const RESEND_KEY    = process.env.RESEND_API_KEY!
 const FROM_EMAIL    = 'Operon Automation <noreply@operonauto.com>'
 const ALERT_EMAIL   = 'ceo@operonauto.com'
+const OWNER_USER_ID = process.env.OWNER_USER_ID
 
 function scoreLabel(score: number) {
   if (score >= 75) return { label: 'Critical', color: '#ef4444' }
@@ -23,13 +25,11 @@ function buildResultsEmail(data: Record<string, string>, score: number): string 
     <tr><td align="center" style="padding:40px 16px;">
       <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
 
-        <!-- Header -->
         <tr><td style="background:#1A2E4A;border-radius:12px 12px 0 0;padding:32px 40px;text-align:center;">
           <p style="margin:0;color:#B8963E;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;">Operon Automation</p>
           <h1 style="margin:8px 0 0;color:#ffffff;font-size:24px;font-weight:800;">Your Revenue Leak Score is Ready</h1>
         </td></tr>
 
-        <!-- Score -->
         <tr><td style="background:#ffffff;padding:40px;text-align:center;">
           <div style="display:inline-block;width:100px;height:100px;border-radius:50%;border:4px solid ${color};margin:0 auto 16px;">
             <p style="margin:28px 0 0;color:${color};font-size:32px;font-weight:800;">${score}</p>
@@ -37,12 +37,11 @@ function buildResultsEmail(data: Record<string, string>, score: number): string 
           </div>
           <p style="margin:0;color:#6B7280;font-size:13px;text-transform:uppercase;letter-spacing:1px;font-weight:700;">${label} Leak Risk</p>
           <h2 style="margin:12px 0 8px;color:#1A2E4A;font-size:20px;font-weight:800;">Hi ${data.businessName || 'there'},</h2>
-          <p style="margin:0;color:#6B7280;font-size:14px;line-height:1.6;max-width:420px;margin:0 auto;">
-            Based on your answers, your business has a <strong style="color:${color};">${label.toLowerCase()} risk</strong> of losing customers through revenue leaks. Here's what we found:
+          <p style="margin:0 auto;color:#6B7280;font-size:14px;line-height:1.6;max-width:420px;">
+            Based on your answers, your business has a <strong style="color:${color};">${label.toLowerCase()} risk</strong> of losing customers through revenue leaks.
           </p>
         </td></tr>
 
-        <!-- Leaks summary -->
         <tr><td style="background:#f9fafb;padding:0 40px 32px;border-top:1px solid #e5e7eb;">
           <p style="color:#1A2E4A;font-size:14px;font-weight:700;margin:24px 0 12px;">Key areas to fix:</p>
           ${data.manualFollowUp !== 'automated' ? `
@@ -70,7 +69,6 @@ function buildResultsEmail(data: Record<string, string>, score: number): string 
           </table>
         </td></tr>
 
-        <!-- CTA -->
         <tr><td style="background:#ffffff;padding:32px 40px;text-align:center;border-top:1px solid #e5e7eb;">
           <p style="margin:0 0 20px;color:#1A2E4A;font-size:15px;font-weight:700;">Ready to fix these leaks?</p>
           <a href="https://operonauto.com/revenue-autopilot" style="display:inline-block;background:#B8963E;color:#1A2E4A;font-size:14px;font-weight:700;padding:14px 32px;border-radius:8px;text-decoration:none;">
@@ -79,10 +77,9 @@ function buildResultsEmail(data: Record<string, string>, score: number): string 
           <p style="margin:16px 0 0;color:#6B7280;font-size:12px;">Or <a href="https://operonauto.com/contact" style="color:#3b82f6;">request setup help</a> from our team.</p>
         </td></tr>
 
-        <!-- Footer -->
         <tr><td style="background:#1A2E4A;border-radius:0 0 12px 12px;padding:20px 40px;text-align:center;">
-          <p style="margin:0;color:#ffffff80;font-size:11px;">Operon Automation · operonauto.com · ceo@operonauto.com · (316) 461-6059</p>
-          <p style="margin:6px 0 0;color:#ffffff40;font-size:10px;font-style:italic;">Revenue Leak Scores are informational only. Operon does not guarantee specific financial results.</p>
+          <p style="margin:0;color:#ffffff80;font-size:11px;">Operon Automation · operonauto.com · ceo@operonauto.com</p>
+          <p style="margin:6px 0 0;color:#ffffff40;font-size:10px;font-style:italic;">Revenue Leak Scores are informational only.</p>
         </td></tr>
 
       </table>
@@ -100,15 +97,11 @@ function buildAlertEmail(data: Record<string, string>, score: number): string {
   <tr><td style="padding:6px;border:1px solid #ddd;font-weight:bold;background:#f5f5f5;">Business</td><td style="padding:6px;border:1px solid #ddd;">${data.businessName}</td></tr>
   <tr><td style="padding:6px;border:1px solid #ddd;font-weight:bold;background:#f5f5f5;">Industry</td><td style="padding:6px;border:1px solid #ddd;">${data.industry}</td></tr>
   <tr><td style="padding:6px;border:1px solid #ddd;font-weight:bold;background:#f5f5f5;">Location</td><td style="padding:6px;border:1px solid #ddd;">${data.cityState}</td></tr>
-  <tr><td style="padding:6px;border:1px solid #ddd;font-weight:bold;background:#f5f5f5;">Service</td><td style="padding:6px;border:1px solid #ddd;">${data.mainService}</td></tr>
   <tr><td style="padding:6px;border:1px solid #ddd;font-weight:bold;background:#f5f5f5;">Phone</td><td style="padding:6px;border:1px solid #ddd;">${data.phone}</td></tr>
   <tr><td style="padding:6px;border:1px solid #ddd;font-weight:bold;background:#f5f5f5;">Email</td><td style="padding:6px;border:1px solid #ddd;">${data.email}</td></tr>
   <tr><td style="padding:6px;border:1px solid #ddd;font-weight:bold;background:#f5f5f5;">Website</td><td style="padding:6px;border:1px solid #ddd;">${data.websiteUrl || 'N/A'}</td></tr>
-  <tr><td style="padding:6px;border:1px solid #ddd;font-weight:bold;background:#f5f5f5;">Runs Ads</td><td style="padding:6px;border:1px solid #ddd;">${data.runsAds}</td></tr>
-  <tr><td style="padding:6px;border:1px solid #ddd;font-weight:bold;background:#f5f5f5;">Uses CRM</td><td style="padding:6px;border:1px solid #ddd;">${data.usesCrm}</td></tr>
   <tr><td style="padding:6px;border:1px solid #ddd;font-weight:bold;background:#f5f5f5;">Follow-Up</td><td style="padding:6px;border:1px solid #ddd;">${data.manualFollowUp}</td></tr>
   <tr><td style="padding:6px;border:1px solid #ddd;font-weight:bold;background:#f5f5f5;">Asks Reviews</td><td style="padding:6px;border:1px solid #ddd;">${data.asksReviews}</td></tr>
-  <tr><td style="padding:6px;border:1px solid #ddd;font-weight:bold;background:#f5f5f5;">Tracks Leads</td><td style="padding:6px;border:1px solid #ddd;">${data.tracksLeadSource}</td></tr>
   <tr><td style="padding:6px;border:1px solid #ddd;font-weight:bold;background:#f5f5f5;">Biggest Problem</td><td style="padding:6px;border:1px solid #ddd;">${data.biggestProblem}</td></tr>
   <tr><td style="padding:6px;border:1px solid #ddd;font-weight:bold;background:#f5f5f5;color:red;">Leak Score</td><td style="padding:6px;border:1px solid #ddd;font-weight:bold;color:red;">${score}/100 — ${label}</td></tr>
 </table>`
@@ -123,15 +116,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // 1. Notify Leo via n8n webhook
-    await fetch(N8N_WEBHOOK, {
+    // 1. Notify via n8n webhook
+    fetch(N8N_WEBHOOK, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: scanData.businessName,
         email: scanData.email,
         phone: scanData.phone || '',
-        business_name: scanData.businessName,
         source: 'revenue-leak-scanner',
         score,
         industry: scanData.industry,
@@ -140,13 +132,10 @@ export async function POST(req: NextRequest) {
       }),
     }).catch((e) => console.error('n8n error:', e))
 
-    // 2. Send results email to prospect via Resend
+    // 2. Send results email to prospect
     const prospectEmail = fetch(RESEND_API, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RESEND_KEY}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: FROM_EMAIL,
         to: [scanData.email],
@@ -155,13 +144,10 @@ export async function POST(req: NextRequest) {
       }),
     })
 
-    // 3. Send alert email to Leo via Resend
+    // 3. Alert email to Leo
     const alertEmail = fetch(RESEND_API, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RESEND_KEY}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: FROM_EMAIL,
         to: [ALERT_EMAIL],
@@ -170,8 +156,88 @@ export async function POST(req: NextRequest) {
       }),
     })
 
-    await Promise.allSettled([prospectEmail, alertEmail])
+    // 4. Auto-add scanner submitter to owner's CRM
+    if (OWNER_USER_ID) {
+      const adminClient = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      )
 
+      // Check if contact already exists for this owner
+      const { data: existing } = await adminClient
+        .from('contacts')
+        .select('id')
+        .eq('user_id', OWNER_USER_ID)
+        .eq('email', scanData.email)
+        .single()
+
+      if (!existing) {
+        const { data: newContact } = await adminClient.from('contacts').insert({
+          user_id: OWNER_USER_ID,
+          name:    scanData.businessName,
+          email:   scanData.email,
+          phone:   scanData.phone || '',
+          type:    'lead',
+          source:  'scanner',
+          status:  'new',
+          notes:   `Industry: ${scanData.industry} | Score: ${score}/100 | Location: ${scanData.cityState}`,
+        }).select().single()
+
+        // If Lead Follow-Up agent is enabled for owner, trigger sequence
+        if (newContact) {
+          const { data: agent } = await adminClient
+            .from('agents')
+            .select('config, enabled')
+            .eq('user_id', OWNER_USER_ID)
+            .eq('type', 'lead_followup')
+            .single()
+
+          if (agent?.enabled && scanData.email) {
+            const cfg = agent.config as {
+              fromName?: string
+              phone?: string
+              replyToEmail?: string
+            }
+            const now = new Date()
+
+            const seq = [
+              { delay: 15 * 60 * 1000,        num: 1 },
+              { delay: 2 * 24 * 60 * 60 * 1000, num: 2 },
+              { delay: 5 * 24 * 60 * 60 * 1000, num: 3 },
+            ]
+
+            for (const { delay, num } of seq) {
+              const scheduledAt = new Date(now.getTime() + delay).toISOString()
+              await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  from: FROM_EMAIL,
+                  to: [scanData.email],
+                  replyTo: cfg.replyToEmail,
+                  subject: num === 1
+                    ? `Following up on your Revenue Leak Scan — Operon`
+                    : num === 2
+                    ? `Still thinking about fixing your revenue leaks?`
+                    : `One last note from Operon`,
+                  html: `<p>Hi ${scanData.businessName},</p><p>Your Revenue Leak Score was ${score}/100. We'd love to help you fix those leaks.</p><p>— ${cfg.fromName ?? 'The Operon Team'}</p>`,
+                  scheduledAt,
+                }),
+              }).catch(() => null)
+            }
+
+            await adminClient.from('agent_activity').insert({
+              user_id:    OWNER_USER_ID,
+              agent_type: 'lead_followup',
+              action:     'lead_followup_scheduled',
+              details:    { contact_id: newContact.id, contact_name: scanData.businessName },
+            })
+          }
+        }
+      }
+    }
+
+    await Promise.allSettled([prospectEmail, alertEmail])
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('Scanner submit error:', err)

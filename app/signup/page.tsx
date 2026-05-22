@@ -1,14 +1,13 @@
 'use client'
 
 import { useState, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react'
+import { ArrowRight, Loader2, Eye, EyeOff, Mail, CheckCircle2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 function SignupForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const fromScan = searchParams.get('fromScan')
 
@@ -18,6 +17,7 @@ function SignupForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [submitted, setSubmitted] = useState(false)
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -25,7 +25,7 @@ function SignupForm() {
     setError('')
 
     const supabase = createClient()
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -40,39 +40,71 @@ function SignupForm() {
       return
     }
 
-    // If coming from scanner, save that scan to their new account
-    if (fromScan && data.user) {
-      const scanRaw = localStorage.getItem(`scan_${fromScan}`)
-      if (scanRaw) {
-        try {
-          await fetch('/api/scanner/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ scanData: JSON.parse(scanRaw) }),
-          })
-        } catch {
-          // non-blocking
-        }
-      }
-    }
-
-    router.push('/dashboard')
-    router.refresh()
+    setSubmitted(true)
+    setLoading(false)
   }
 
   const inputClass =
     'w-full border border-op-border rounded-lg px-4 py-3 text-sm text-op-body placeholder-op-muted focus:outline-none focus:ring-2 focus:ring-op-blue/40 focus:border-op-blue transition-all bg-white'
 
+  // ── Pending verification screen ──────────────────────────────
+  if (submitted) {
+    return (
+      <div className="min-h-screen bg-op-bg flex flex-col items-center justify-center px-4 py-16">
+        <Link href="/" className="mb-8">
+          <Image src="/logos/logo-light.png" alt="Operon Automation" width={150} height={38} className="h-9 w-auto" />
+        </Link>
+        <div className="w-full max-w-sm">
+          <div className="card text-center">
+            <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Mail size={26} className="text-op-blue" />
+            </div>
+            <h1 className="text-2xl font-bold font-manrope text-op-navy mb-2">Check your email</h1>
+            <p className="text-sm text-op-muted leading-relaxed mb-1">
+              We sent a verification link to
+            </p>
+            <p className="text-sm font-semibold text-op-navy mb-4">{email}</p>
+            <p className="text-sm text-op-muted leading-relaxed mb-5">
+              Click the link in the email to activate your account and access your dashboard. It may take a minute to arrive.
+            </p>
+
+            {fromScan && (
+              <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-5 flex items-start gap-2 text-left">
+                <CheckCircle2 size={15} className="text-op-green shrink-0 mt-0.5" />
+                <p className="text-xs text-op-green leading-relaxed">
+                  Your scan results will be saved to your account once your email is verified.
+                </p>
+              </div>
+            )}
+
+            <p className="text-xs text-op-muted">
+              Didn&apos;t get it? Check your spam folder. If it&apos;s still missing,{' '}
+              <button
+                onClick={() => setSubmitted(false)}
+                className="text-op-blue hover:underline"
+              >
+                try again
+              </button>
+              .
+            </p>
+          </div>
+
+          <p className="text-center text-sm text-op-muted mt-6">
+            Already verified?{' '}
+            <Link href="/login" className="text-op-blue font-semibold hover:underline">
+              Sign in
+            </Link>
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Signup form ──────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-op-bg flex flex-col items-center justify-center px-4 py-16">
       <Link href="/" className="mb-8">
-        <Image
-          src="/logos/logo-light.png"
-          alt="Operon Automation"
-          width={150}
-          height={38}
-          className="h-9 w-auto"
-        />
+        <Image src="/logos/logo-light.png" alt="Operon Automation" width={150} height={38} className="h-9 w-auto" />
       </Link>
 
       <div className="w-full max-w-sm">
@@ -92,9 +124,7 @@ function SignupForm() {
 
           <form onSubmit={handleSignup} className="flex flex-col gap-4">
             <div>
-              <label className="block text-sm font-semibold text-op-navy mb-1.5">
-                Business Name
-              </label>
+              <label className="block text-sm font-semibold text-op-navy mb-1.5">Business Name</label>
               <input
                 type="text"
                 value={businessName}
@@ -145,6 +175,12 @@ function SignupForm() {
               </div>
             )}
 
+            <div className="bg-blue-50 border border-blue-100 rounded-lg px-4 py-3">
+              <p className="text-xs text-op-blue leading-relaxed">
+                <strong>Heads up:</strong> After signing up, we&apos;ll send a verification email to confirm your address. Check your inbox to activate your account.
+              </p>
+            </div>
+
             <button
               type="submit"
               disabled={loading}
@@ -167,9 +203,7 @@ function SignupForm() {
 
         <p className="text-center text-sm text-op-muted mt-6">
           Already have an account?{' '}
-          <Link href="/login" className="text-op-blue font-semibold hover:underline">
-            Sign in
-          </Link>
+          <Link href="/login" className="text-op-blue font-semibold hover:underline">Sign in</Link>
         </p>
       </div>
     </div>

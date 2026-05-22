@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Loader2, Mail, Star, User, X } from 'lucide-react'
+import Link from 'next/link'
+import { Plus, Loader2, Mail, Star, User, X, ChevronRight } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface Contact {
@@ -14,6 +15,8 @@ interface Contact {
   source: string
   created_at: string
 }
+
+type FilterStatus = 'all' | 'new' | 'contacted' | 'converted' | 'lost'
 
 const statusColors: Record<string, string> = {
   new:       'bg-blue-50 text-op-blue',
@@ -42,20 +45,13 @@ function AddContactForm({ onAdd, onCancel }: {
     if (!form.name) return
     setLoading(true)
     setError('')
-
     const res = await fetch('/api/contacts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form),
     })
     const data = await res.json()
-
-    if (!res.ok) {
-      setError(data.error ?? 'Something went wrong')
-      setLoading(false)
-      return
-    }
-
+    if (!res.ok) { setError(data.error ?? 'Something went wrong'); setLoading(false); return }
     onAdd(data.contact)
     setLoading(false)
   }
@@ -64,11 +60,8 @@ function AddContactForm({ onAdd, onCancel }: {
     <div className="card border-2 border-op-blue/30 mb-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-semibold font-manrope text-op-navy">Add New Contact</h3>
-        <button onClick={onCancel} className="text-op-muted hover:text-op-navy transition-colors">
-          <X size={18} />
-        </button>
+        <button onClick={onCancel} className="text-op-muted hover:text-op-navy transition-colors"><X size={18} /></button>
       </div>
-
       <form onSubmit={handleSubmit} className="grid sm:grid-cols-2 gap-3">
         <div className="sm:col-span-2">
           <label className="block text-xs font-semibold text-op-navy mb-1">Name *</label>
@@ -97,39 +90,37 @@ function AddContactForm({ onAdd, onCancel }: {
           <label className="block text-xs font-semibold text-op-navy mb-1">Notes</label>
           <input className={inputClass} value={form.notes} onChange={(e) => set('notes', e.target.value)} placeholder="Optional notes..." />
         </div>
-
         {error && (
           <div className="sm:col-span-2 bg-red-50 border border-red-200 rounded-lg px-4 py-2">
             <p className="text-sm text-op-red">{error}</p>
           </div>
         )}
-
         <div className="sm:col-span-2 flex gap-3">
           <button type="submit" disabled={loading} className="btn-primary text-sm px-5 py-2.5">
             {loading ? <Loader2 size={14} className="animate-spin" /> : 'Add Contact'}
           </button>
-          <button type="button" onClick={onCancel} className="btn-secondary text-sm px-5 py-2.5">
-            Cancel
-          </button>
+          <button type="button" onClick={onCancel} className="btn-secondary text-sm px-5 py-2.5">Cancel</button>
         </div>
       </form>
     </div>
   )
 }
 
-function ContactRow({ contact, onReviewRequest }: {
+function ContactRow({ contact, onReviewRequest, sending }: {
   contact: Contact
   onReviewRequest: (contact: Contact) => void
+  sending: boolean
 }) {
   return (
-    <div className="card flex flex-col sm:flex-row sm:items-center gap-4">
+    <div className={`card flex flex-col sm:flex-row sm:items-center gap-4 ${sending ? 'opacity-60 pointer-events-none' : ''}`}>
       <div className="w-9 h-9 rounded-full bg-op-bg flex items-center justify-center shrink-0">
         <User size={16} className="text-op-muted" />
       </div>
-
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <p className="font-semibold text-op-navy text-sm">{contact.name}</p>
+          <Link href={`/dashboard/contacts/${contact.id}`} className="font-semibold text-op-navy text-sm hover:text-op-blue transition-colors">
+            {contact.name}
+          </Link>
           <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${contact.type === 'lead' ? 'bg-blue-50 text-op-blue' : 'bg-purple-50 text-purple-600'}`}>
             {contact.type === 'lead' ? 'Lead' : 'Customer'}
           </span>
@@ -143,28 +134,32 @@ function ContactRow({ contact, onReviewRequest }: {
           {contact.source && <p className="text-xs text-op-muted">via {contact.source}</p>}
         </div>
       </div>
-
       <div className="flex gap-2 shrink-0">
-        {contact.type === 'lead' && contact.email && (
-          <a
-            href={`mailto:${contact.email}`}
-            className="btn-secondary text-xs px-3 py-1.5 flex items-center gap-1.5"
-          >
+        {contact.email && (
+          <a href={`mailto:${contact.email}`} className="btn-secondary text-xs px-3 py-1.5 flex items-center gap-1.5">
             <Mail size={12} /> Email
           </a>
         )}
         {contact.email && (
-          <button
-            onClick={() => onReviewRequest(contact)}
-            className="btn-secondary text-xs px-3 py-1.5 flex items-center gap-1.5"
-          >
-            <Star size={12} /> Review Request
+          <button onClick={() => onReviewRequest(contact)} className="btn-secondary text-xs px-3 py-1.5 flex items-center gap-1.5">
+            <Star size={12} /> Review
           </button>
         )}
+        <Link href={`/dashboard/contacts/${contact.id}`} className="btn-secondary text-xs px-3 py-1.5 flex items-center gap-1.5">
+          <ChevronRight size={12} />
+        </Link>
       </div>
     </div>
   )
 }
+
+const FILTERS: { value: FilterStatus; label: string }[] = [
+  { value: 'all',       label: 'All'       },
+  { value: 'new',       label: 'New'       },
+  { value: 'contacted', label: 'Contacted' },
+  { value: 'converted', label: 'Converted' },
+  { value: 'lost',      label: 'Lost'      },
+]
 
 export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([])
@@ -172,14 +167,12 @@ export default function ContactsPage() {
   const [showAdd, setShowAdd] = useState(false)
   const [sending, setSending] = useState<string | null>(null)
   const [sentMsg, setSentMsg] = useState('')
+  const [filter, setFilter] = useState<FilterStatus>('all')
 
   useEffect(() => {
     const load = async () => {
       const supabase = createClient()
-      const { data } = await supabase
-        .from('contacts')
-        .select('*')
-        .order('created_at', { ascending: false })
+      const { data } = await supabase.from('contacts').select('*').order('created_at', { ascending: false })
       setContacts((data as Contact[]) ?? [])
       setLoading(false)
     }
@@ -201,6 +194,8 @@ export default function ContactsPage() {
     setTimeout(() => setSentMsg(''), 5000)
   }
 
+  const filtered = filter === 'all' ? contacts : contacts.filter((c) => c.status === filter)
+
   if (loading) {
     return (
       <main className="flex-1 p-6 md:p-8 flex items-center justify-center">
@@ -215,7 +210,7 @@ export default function ContactsPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold font-manrope text-op-navy">Contacts</h1>
-            <p className="text-sm text-op-muted mt-0.5">Manage your leads and customers.</p>
+            <p className="text-sm text-op-muted mt-0.5">{contacts.length} total · {contacts.filter(c => c.status === 'new').length} new</p>
           </div>
           <button onClick={() => setShowAdd(true)} className="btn-primary text-sm">
             <Plus size={15} /> Add Contact
@@ -230,21 +225,52 @@ export default function ContactsPage() {
 
         {showAdd && <AddContactForm onAdd={handleAdd} onCancel={() => setShowAdd(false)} />}
 
-        {contacts.length === 0 && !showAdd ? (
+        {/* Filter tabs */}
+        {contacts.length > 0 && (
+          <div className="flex gap-1 mb-4 flex-wrap">
+            {FILTERS.map(({ value, label }) => {
+              const count = value === 'all' ? contacts.length : contacts.filter(c => c.status === value).length
+              return (
+                <button
+                  key={value}
+                  onClick={() => setFilter(value)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    filter === value
+                      ? 'bg-op-blue text-white'
+                      : 'bg-op-bg text-op-muted hover:bg-op-border hover:text-op-navy'
+                  }`}
+                >
+                  {label} {count > 0 && <span className="opacity-70">({count})</span>}
+                </button>
+              )
+            })}
+          </div>
+        )}
+
+        {filtered.length === 0 && !showAdd ? (
           <div className="card text-center py-12">
             <User size={32} className="text-op-muted mx-auto mb-3" />
-            <p className="font-semibold text-op-navy mb-1">No contacts yet</p>
-            <p className="text-sm text-op-muted mb-4">Add your first lead or customer to get started.</p>
-            <button onClick={() => setShowAdd(true)} className="btn-primary text-sm mx-auto">
-              <Plus size={14} /> Add First Contact
-            </button>
+            <p className="font-semibold text-op-navy mb-1">
+              {filter === 'all' ? 'No contacts yet' : `No ${filter} contacts`}
+            </p>
+            <p className="text-sm text-op-muted mb-4">
+              {filter === 'all' ? 'Add your first lead or customer to get started.' : `No contacts with status "${filter}" yet.`}
+            </p>
+            {filter === 'all' && (
+              <button onClick={() => setShowAdd(true)} className="btn-primary text-sm mx-auto">
+                <Plus size={14} /> Add First Contact
+              </button>
+            )}
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {contacts.map((c) => (
-              <div key={c.id} className={sending === c.id ? 'opacity-60 pointer-events-none' : ''}>
-                <ContactRow contact={c} onReviewRequest={handleReviewRequest} />
-              </div>
+            {filtered.map((c) => (
+              <ContactRow
+                key={c.id}
+                contact={c}
+                onReviewRequest={handleReviewRequest}
+                sending={sending === c.id}
+              />
             ))}
           </div>
         )}

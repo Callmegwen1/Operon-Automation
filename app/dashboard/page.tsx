@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowRight, Zap } from 'lucide-react'
+import { ArrowRight, Zap, CheckCircle2, Circle, Bot, User, BarChart2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { generateLeaks } from '@/lib/leaks'
 
@@ -12,15 +12,55 @@ const impactConfig: Record<Impact, { label: string; color: string; bg: string; b
   low:    { label: 'Low Impact',    color: 'text-op-blue',  bg: 'bg-blue-50',  border: 'border-blue-200'  },
 }
 
+type Activity = {
+  id: string
+  agent_type: string
+  action: string
+  details: Record<string, string>
+  created_at: string
+}
+
+function activityLabel(a: Activity): string {
+  const d = a.details ?? {}
+  if (a.action === 'review_request_sent') return `Review request sent to ${d.customer_name ?? 'a customer'}`
+  if (a.action === 'lead_followup_scheduled') return `Follow-up sequence started for ${d.contact_name ?? 'a lead'}`
+  if (a.action === 'weekly_report_sent') return 'Weekly report sent'
+  return a.action.replace(/_/g, ' ')
+}
+
+function agentIcon(agentType: string) {
+  if (agentType === 'review_request') return '⭐'
+  if (agentType === 'lead_followup')  return '📧'
+  if (agentType === 'weekly_report')  return '📊'
+  return '🤖'
+}
+
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime()
+  const m = Math.floor(diff / 60000)
+  if (m < 60) return `${m}m ago`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h ago`
+  return `${Math.floor(h / 24)}d ago`
+}
+
 export default async function DashboardPage() {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: scan }, { data: business }, { data: dbLeaks }] = await Promise.all([
+  const [
+    { data: scan },
+    { data: business },
+    { data: dbLeaks },
+    { data: agents },
+    { data: recentActivity },
+  ] = await Promise.all([
     supabase.from('scans').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).single(),
     supabase.from('businesses').select('*').eq('user_id', user.id).single(),
     supabase.from('leaks').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+    supabase.from('agents').select('type, enabled').eq('user_id', user.id).eq('enabled', true),
+    supabase.from('agent_activity').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(7),
   ])
 
   const businessName = business?.name ?? user.user_metadata?.business_name ?? 'your business'
@@ -28,7 +68,13 @@ export default async function DashboardPage() {
   const openLeaks = leaks.filter((l: { status?: string }) => l.status !== 'fixed')
   const fixedLeaks = leaks.length - openLeaks.length
 
-  // No scan yet — onboarding state
+  // Onboarding steps
+  const hasProfile   = !!(business?.name)
+  const hasScan      = !!scan
+  const hasAgent     = !!(agents && agents.length > 0)
+  const onboardingDone = hasProfile && hasScan && hasAgent
+
+  // No scan yet — empty state
   if (!scan) {
     return (
       <main className="flex-1 p-6 md:p-10 flex flex-col items-center justify-center">
@@ -51,24 +97,18 @@ export default async function DashboardPage() {
     )
   }
 
-  const scoreColor =
-    scan.score >= 75 ? 'text-op-red' : scan.score >= 55 ? 'text-op-amber' : 'text-op-blue'
-  const scoreLabel =
-    scan.score >= 75 ? 'Critical Risk' : scan.score >= 55 ? 'High Risk' : 'Moderate Risk'
+  const scoreColor = scan.score >= 75 ? 'text-op-red' : scan.score >= 55 ? 'text-op-amber' : 'text-op-blue'
+  const scoreLabel = scan.score >= 75 ? 'Critical Risk' : scan.score >= 55 ? 'High Risk' : 'Moderate Risk'
 
   return (
     <main className="flex-1 p-6 md:p-8 overflow-auto">
-      {/* Page header */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold font-manrope text-op-navy">Revenue Dashboard</h1>
           <p className="text-sm text-op-muted mt-0.5">
             {businessName} · Last scanned{' '}
-            {new Date(scan.created_at).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            })}
+            {new Date(scan.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
           </p>
         </div>
         <Link href="/scanner" className="btn-secondary text-sm self-start md:self-auto">
@@ -76,97 +116,138 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
+      {/* Onboarding checklist */}
+      {!onboardingDone && (
+        <div className="card border border-op-blue/20 bg-blue-50/40 mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <BarChart2 size={16} className="text-op-blue" />
+            <h2 className="text-sm font-bold text-op-navy">Get the most out of Operon</h2>
+          </div>
+          <div className="flex flex-col gap-2">
+            {([
+              { done: hasProfile, label: 'Complete your business profile', href: '/dashboard/profile', icon: User },
+              { done: hasScan,    label: 'Run your Revenue Leak Scan',     href: '/scanner',           icon: Zap  },
+              { done: hasAgent,   label: 'Activate an autopilot agent',    href: '/dashboard/agents',  icon: Bot  },
+            ] as { done: boolean; label: string; href: string; icon: React.ElementType }[]).map(({ done, label, href, icon: Icon }) => (
+              <Link
+                key={label}
+                href={done ? '#' : href}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all ${
+                  done ? 'text-op-muted pointer-events-none' : 'text-op-navy hover:bg-blue-100'
+                }`}
+              >
+                {done
+                  ? <CheckCircle2 size={16} className="text-op-green shrink-0" />
+                  : <Circle size={16} className="text-op-blue shrink-0" />
+                }
+                <Icon size={14} className="shrink-0 text-op-muted" />
+                <span className={done ? 'line-through' : ''}>{label}</span>
+                {!done && <ArrowRight size={13} className="ml-auto text-op-blue" />}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <div className="card text-center">
-          <p className="text-xs font-semibold text-op-muted uppercase tracking-wide mb-2">
-            Revenue Leak Score
-          </p>
+          <p className="text-xs font-semibold text-op-muted uppercase tracking-wide mb-2">Revenue Leak Score</p>
           <p className={`text-5xl font-bold font-manrope ${scoreColor}`}>
-            {scan.score}
-            <span className="text-xl text-op-muted font-normal">/100</span>
+            {scan.score}<span className="text-xl text-op-muted font-normal">/100</span>
           </p>
           <p className={`text-xs font-bold mt-2 ${scoreColor}`}>{scoreLabel}</p>
         </div>
-
         <div className="card text-center">
-          <p className="text-xs font-semibold text-op-muted uppercase tracking-wide mb-2">
-            Open Leaks
-          </p>
+          <p className="text-xs font-semibold text-op-muted uppercase tracking-wide mb-2">Open Leaks</p>
           <p className="text-5xl font-bold font-manrope text-op-navy">{openLeaks.length}</p>
           <p className="text-xs font-semibold mt-2 text-op-muted">Need attention</p>
         </div>
-
         <div className="card text-center">
-          <p className="text-xs font-semibold text-op-muted uppercase tracking-wide mb-2">
-            Resolved
-          </p>
+          <p className="text-xs font-semibold text-op-muted uppercase tracking-wide mb-2">Resolved</p>
           <p className="text-5xl font-bold font-manrope text-op-green">{fixedLeaks}</p>
           <p className="text-xs font-semibold mt-2 text-op-green">Leaks fixed</p>
         </div>
       </div>
 
-      {/* Revenue Leaks */}
-      <div>
-        <h2 className="text-lg font-bold font-manrope text-op-navy mb-4">Your Revenue Leaks</h2>
-
-        <div className="flex flex-col gap-3">
-          {leaks.map((leak: {
-            id?: string
-            title: string
-            description: string
-            impact: Impact
-            recommended_fix: string
-            status?: string
-          }, i: number) => {
-            const cfg = impactConfig[leak.impact] ?? impactConfig.medium
-            const isFixed = leak.status === 'fixed'
-
-            return (
-              <div
-                key={leak.id ?? i}
-                className={`card border ${cfg.border} ${isFixed ? 'opacity-60' : ''}`}
-              >
-                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span
-                        className={`text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}
-                      >
-                        {cfg.label}
-                      </span>
-                      {isFixed && (
-                        <span className="text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-green-50 text-op-green">
-                          Fixed
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Revenue leaks */}
+        <div className="lg:col-span-2">
+          <h2 className="text-lg font-bold font-manrope text-op-navy mb-4">Your Revenue Leaks</h2>
+          <div className="flex flex-col gap-3">
+            {leaks.map((leak: {
+              id?: string
+              title: string
+              description: string
+              impact: Impact
+              recommended_fix: string
+              status?: string
+            }, i: number) => {
+              const cfg = impactConfig[leak.impact] ?? impactConfig.medium
+              const isFixed = leak.status === 'fixed'
+              return (
+                <div key={leak.id ?? i} className={`card border ${cfg.border} ${isFixed ? 'opacity-60' : ''}`}>
+                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={`text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.color}`}>
+                          {cfg.label}
                         </span>
+                        {isFixed && (
+                          <span className="text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-green-50 text-op-green">Fixed</span>
+                        )}
+                      </div>
+                      <h3 className="font-semibold text-op-navy mb-1">{leak.title}</h3>
+                      <p className="text-sm text-op-muted leading-relaxed">{leak.description}</p>
+                      {leak.recommended_fix && (
+                        <p className="text-sm text-op-body mt-2">
+                          <span className="font-semibold text-op-navy">Fix: </span>
+                          {leak.recommended_fix}
+                        </p>
                       )}
                     </div>
-
-                    <h3 className="font-semibold text-op-navy mb-1">{leak.title}</h3>
-                    <p className="text-sm text-op-muted leading-relaxed">{leak.description}</p>
-
-                    {leak.recommended_fix && (
-                      <p className="text-sm text-op-body mt-2">
-                        <span className="font-semibold text-op-navy">Fix: </span>
-                        {leak.recommended_fix}
-                      </p>
+                    {!isFixed && (
+                      <div className="shrink-0">
+                        <Link href="/contact" className="btn-primary text-sm px-4 py-2 whitespace-nowrap">
+                          Activate Fix <ArrowRight size={14} />
+                        </Link>
+                      </div>
                     )}
                   </div>
-
-                  {!isFixed && (
-                    <div className="shrink-0">
-                      <Link
-                        href="/contact"
-                        className="btn-primary text-sm px-4 py-2 whitespace-nowrap"
-                      >
-                        Activate Fix <ArrowRight size={14} />
-                      </Link>
-                    </div>
-                  )}
                 </div>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Agent activity feed */}
+        <div>
+          <h2 className="text-lg font-bold font-manrope text-op-navy mb-4">Agent Activity</h2>
+          {recentActivity && recentActivity.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              {(recentActivity as Activity[]).map((a) => (
+                <div key={a.id} className="card py-3 px-4 flex items-start gap-3">
+                  <span className="text-base shrink-0">{agentIcon(a.agent_type)}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-op-body leading-snug">{activityLabel(a)}</p>
+                    <p className="text-xs text-op-muted mt-0.5">{timeAgo(a.created_at)}</p>
+                  </div>
+                </div>
+              ))}
+              <Link href="/dashboard/agents" className="text-xs text-op-blue hover:underline mt-1 pl-1">
+                View all agents →
+              </Link>
+            </div>
+          ) : (
+            <div className="card text-center py-8">
+              <Bot size={24} className="text-op-muted mx-auto mb-2" />
+              <p className="text-sm font-semibold text-op-navy mb-1">No activity yet</p>
+              <p className="text-xs text-op-muted mb-3">Activate an agent to start automating.</p>
+              <Link href="/dashboard/agents" className="btn-primary text-xs px-4 py-2 mx-auto">
+                Set Up Agents
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </main>

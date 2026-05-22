@@ -1,14 +1,18 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react'
+import { ArrowRight, Loader2, Eye, EyeOff, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const confirmed = searchParams.get('confirmed')
+  const linkError = searchParams.get('error')
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -39,21 +43,35 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-op-bg flex flex-col items-center justify-center px-4 py-16">
       <Link href="/" className="mb-8">
-        <Image
-          src="/logos/logo-light.png"
-          alt="Operon Automation"
-          width={150}
-          height={38}
-          className="h-9 w-auto"
-        />
+        <Image src="/logos/logo-light.png" alt="Operon Automation" width={150} height={38} className="h-9 w-auto" />
       </Link>
 
       <div className="w-full max-w-sm">
+        {/* Email confirmed banner */}
+        {confirmed && (
+          <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-4">
+            <CheckCircle2 size={16} className="text-op-green shrink-0" />
+            <p className="text-sm text-op-green font-semibold">
+              Email confirmed! You can now sign in below.
+            </p>
+          </div>
+        )}
+
+        {/* Link expired / error banner */}
+        {linkError === 'link-expired' && (
+          <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4">
+            <AlertTriangle size={16} className="text-op-amber shrink-0" />
+            <p className="text-sm text-op-amber font-semibold">
+              That verification link has expired. Please{' '}
+              <Link href="/signup" className="underline">sign up again</Link> or contact{' '}
+              <a href="mailto:ceo@operonauto.com" className="underline">support</a>.
+            </p>
+          </div>
+        )}
+
         <div className="card">
           <h1 className="text-2xl font-bold font-manrope text-op-navy mb-1">Welcome back</h1>
-          <p className="text-sm text-op-muted mb-6">
-            Sign in to your Revenue Autopilot dashboard.
-          </p>
+          <p className="text-sm text-op-muted mb-6">Sign in to your Revenue Autopilot dashboard.</p>
 
           <form onSubmit={handleLogin} className="flex flex-col gap-4">
             <div>
@@ -111,17 +129,20 @@ export default function LoginPage() {
 
         <p className="text-center text-sm text-op-muted mt-6">
           Don&apos;t have an account?{' '}
-          <Link href="/signup" className="text-op-blue font-semibold hover:underline">
-            Create one free
-          </Link>
+          <Link href="/signup" className="text-op-blue font-semibold hover:underline">Create one free</Link>
         </p>
-
         <p className="text-center text-sm text-op-muted mt-3">
-          <Link href="/scanner" className="text-op-blue hover:underline">
-            Scan my business free →
-          </Link>
+          <Link href="/scanner" className="text-op-blue hover:underline">Scan my business free →</Link>
         </p>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-op-bg" />}>
+      <LoginForm />
+    </Suspense>
   )
 }

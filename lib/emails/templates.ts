@@ -151,6 +151,56 @@ export function reviewRequest({
   }
 }
 
+// ── Welcome Email ────────────────────────────────────────────
+export function welcomeEmail({
+  businessName,
+  dashboardUrl,
+}: {
+  businessName: string
+  dashboardUrl: string
+}): { subject: string; html: string } {
+  return {
+    subject: 'Welcome to Operon — here\'s what to do first',
+    html: wrap(`
+      <tr><td style="background:#102A43;border-radius:12px 12px 0 0;padding:28px 36px;">
+        <p style="margin:0 0 4px;color:#94A3B8;font-size:12px;text-transform:uppercase;letter-spacing:1px;">Welcome aboard</p>
+        <p style="margin:0;color:#ffffff;font-size:20px;font-weight:700;">Operon Automation</p>
+      </td></tr>
+      <tr><td style="background:#ffffff;border-radius:0 0 12px 12px;padding:36px;">
+        <p style="margin:0 0 16px;color:#334155;font-size:15px;">Hi ${businessName},</p>
+        <p style="margin:0 0 16px;color:#334155;font-size:15px;line-height:1.6;">
+          Your account is confirmed and your Revenue Autopilot dashboard is ready. Here's what to do first:
+        </p>
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+          <tr><td style="padding:12px;background:#F8FAFC;border-radius:8px;border-left:3px solid #2563EB;margin-bottom:8px;">
+            <p style="margin:0;color:#102A43;font-size:13px;font-weight:700;">1. Complete your business profile</p>
+            <p style="margin:4px 0 0;color:#64748B;font-size:12px;">Add your business details so your agents know who they're representing.</p>
+          </td></tr>
+        </table>
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">
+          <tr><td style="padding:12px;background:#F8FAFC;border-radius:8px;border-left:3px solid #2563EB;">
+            <p style="margin:0;color:#102A43;font-size:13px;font-weight:700;">2. Run your Revenue Leak Scan</p>
+            <p style="margin:4px 0 0;color:#64748B;font-size:12px;">See exactly where your business may be losing customers and revenue.</p>
+          </td></tr>
+        </table>
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+          <tr><td style="padding:12px;background:#F8FAFC;border-radius:8px;border-left:3px solid #2563EB;">
+            <p style="margin:0;color:#102A43;font-size:13px;font-weight:700;">3. Activate your first agent</p>
+            <p style="margin:4px 0 0;color:#64748B;font-size:12px;">The Lead Follow-Up Agent typically has the fastest impact — start there.</p>
+          </td></tr>
+        </table>
+        <div style="text-align:center;">
+          <a href="${dashboardUrl}" style="display:inline-block;background:#2563EB;color:#ffffff;font-size:14px;font-weight:700;padding:14px 32px;border-radius:8px;text-decoration:none;">
+            Open My Dashboard →
+          </a>
+        </div>
+        <p style="margin:24px 0 0;color:#64748B;font-size:13px;text-align:center;">
+          Questions? Reply to this email or reach us at <a href="mailto:ceo@operonauto.com" style="color:#2563EB;">ceo@operonauto.com</a>
+        </p>
+      </td></tr>`),
+  }
+}
+
 // ── Weekly Owner Report ──────────────────────────────────────
 export function weeklyReport({
   businessName,
