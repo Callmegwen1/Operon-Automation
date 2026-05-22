@@ -6,19 +6,21 @@ import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard,
-  AlertTriangle,
   User,
   LogOut,
   Menu,
   X,
   Zap,
+  Bot,
+  Users,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 const navItems = [
-  { href: '/dashboard',         icon: LayoutDashboard, label: 'Overview'   },
-  { href: '/dashboard/leaks',   icon: AlertTriangle,   label: 'My Leaks'   },
-  { href: '/dashboard/profile', icon: User,            label: 'Profile'    },
+  { href: '/dashboard',          icon: LayoutDashboard, label: 'Overview'  },
+  { href: '/dashboard/agents',   icon: Bot,             label: 'Agents'    },
+  { href: '/dashboard/contacts', icon: Users,           label: 'Contacts'  },
+  { href: '/dashboard/profile',  icon: User,            label: 'Profile'   },
 ]
 
 function SidebarContent({ onClose }: { onClose?: () => void }) {
