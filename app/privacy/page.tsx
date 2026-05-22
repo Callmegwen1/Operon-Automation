@@ -69,7 +69,7 @@ export default function PrivacyPage() {
 
       <h2>6. Data Retention</h2>
       <p>
-        We retain your information for as long as necessary to provide our services and comply with legal obligations. You may request deletion of your personal data at any time by contacting us at hello@operonauto.com.
+        We retain your information for as long as necessary to provide our services and comply with legal obligations. You may request deletion of your personal data at any time by contacting us at ceo@operonauto.com.
       </p>
 
       <h2>7. Your Rights</h2>
@@ -100,7 +100,7 @@ export default function PrivacyPage() {
       <p>
         If you have questions about this Privacy Policy, please contact us at:<br />
         Operon Automation<br />
-        Email: hello@operonauto.com<br />
+        Email: ceo@operonauto.com<br />
         Website: operonauto.com
       </p>
     </LegalPage>

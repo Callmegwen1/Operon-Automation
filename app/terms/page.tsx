@@ -85,7 +85,7 @@ export default function TermsPage() {
 
       <h2>13. Contact</h2>
       <p>
-        Questions about these Terms? Contact us at hello@operonauto.com.
+        Questions about these Terms? Contact us at ceo@operonauto.com.
       </p>
     </LegalPage>
   )

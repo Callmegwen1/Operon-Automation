@@ -82,7 +82,7 @@ export default function SmsTermsPage() {
 
       <h2>9. Contact</h2>
       <p>
-        Questions about SMS terms? Contact us at hello@operonauto.com.
+        Questions about SMS terms? Contact us at ceo@operonauto.com.
       </p>
     </LegalPage>
   )

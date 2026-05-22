@@ -73,7 +73,7 @@ export default function ContactPage() {
 
               <div className="text-sm text-op-muted">
                 <p className="font-semibold text-op-navy mb-1">Email</p>
-                <p>hello@operonauto.com</p>
+                <p>ceo@operonauto.com</p>
               </div>
             </div>
           </div>

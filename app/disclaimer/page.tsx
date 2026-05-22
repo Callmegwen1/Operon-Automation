@@ -49,7 +49,7 @@ export default function DisclaimerPage() {
 
       <h2>Contact</h2>
       <p>
-        Questions about this disclaimer? Contact us at hello@operonauto.com.
+        Questions about this disclaimer? Contact us at ceo@operonauto.com.
       </p>
     </LegalPage>
   )
