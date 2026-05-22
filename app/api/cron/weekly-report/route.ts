@@ -55,9 +55,10 @@ export async function GET(req: NextRequest) {
 
       if (!scan) continue
 
-      const rawLeaks = (leaks && leaks.length > 0) ? leaks : generateLeaks(scan)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const openLeaks = rawLeaks.filter((l: any) => l.status !== 'fixed').length
+      const rawLeaks = (leaks && leaks.length > 0)
+        ? (leaks as { status?: string }[])
+        : (generateLeaks(scan) as { status?: string }[])
+      const openLeaks = rawLeaks.filter((l) => l.status !== 'fixed').length
       const fixedLeaks = rawLeaks.length - openLeaks
 
       const report = weeklyReport({
