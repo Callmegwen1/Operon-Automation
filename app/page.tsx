@@ -1,13 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
-  Phone,
-  Clock,
-  Star,
-  FileText,
-  DollarSign,
-  BarChart2,
-  Users,
   ArrowRight,
   CheckCircle2,
   ChevronRight,
@@ -20,133 +13,98 @@ import {
   Sparkles,
   Building2,
   TrendingUp,
+  Users,
 } from 'lucide-react'
 import DashboardMockup from '@/components/dashboard/DashboardMockup'
-import SectionHeader from '@/components/ui/SectionHeader'
 
 export const metadata: Metadata = {
-  title: 'Operon Automation | Revenue Recovery Systems for Small Businesses',
+  title: 'Operon Automation | Revenue Recovery for Small Businesses',
   description:
-    'Find and fix the leaks costing your business customers. Operon helps small businesses recover missed leads, improve follow-up, grow reviews, and automate the work that slips through the cracks.',
+    'Find and fix the leaks costing your business customers. Operon helps small businesses recover missed leads, grow reviews, and automate follow-up.',
 }
 
-const leakCards = [
+const problemStatements = [
   {
-    icon: Phone,
-    color: 'text-op-amber',
-    bg: 'bg-amber-50 border-amber-200',
-    title: 'Missed Calls',
-    desc: 'Every unanswered call is a lead that calls your competitor next. Most businesses never follow up.',
+    statement: 'Most leads go unanswered — and call your competitor next.',
+    detail:
+      'Every missed call, slow response, or ignored estimate is revenue walking out the door. The first business to follow up wins the job.',
   },
   {
-    icon: Clock,
-    color: 'text-op-red',
-    bg: 'bg-red-50 border-red-200',
-    title: 'Slow Lead Follow-Up',
-    desc: 'Speed is everything. Leads contacted within 5 minutes are 21x more likely to convert.',
+    statement: 'Reviews drive search rankings. Most businesses never ask.',
+    detail:
+      'Businesses with strong review systems rank higher and get chosen first. Happy customers won\'t leave reviews unless you ask — and most never do.',
   },
   {
-    icon: FileText,
-    color: 'text-op-amber',
-    bg: 'bg-amber-50 border-amber-200',
-    title: 'No Quote Follow-Up',
-    desc: 'Estimates sent and forgotten. A simple follow-up system can recover a significant portion of these.',
+    statement: 'Your best leads are customers you\'ve stopped talking to.',
+    detail:
+      'Past clients who\'ve gone quiet can be reactivated at a fraction of the cost of new lead acquisition. Most businesses just never reach back out.',
   },
-  {
-    icon: Star,
-    color: 'text-op-blue',
-    bg: 'bg-blue-50 border-blue-200',
-    title: 'Weak Review System',
-    desc: 'Businesses with strong reviews get chosen first. Not asking for reviews is leaving trust on the table.',
-  },
-  {
-    icon: DollarSign,
-    color: 'text-op-red',
-    bg: 'bg-red-50 border-red-200',
-    title: 'Unpaid Invoices',
-    desc: 'Work done, money owed. Automated reminders collect faster without awkward manual follow-ups.',
-  },
-  {
-    icon: BarChart2,
-    color: 'text-op-muted',
-    bg: 'bg-slate-50 border-slate-200',
-    title: 'Untracked Ad Spend',
-    desc: 'Running ads without knowing which ones bring real customers means spending on guesswork.',
-  },
-  {
-    icon: Users,
-    color: 'text-op-green',
-    bg: 'bg-green-50 border-green-200',
-    title: 'Lost Past Customers',
-    desc: "Your best lead is someone who already trusted you. Old customers who've gone quiet can be reactivated.",
-  },
+]
+
+const autopilotFeatures = [
+  'Revenue Leak Dashboard with clear visibility',
+  'Automated lead follow-up and call recovery',
+  'Review request and reputation system',
+  'Estimate and invoice follow-up agents',
+  'Weekly Owner Report — what ran, what recovered',
 ]
 
 const howSteps = [
-  { num: '01', title: 'Scan your business', desc: 'Answer a few questions about your leads, follow-up, reviews, and marketing.' },
-  { num: '02', title: 'See your revenue leaks', desc: 'Get a Revenue Leak Score and a clear view of where customers may be slipping away.' },
-  { num: '03', title: 'Activate recommended fixes', desc: 'Revenue Autopilot recommends simple systems. Activate the ones that fit your business.' },
-  { num: '04', title: 'Recover missed opportunities', desc: 'Automated follow-up, review requests, and reactivation campaigns run on your behalf.' },
-  { num: '05', title: 'Get a weekly owner report', desc: 'See what is running, what recovered, and what needs attention — every week.' },
+  { num: '01', title: 'Scan your business',            desc: 'Answer a few questions about your leads, follow-up, reviews, and marketing.' },
+  { num: '02', title: 'See your revenue leaks',        desc: 'Get a Revenue Leak Score and a clear view of where customers may be slipping away.' },
+  { num: '03', title: 'Activate recommended fixes',    desc: 'Revenue Autopilot recommends the exact systems to activate for your business.' },
+  { num: '04', title: 'Recover missed opportunities',  desc: 'Automated follow-up, review requests, and reactivation campaigns run on your behalf.' },
+  { num: '05', title: 'Get a weekly owner report',     desc: 'See what is running, what recovered, and what needs attention — every week.' },
 ]
 
 const industries = [
-  { icon: Home,      label: 'Home Services'    },
-  { icon: Sparkles,  label: 'Med Spas'         },
-  { icon: Car,       label: 'Auto Shops'        },
-  { icon: Dumbbell,  label: 'Fitness Studios'   },
-  { icon: Smile,     label: 'Dental Offices'    },
-  { icon: Stethoscope, label: 'Clinics'         },
-  { icon: Wrench,    label: 'Cleaning Companies'},
-  { icon: Building2, label: 'Contractors'       },
-  { icon: TrendingUp, label: 'Real Estate Teams'},
-  { icon: Users,     label: 'Local Services'    },
+  { icon: Home,         label: 'Home Services'     },
+  { icon: Sparkles,     label: 'Med Spas'          },
+  { icon: Car,          label: 'Auto Shops'         },
+  { icon: Dumbbell,     label: 'Fitness Studios'    },
+  { icon: Smile,        label: 'Dental Offices'     },
+  { icon: Stethoscope,  label: 'Clinics'            },
+  { icon: Wrench,       label: 'Cleaning Companies' },
+  { icon: Building2,    label: 'Contractors'        },
+  { icon: TrendingUp,   label: 'Real Estate'        },
+  { icon: Users,        label: 'Local Services'     },
 ]
 
 export default function HomePage() {
   return (
     <>
       {/* ─── HERO ─────────────────────────────────────────────── */}
-      <section className="bg-op-bg pt-16 pb-0 overflow-hidden">
+      <section className="bg-white pt-20 md:pt-28 pb-4 overflow-hidden">
         <div className="container-wide">
-          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+          <div className="flex flex-col lg:flex-row items-center gap-14 lg:gap-20">
 
             {/* Left copy */}
-            <div className="flex-1 text-center lg:text-left max-w-xl mx-auto lg:mx-0">
-              <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-full px-4 py-1.5 mb-6">
-                <span className="w-2 h-2 rounded-full bg-op-amber animate-pulse" />
-                <span className="text-xs font-semibold text-op-amber">Revenue Leak Scanner — Free</span>
-              </div>
-
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold font-manrope text-op-navy leading-[1.1] mb-6">
+            <div className="flex-none w-full lg:w-[480px] text-center lg:text-left">
+              <p className="eyebrow mb-5">Revenue Recovery System</p>
+              <h1 className="text-5xl sm:text-6xl lg:text-[68px] font-extrabold font-manrope text-op-primary leading-[1.06] mb-5">
                 Find and fix the{' '}
-                <span className="text-op-amber underline decoration-wavy decoration-amber-300 underline-offset-4">
-                  leaks
-                </span>{' '}
-                costing your business customers.
+                <span className="text-op-amber">leaks</span>{' '}
+                costing you customers.
               </h1>
-
-              <p className="text-lg text-op-muted leading-relaxed mb-8">
-                Operon helps small businesses recover missed leads, improve follow-up, grow reviews, track revenue leaks, and automate the work that usually slips through the cracks.
+              <p className="text-base text-op-muted leading-relaxed mb-8 max-w-md mx-auto lg:mx-0">
+                Operon scans your business and shows exactly where leads, reviews, and revenue are slipping away.
               </p>
-
-              <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
-                <Link href="/scanner" className="btn-primary px-7 py-3.5 text-base">
+              <div className="flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-4">
+                <Link href="/scanner" className="btn-primary px-7 py-3.5 text-sm">
                   Scan My Business Free
-                  <ArrowRight size={17} />
+                  <ArrowRight size={15} />
                 </Link>
-                <Link href="/services" className="btn-secondary px-7 py-3.5 text-base">
-                  See Services
+                <Link
+                  href="#how-it-works"
+                  className="text-sm text-op-muted hover:text-op-navy transition-colors underline underline-offset-4"
+                >
+                  See how it works
                 </Link>
               </div>
-
-              <p className="mt-5 text-xs text-op-muted">
-                No credit card required &middot; Results in under 2 minutes
-              </p>
             </div>
 
             {/* Right: Dashboard */}
-            <div className="flex-1 w-full max-w-md lg:max-w-none pb-0 px-4 lg:px-0 lg:pt-8">
+            <div className="flex-1 w-full">
               <DashboardMockup />
             </div>
           </div>
@@ -154,24 +112,86 @@ export default function HomePage() {
       </section>
 
       {/* ─── PROBLEM ──────────────────────────────────────────── */}
-      <section className="section-pad bg-white">
+      <section className="bg-white section-pad border-t border-op-border">
         <div className="container-wide">
-          <div className="max-w-3xl mx-auto text-center mb-14">
-            <SectionHeader
-              eyebrow="The Problem"
-              title="Your business may be losing customers in places"
-              titleHighlight="you cannot see."
-              description="Most businesses do not only need more leads. They need to stop losing the leads they already get. Missed calls, slow follow-up, weak reviews, unpaid invoices, untracked ads, and old customers slipping away — these are revenue leaks."
-              center
-            />
+          <p className="eyebrow mb-10">The Problem</p>
+          <div className="flex flex-col gap-10 max-w-3xl">
+            {problemStatements.map(({ statement, detail }) => (
+              <div key={statement} className="border-l-[3px] border-op-amber pl-6">
+                <p className="text-xl font-semibold font-manrope text-op-primary leading-snug mb-2">
+                  {statement}
+                </p>
+                <p className="text-sm text-op-muted leading-relaxed">{detail}</p>
+              </div>
+            ))}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {leakCards.map(({ icon: Icon, color, bg, title, desc }) => (
-              <div key={title} className={`card-hover border ${bg}`}>
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-4 ${bg}`}>
-                  <Icon size={20} className={color} />
-                </div>
-                <h3 className="font-semibold font-manrope text-op-navy text-sm mb-2">{title}</h3>
+        </div>
+      </section>
+
+      {/* ─── SOCIAL PROOF ─────────────────────────────────────── */}
+      <section className="bg-[#FAFAFA] border-y border-op-border py-14">
+        <div className="container-wide max-w-2xl">
+          <p className="text-lg font-manrope text-op-primary leading-relaxed mb-3">
+            &ldquo;Built this because I watched good businesses lose revenue to problems they didn&apos;t know they had.&rdquo;
+          </p>
+          <p className="text-sm text-op-muted">
+            — Leonardo Diaz, Founder, Operon Automation
+          </p>
+        </div>
+      </section>
+
+      {/* ─── REVENUE AUTOPILOT ────────────────────────────────── */}
+      <section className="bg-white section-pad">
+        <div className="container-wide">
+          <div className="flex flex-col lg:flex-row items-start gap-16 lg:gap-20">
+
+            <div className="flex-none w-full lg:w-[440px]">
+              <p className="eyebrow mb-4">Revenue Autopilot</p>
+              <h2 className="text-3xl md:text-[2.5rem] font-extrabold font-manrope text-op-primary leading-tight mb-4">
+                Scan, identify, and fix leaks automatically.
+              </h2>
+              <p className="text-sm text-op-muted leading-relaxed mb-6">
+                Revenue Autopilot shows your Revenue Leak Score and recommends the exact systems to activate. Agents run in the background so you can focus on your business.
+              </p>
+              <ul className="flex flex-col gap-2.5 mb-8">
+                {autopilotFeatures.map((f) => (
+                  <li key={f} className="flex items-center gap-3 text-sm text-op-body">
+                    <CheckCircle2 size={15} className="text-op-green shrink-0" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <div className="flex gap-3">
+                <Link href="/revenue-autopilot" className="btn-primary text-sm">
+                  Learn More <ChevronRight size={15} />
+                </Link>
+                <Link href="/scanner" className="btn-secondary text-sm">
+                  Scan Free
+                </Link>
+              </div>
+            </div>
+
+            <div className="flex-1 w-full max-w-lg mx-auto lg:mx-0">
+              <DashboardMockup />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── HOW IT WORKS ─────────────────────────────────────── */}
+      <section id="how-it-works" className="bg-[#FAFAFA] section-pad border-y border-op-border">
+        <div className="container-wide">
+          <p className="eyebrow mb-4">How It Works</p>
+          <h2 className="text-3xl md:text-[2.5rem] font-extrabold font-manrope text-op-primary leading-tight mb-14">
+            Five steps. Fully automatic.
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-6">
+            {howSteps.map(({ num, title, desc }) => (
+              <div key={num} className="flex flex-col">
+                <span className="text-[72px] font-extrabold font-manrope text-op-border leading-none mb-4 select-none">
+                  {num}
+                </span>
+                <h3 className="text-sm font-semibold text-op-primary mb-2">{title}</h3>
                 <p className="text-xs text-op-muted leading-relaxed">{desc}</p>
               </div>
             ))}
@@ -179,110 +199,42 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ─── REVENUE AUTOPILOT PREVIEW ────────────────────────── */}
-      <section className="section-pad bg-op-bg">
+      {/* ─── SERVICES ─────────────────────────────────────────── */}
+      <section className="bg-white section-pad">
         <div className="container-wide">
-          <div className="flex flex-col lg:flex-row items-center gap-12">
-            <div className="flex-1 max-w-lg">
-              <SectionHeader
-                eyebrow="Revenue Autopilot"
-                title="Scan, identify, and fix the leaks automatically."
-                description="Revenue Autopilot scans your business, shows you a Revenue Leak Score, and recommends the exact systems to activate. Each agent runs on autopilot so you can focus on running your business."
-              />
-              <ul className="mt-8 flex flex-col gap-3">
-                {[
-                  'Revenue Leak Dashboard with clear visibility',
-                  'Automated lead follow-up and call recovery',
-                  'Review request and reputation system',
-                  'Estimate and invoice follow-up agents',
-                  'Weekly Owner Report — what ran, what recovered',
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-3">
-                    <CheckCircle2 size={16} className="text-op-green mt-0.5 shrink-0" />
-                    <span className="text-sm text-op-body">{item}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-8 flex gap-3">
-                <Link href="/revenue-autopilot" className="btn-primary">
-                  Learn More <ChevronRight size={16} />
-                </Link>
-                <Link href="/scanner" className="btn-secondary">
-                  Scan Free
-                </Link>
-              </div>
-            </div>
-            <div className="flex-1 w-full max-w-md">
-              <DashboardMockup />
-            </div>
-          </div>
-        </div>
-      </section>
+          <div className="flex flex-col lg:flex-row items-start gap-16 lg:gap-20">
 
-      {/* ─── REVENUE LEAK SCANNER PREVIEW ────────────────────── */}
-      <section className="section-pad bg-op-navy text-white">
-        <div className="container-wide">
-          <div className="max-w-3xl mx-auto text-center">
-            <SectionHeader
-              eyebrow="Free Tool"
-              title="Get your free Revenue Leak"
-              titleHighlight="Score."
-              description="Answer a few questions about your website, leads, follow-up, reviews, and marketing. Operon will show where customers may be slipping away — no cost, no commitment."
-              center
-              light
-            />
-            <div className="mt-10 flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href="/scanner" className="btn-primary px-8 py-4 text-base">
-                Get Your Free Score
-                <ArrowRight size={18} />
-              </Link>
-            </div>
-            <p className="mt-4 text-xs text-white/40">
-              Results in under 2 minutes. No credit card. No guaranteed revenue claims.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── SERVICES PREVIEW ─────────────────────────────────── */}
-      <section className="section-pad bg-white">
-        <div className="container-wide">
-          <div className="flex flex-col lg:flex-row items-center gap-12">
-            <div className="flex-1 max-w-lg">
-              <SectionHeader
-                eyebrow="Operon Services"
-                title="Need a deeper custom system?"
-                description="Use Revenue Autopilot for self-serve revenue recovery, or work with Operon Services for custom automation and marketing systems built around your specific business."
-              />
-              <div className="mt-8 grid grid-cols-2 gap-3">
-                {[
-                  'CRM setup & automation',
-                  'Custom lead follow-up',
-                  'Marketing systems',
-                  'Revenue dashboards',
-                  'Ad tracking & reporting',
-                  'Done-for-you workflows',
-                ].map((item) => (
-                  <div key={item} className="flex items-center gap-2">
-                    <CheckCircle2 size={14} className="text-op-green shrink-0" />
-                    <span className="text-sm text-op-body">{item}</span>
-                  </div>
-                ))}
-              </div>
-              <Link href="/services" className="btn-primary mt-8 inline-flex">
-                Request Setup Help <ArrowRight size={16} />
+            <div className="flex-none w-full lg:w-[440px]">
+              <p className="eyebrow mb-4">Operon Services</p>
+              <h2 className="text-3xl md:text-[2.5rem] font-extrabold font-manrope text-op-primary leading-tight mb-4">
+                Need a custom system?
+              </h2>
+              <p className="text-sm text-op-muted leading-relaxed mb-8">
+                Use Revenue Autopilot for self-serve revenue recovery, or work with Operon Services for custom automation built around your specific business.
+              </p>
+              <Link href="/services" className="btn-primary text-sm inline-flex">
+                Request Setup Help <ArrowRight size={15} />
               </Link>
             </div>
 
-            <div className="flex-1 grid grid-cols-2 gap-4">
+            <div className="flex-1 grid sm:grid-cols-2 gap-4">
               {[
-                { icon: Users, title: 'Revenue Autopilot', desc: 'Self-serve. Scan, score, and activate systems yourself.', badge: 'Software', badgeColor: 'badge-blue' },
-                { icon: Wrench, title: 'Operon Services', desc: 'Done-for-you. Custom systems built with you.', badge: 'Agency', badgeColor: 'badge-green' },
-              ].map(({ icon: Icon, title, desc, badge, badgeColor }) => (
-                <div key={title} className="card-hover col-span-1">
-                  <span className={`${badgeColor} mb-4 inline-flex`}>{badge}</span>
-                  <Icon size={24} className="text-op-navy mb-3" />
-                  <h3 className="font-semibold font-manrope text-op-navy text-sm mb-2">{title}</h3>
+                {
+                  title: 'Revenue Autopilot',
+                  desc: 'Self-serve. Scan your business, see your score, and activate automation systems yourself.',
+                  badge: 'Software',
+                },
+                {
+                  title: 'Operon Services',
+                  desc: 'Done-for-you. Custom systems built around your specific business workflows and goals.',
+                  badge: 'Agency',
+                },
+              ].map(({ title, desc, badge }) => (
+                <div key={title} className="card">
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-op-muted mb-4 block">
+                    {badge}
+                  </span>
+                  <h3 className="font-semibold font-manrope text-op-primary text-sm mb-2">{title}</h3>
                   <p className="text-xs text-op-muted leading-relaxed">{desc}</p>
                 </div>
               ))}
@@ -291,56 +243,24 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ─── HOW IT WORKS ─────────────────────────────────────── */}
-      <section className="section-pad bg-op-bg">
-        <div className="container-wide">
-          <div className="text-center mb-14">
-            <SectionHeader
-              eyebrow="How It Works"
-              title="Simple steps to stop the"
-              titleHighlight="leaks."
-              center
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-            {howSteps.map(({ num, title, desc }, i) => (
-              <div key={num} className="relative flex flex-col items-center text-center lg:items-start lg:text-left">
-                {i < howSteps.length - 1 && (
-                  <div className="hidden lg:block absolute top-5 left-[calc(50%+28px)] w-full h-px bg-op-border" />
-                )}
-                <div className="w-10 h-10 rounded-full bg-op-blue text-white flex items-center justify-center font-bold font-manrope text-sm mb-4 shrink-0 z-10">
-                  {num}
-                </div>
-                <h3 className="font-semibold font-manrope text-op-navy text-sm mb-2">{title}</h3>
-                <p className="text-xs text-op-muted leading-relaxed">{desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ─── INDUSTRIES ───────────────────────────────────────── */}
-      <section className="section-pad bg-white">
+      <section className="bg-[#FAFAFA] section-pad border-y border-op-border">
         <div className="container-wide">
-          <div className="text-center mb-12">
-            <SectionHeader
-              eyebrow="Who We Serve"
-              title="Built for local and service"
-              titleHighlight="businesses."
-              center
-            />
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+          <p className="eyebrow mb-4">Who We Serve</p>
+          <h2 className="text-3xl md:text-[2.5rem] font-extrabold font-manrope text-op-primary leading-tight mb-10">
+            Built for local service businesses.
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
             {industries.map(({ icon: Icon, label }) => (
               <Link
                 key={label}
                 href="/industries"
-                className="card-hover flex flex-col items-center gap-3 py-6 text-center group"
+                className="flex items-center gap-2.5 px-4 py-3 rounded-lg border border-op-border bg-white hover:border-op-navy hover:text-op-navy transition-all group"
               >
-                <div className="w-12 h-12 rounded-xl bg-op-bg flex items-center justify-center group-hover:bg-blue-50 transition-colors">
-                  <Icon size={22} className="text-op-muted group-hover:text-op-blue transition-colors" />
-                </div>
-                <span className="text-xs font-semibold text-op-body group-hover:text-op-blue transition-colors">{label}</span>
+                <Icon size={14} className="text-op-muted group-hover:text-op-navy transition-colors shrink-0" />
+                <span className="text-sm text-op-muted group-hover:text-op-navy transition-colors font-medium leading-tight">
+                  {label}
+                </span>
               </Link>
             ))}
           </div>
@@ -348,20 +268,21 @@ export default function HomePage() {
       </section>
 
       {/* ─── FINAL CTA ────────────────────────────────────────── */}
-      <section className="section-pad bg-op-blue text-white">
-        <div className="container-wide text-center max-w-2xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-extrabold font-manrope leading-tight mb-5">
+      <section className="bg-op-navy section-pad">
+        <div className="container-wide max-w-2xl">
+          <h2 className="text-3xl md:text-[2.5rem] font-extrabold font-manrope text-white leading-tight mb-4">
             Ready to see where your business is leaking revenue?
           </h2>
-          <p className="text-lg text-white/80 mb-8">
-            Your free Revenue Leak Score shows the top areas where customers may be slipping away — and what to fix first.
+          <p className="text-white/60 mb-8 text-base">
+            Your free Revenue Leak Score shows exactly where customers may be slipping away.
           </p>
-          <Link href="/scanner" className="inline-flex items-center gap-2 bg-white text-op-blue font-bold font-inter px-8 py-4 rounded-lg text-base hover:bg-blue-50 transition-colors">
-            Scan My Business Free <ArrowRight size={18} />
+          <Link
+            href="/scanner"
+            className="inline-flex items-center gap-2 bg-white text-op-navy font-bold font-inter px-7 py-3.5 rounded-lg text-sm hover:bg-op-bg transition-colors"
+          >
+            Scan My Business Free <ArrowRight size={15} />
           </Link>
-          <p className="mt-4 text-sm text-white/50">
-            No cost. No commitment. Results in under 2 minutes.
-          </p>
+          <p className="mt-4 text-xs text-white/30">No cost. No commitment. Results in under 2 minutes.</p>
         </div>
       </section>
     </>

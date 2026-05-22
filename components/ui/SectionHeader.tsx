@@ -15,26 +15,25 @@ export default function SectionHeader({
   center = false,
   light = false,
 }: SectionHeaderProps) {
-  const titleColor = light ? 'text-white' : 'text-op-navy'
-  const eyebrowColor = light ? 'text-blue-300' : 'text-op-blue'
-  const descColor = light ? 'text-white/70' : 'text-op-muted'
-  const align = center ? 'text-center' : ''
+  const titleColor = light ? 'text-white' : 'text-op-primary'
+  const descColor  = light ? 'text-white/60' : 'text-op-muted'
+  const align      = center ? 'text-center' : ''
 
   return (
     <div className={`max-w-2xl ${center ? 'mx-auto' : ''} ${align}`}>
       {eyebrow && (
-        <p className={`text-sm font-semibold uppercase tracking-widest mb-3 ${eyebrowColor} font-inter`}>
+        <p className={`eyebrow mb-3 ${light ? 'text-white/40' : ''}`}>
           {eyebrow}
         </p>
       )}
-      <h2 className={`text-3xl md:text-4xl font-extrabold font-manrope ${titleColor} leading-tight mb-4`}>
+      <h2 className={`text-3xl md:text-[2.5rem] font-extrabold font-manrope ${titleColor} leading-tight mb-4`}>
         {title}{' '}
         {titleHighlight && (
           <span className="text-op-amber">{titleHighlight}</span>
         )}
       </h2>
       {description && (
-        <p className={`text-base md:text-lg leading-relaxed ${descColor}`}>{description}</p>
+        <p className={`text-sm md:text-base leading-relaxed ${descColor}`}>{description}</p>
       )}
     </div>
   )

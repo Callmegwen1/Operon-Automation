@@ -8,16 +8,17 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'op-navy':   '#102A43',
-        'op-blue':   '#2563EB',
-        'op-green':  '#16A34A',
-        'op-amber':  '#F59E0B',
-        'op-red':    '#DC2626',
-        'op-bg':     '#F8FAFC',
-        'op-card':   '#FFFFFF',
-        'op-border': '#E5E7EB',
-        'op-body':   '#334155',
-        'op-muted':  '#64748B',
+        'op-navy':    '#1A2E4A',
+        'op-primary': '#0F1117',
+        'op-blue':    '#2563EB',
+        'op-green':   '#16A34A',
+        'op-amber':   '#D97706',
+        'op-red':     '#DC2626',
+        'op-bg':      '#FAFAFA',
+        'op-card':    '#FFFFFF',
+        'op-border':  '#E5E7EB',
+        'op-body':    '#334155',
+        'op-muted':   '#64748B',
       },
       fontFamily: {
         manrope: ['var(--font-manrope)', 'sans-serif'],

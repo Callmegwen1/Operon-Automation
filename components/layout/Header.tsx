@@ -6,12 +6,11 @@ import Image from 'next/image'
 import { Menu, X } from 'lucide-react'
 
 const navLinks = [
-  { label: 'Home',               href: '/' },
-  { label: 'Revenue Autopilot',  href: '/revenue-autopilot' },
-  { label: 'Free Scanner',       href: '/scanner' },
-  { label: 'Services',           href: '/services' },
-  { label: 'Pricing',            href: '/pricing' },
-  { label: 'Contact',            href: '/contact' },
+  { label: 'Revenue Autopilot', href: '/revenue-autopilot' },
+  { label: 'Free Scanner',      href: '/scanner' },
+  { label: 'Services',          href: '/services' },
+  { label: 'Pricing',           href: '/pricing' },
+  { label: 'Contact',           href: '/contact' },
 ]
 
 export default function Header() {
@@ -39,7 +38,7 @@ export default function Header() {
             <Link
               key={link.href}
               href={link.href}
-              className="text-sm font-medium text-op-body hover:text-op-blue transition-colors duration-150"
+              className="text-sm font-medium text-op-body hover:text-op-navy transition-colors duration-150"
             >
               {link.label}
             </Link>
@@ -55,7 +54,7 @@ export default function Header() {
             Login
           </Link>
           <Link href="/scanner" className="btn-primary text-sm px-5 py-2.5">
-            Scan My Business Free
+            Scan Free
           </Link>
         </div>
 
@@ -78,7 +77,7 @@ export default function Header() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setOpen(false)}
-                className="text-sm font-medium text-op-body hover:text-op-blue py-2.5 px-3 rounded-lg hover:bg-op-bg transition-colors"
+                className="text-sm font-medium text-op-body hover:text-op-navy py-2.5 px-3 rounded-lg hover:bg-op-bg transition-colors"
               >
                 {link.label}
               </Link>
@@ -96,7 +95,7 @@ export default function Header() {
                 onClick={() => setOpen(false)}
                 className="btn-primary w-full justify-center"
               >
-                Scan My Business Free
+                Scan Free
               </Link>
             </div>
           </nav>

@@ -22,21 +22,25 @@
   }
 
   .section-pad {
-    @apply py-16 md:py-24;
+    @apply py-20 md:py-32;
+  }
+
+  .eyebrow {
+    @apply text-[11px] font-semibold tracking-[0.15em] uppercase font-inter text-op-muted;
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 bg-op-blue text-white font-semibold font-inter
+    @apply inline-flex items-center justify-center gap-2 bg-op-navy text-white font-semibold font-inter
            px-6 py-3 rounded-lg text-sm transition-all duration-200
-           hover:bg-blue-700 active:scale-95 focus-visible:outline-none focus-visible:ring-2
-           focus-visible:ring-op-blue focus-visible:ring-offset-2;
+           hover:bg-[#0F1F2E] active:scale-95 focus-visible:outline-none focus-visible:ring-2
+           focus-visible:ring-op-navy focus-visible:ring-offset-2;
   }
 
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 bg-white text-op-navy font-semibold font-inter
            border border-op-border px-6 py-3 rounded-lg text-sm transition-all duration-200
-           hover:border-op-blue hover:text-op-blue active:scale-95 focus-visible:outline-none
-           focus-visible:ring-2 focus-visible:ring-op-blue focus-visible:ring-offset-2;
+           hover:border-op-navy hover:text-op-navy active:scale-95 focus-visible:outline-none
+           focus-visible:ring-2 focus-visible:ring-op-navy focus-visible:ring-offset-2;
   }
 
   .btn-outline-white {
