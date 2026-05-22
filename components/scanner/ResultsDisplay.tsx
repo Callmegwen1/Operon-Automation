@@ -14,7 +14,9 @@ import {
   ArrowRight,
   TrendingUp,
   Loader2,
+  Zap,
 } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 interface ScanData {
   businessName: string
@@ -147,19 +149,42 @@ export default function ResultsDisplay() {
   const id = params.get('id')
   const [scan, setScan] = useState<ScanData | null>(null)
   const [loaded, setLoaded] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [savedToDash, setSavedToDash] = useState(false)
 
   useEffect(() => {
-    if (id) {
-      const raw = localStorage.getItem(`scan_${id}`)
-      if (raw) {
-        setScan(JSON.parse(raw) as ScanData)
+    const init = async () => {
+      // Load scan data
+      let scanData: ScanData | null = null
+      if (id) {
+        const raw = localStorage.getItem(`scan_${id}`)
+        scanData = raw ? (JSON.parse(raw) as ScanData) : DEMO
       } else {
-        setScan(DEMO)
+        scanData = DEMO
       }
-    } else {
-      setScan(DEMO)
+      setScan(scanData)
+      setLoaded(true)
+
+      // Check auth — if logged in, auto-save this scan to their account
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        setIsLoggedIn(true)
+        if (id && scanData && scanData !== DEMO) {
+          try {
+            await fetch('/api/scanner/save', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ scanData }),
+            })
+            setSavedToDash(true)
+          } catch {
+            // non-blocking
+          }
+        }
+      }
     }
-    setLoaded(true)
+    init()
   }, [id])
 
   if (!loaded) {
@@ -199,6 +224,38 @@ export default function ResultsDisplay() {
           </div>
         </div>
       </div>
+
+      {/* Save to account banner */}
+      {isLoggedIn && savedToDash ? (
+        <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-5 py-4 mb-6">
+          <CheckCircle2 size={18} className="text-op-green shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-op-green">Saved to your dashboard</p>
+            <p className="text-xs text-op-muted">View your results anytime in Revenue Autopilot.</p>
+          </div>
+          <Link href="/dashboard" className="btn-primary text-xs px-4 py-2 ml-auto shrink-0">
+            Open Dashboard <ArrowRight size={13} />
+          </Link>
+        </div>
+      ) : !isLoggedIn ? (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-blue-50 border border-blue-200 rounded-xl px-5 py-4 mb-6">
+          <div className="w-9 h-9 bg-op-blue rounded-lg flex items-center justify-center shrink-0">
+            <Zap size={16} className="text-white" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-op-navy">Save your results and track your fixes</p>
+            <p className="text-xs text-op-muted mt-0.5">
+              Create a free account to access your Revenue Autopilot dashboard and activate fixes.
+            </p>
+          </div>
+          <Link
+            href={`/signup${id ? `?fromScan=${id}` : ''}`}
+            className="btn-primary text-xs px-4 py-2 shrink-0"
+          >
+            Create Free Account <ArrowRight size={13} />
+          </Link>
+        </div>
+      ) : null}
 
       {/* Leak cards */}
       <div className="flex flex-col gap-4 mb-10">

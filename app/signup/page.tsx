@@ -1,32 +1,59 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
-export default function LoginPage() {
+function SignupForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const fromScan = searchParams.get('fromScan')
+
+  const [businessName, setBusinessName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
 
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { business_name: businessName },
+        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
+      },
+    })
 
     if (error) {
       setError(error.message)
       setLoading(false)
       return
+    }
+
+    // If coming from scanner, save that scan to their new account
+    if (fromScan && data.user) {
+      const scanRaw = localStorage.getItem(`scan_${fromScan}`)
+      if (scanRaw) {
+        try {
+          await fetch('/api/scanner/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ scanData: JSON.parse(scanRaw) }),
+          })
+        } catch {
+          // non-blocking
+        }
+      }
     }
 
     router.push('/dashboard')
@@ -49,13 +76,35 @@ export default function LoginPage() {
       </Link>
 
       <div className="w-full max-w-sm">
-        <div className="card">
-          <h1 className="text-2xl font-bold font-manrope text-op-navy mb-1">Welcome back</h1>
-          <p className="text-sm text-op-muted mb-6">
-            Sign in to your Revenue Autopilot dashboard.
-          </p>
+        {fromScan && (
+          <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-4 text-center">
+            <p className="text-sm text-op-green font-semibold">
+              Your scan results will be saved to your account.
+            </p>
+          </div>
+        )}
 
-          <form onSubmit={handleLogin} className="flex flex-col gap-4">
+        <div className="card">
+          <h1 className="text-2xl font-bold font-manrope text-op-navy mb-1">
+            Create your free account
+          </h1>
+          <p className="text-sm text-op-muted mb-6">Access your Revenue Autopilot dashboard.</p>
+
+          <form onSubmit={handleSignup} className="flex flex-col gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-op-navy mb-1.5">
+                Business Name
+              </label>
+              <input
+                type="text"
+                value={businessName}
+                onChange={(e) => setBusinessName(e.target.value)}
+                placeholder="Smith's Plumbing"
+                required
+                className={inputClass}
+              />
+            </div>
+
             <div>
               <label className="block text-sm font-semibold text-op-navy mb-1.5">Email</label>
               <input
@@ -75,7 +124,8 @@ export default function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="Min. 8 characters"
+                  minLength={8}
                   required
                   className="w-full border border-op-border rounded-lg px-4 py-3 pr-11 text-sm text-op-body placeholder-op-muted focus:outline-none focus:ring-2 focus:ring-op-blue/40 focus:border-op-blue transition-all bg-white"
                 />
@@ -103,25 +153,33 @@ export default function LoginPage() {
               {loading ? (
                 <Loader2 size={16} className="animate-spin" />
               ) : (
-                <>Sign In <ArrowRight size={16} /></>
+                <>Create Account <ArrowRight size={16} /></>
               )}
             </button>
           </form>
+
+          <p className="text-xs text-op-muted text-center mt-4">
+            By creating an account you agree to our{' '}
+            <Link href="/terms" className="text-op-blue hover:underline">Terms</Link> and{' '}
+            <Link href="/privacy" className="text-op-blue hover:underline">Privacy Policy</Link>.
+          </p>
         </div>
 
         <p className="text-center text-sm text-op-muted mt-6">
-          Don&apos;t have an account?{' '}
-          <Link href="/signup" className="text-op-blue font-semibold hover:underline">
-            Create one free
-          </Link>
-        </p>
-
-        <p className="text-center text-sm text-op-muted mt-3">
-          <Link href="/scanner" className="text-op-blue hover:underline">
-            Scan my business free →
+          Already have an account?{' '}
+          <Link href="/login" className="text-op-blue font-semibold hover:underline">
+            Sign in
           </Link>
         </p>
       </div>
     </div>
+  )
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-op-bg" />}>
+      <SignupForm />
+    </Suspense>
   )
 }

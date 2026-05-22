@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 import { Manrope, Inter } from 'next/font/google'
 import './globals.css'
-import Header from '@/components/layout/Header'
-import Footer from '@/components/layout/Footer'
+import LayoutWrapper from '@/components/LayoutWrapper'
 
 const manrope = Manrope({
   subsets: ['latin'],
@@ -56,9 +55,7 @@ export default function RootLayout({
         {/* TODO: Replace XXXXXXXX with real Pixel ID */}
         {/* <Script id="meta-pixel" strategy="afterInteractive">...</Script> */}
 
-        <Header />
-        <main>{children}</main>
-        <Footer />
+        <LayoutWrapper>{children}</LayoutWrapper>
       </body>
     </html>
   )
