@@ -1,12 +1,4 @@
-import {
-  TrendingUp,
-  Bell,
-  Phone,
-  Star,
-  FileText,
-  RefreshCw,
-  CheckCircle2,
-} from 'lucide-react'
+import { TrendingUp, Phone, Star, FileText, RefreshCw, DollarSign } from 'lucide-react'
 
 const trendPoints = [28, 22, 35, 30, 42, 38, 55, 50, 62, 58, 70, 74]
 
@@ -30,95 +22,69 @@ function MiniChart() {
     <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-auto" aria-hidden="true">
       <defs>
         <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#1A2E4A" stopOpacity="0.12" />
-          <stop offset="100%" stopColor="#1A2E4A" stopOpacity="0" />
+          <stop offset="0%" stopColor="#16A34A" stopOpacity="0.18" />
+          <stop offset="100%" stopColor="#16A34A" stopOpacity="0" />
         </linearGradient>
       </defs>
       <polygon points={fillPts} fill="url(#chartGrad)" />
       <polyline
         points={pts}
         fill="none"
-        stroke="#1A2E4A"
-        strokeWidth="2"
+        stroke="#16A34A"
+        strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <circle
         cx={w - pad}
         cy={h - pad - ((trendPoints[trendPoints.length - 1] - min) / (max - min)) * (h - pad * 2)}
-        r="3"
-        fill="#1A2E4A"
+        r="4"
+        fill="#16A34A"
       />
     </svg>
   )
 }
 
 const activity = [
-  { icon: Phone,     label: 'Missed call recovered',   time: '2m ago',  color: 'text-op-green' },
-  { icon: Star,      label: 'Review request sent',     time: '14m ago', color: 'text-op-amber' },
-  { icon: FileText,  label: 'Estimate follow-up sent', time: '1h ago',  color: 'text-op-muted' },
-  { icon: RefreshCw, label: 'Customer reactivated',    time: '3h ago',  color: 'text-op-green' },
-  { icon: Bell,      label: 'Invoice reminder sent',   time: '5h ago',  color: 'text-op-muted' },
+  { icon: Phone,       label: 'Carlos called back — booked Friday',  time: '2m',    color: 'text-op-green' },
+  { icon: Star,        label: 'Keisha left 5 stars on Google',        time: '18m',   color: 'text-op-amber' },
+  { icon: FileText,    label: 'Aug 12 estimate just got accepted',     time: '1h',    color: 'text-op-navy'  },
+  { icon: RefreshCw,   label: 'Maria reactivated after 60 days',      time: '4h',    color: 'text-op-green' },
+  { icon: DollarSign,  label: 'Invoice #1047 paid — $2,400',          time: 'Yest.', color: 'text-op-muted' },
 ]
 
 export default function DashboardMockup() {
   return (
     <div className="relative w-full max-w-xl mx-auto select-none" aria-label="Revenue Autopilot dashboard preview">
 
-      {/* Main dashboard card */}
       <div className="bg-white rounded-2xl border border-op-border shadow-[0_24px_80px_rgba(0,0,0,0.13)] overflow-hidden">
 
-        {/* Topbar */}
+        {/* Topbar — real business name, not generic label */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-op-border bg-op-bg">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-op-green" />
-            <span className="text-xs font-semibold font-inter text-op-navy">Revenue Autopilot</span>
+            <span className="w-2 h-2 rounded-full bg-op-green animate-pulse" />
+            <span className="text-xs font-semibold font-inter text-op-navy">Rivera Home Services</span>
           </div>
-          <span className="text-[10px] text-op-muted font-inter">May 1 – May 20, 2025</span>
+          <span className="text-[10px] text-op-muted font-inter">May 19 – 22, 2025</span>
         </div>
 
         <div className="p-4">
-          {/* Stat cards row */}
+          {/* Two focused stat cards instead of 4-color grid */}
           <div className="grid grid-cols-2 gap-2.5 mb-4">
-
-            {/* Leak Found — pulsing indicator */}
+            <div className="bg-green-50 border border-green-200 rounded-xl p-3">
+              <p className="text-[10px] font-semibold text-op-green uppercase tracking-wide mb-1">Recovered</p>
+              <p className="text-2xl font-bold font-manrope text-op-navy">$21,347</p>
+              <p className="text-[10px] text-op-green mt-1 flex items-center gap-0.5 font-medium">
+                <TrendingUp size={9} /> +18.4% vs April
+              </p>
+            </div>
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
               <div className="flex items-center gap-1.5 mb-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-op-amber animate-pulse shrink-0" />
-                <span className="text-[10px] font-semibold text-op-amber uppercase tracking-wide">Revenue Leak Found</span>
+                <p className="text-[10px] font-semibold text-op-amber uppercase tracking-wide">Opportunity</p>
               </div>
-              <p className="text-xl font-bold font-manrope text-op-navy">$7,450</p>
-              <p className="text-[10px] text-op-muted mt-0.5">Estimated opportunity</p>
-            </div>
-
-            {/* Recovered */}
-            <div className="bg-green-50 border border-green-200 rounded-xl p-3">
-              <div className="flex items-center gap-1.5 mb-1">
-                <TrendingUp size={11} className="text-op-green" />
-                <span className="text-[10px] font-semibold text-op-green uppercase tracking-wide">Recovered Revenue</span>
-              </div>
-              <p className="text-xl font-bold font-manrope text-op-navy">$21,680</p>
-              <p className="text-[10px] text-op-muted mt-0.5">This month</p>
-            </div>
-
-            {/* Autopilot Active */}
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
-              <div className="flex items-center gap-1.5 mb-1">
-                <CheckCircle2 size={11} className="text-op-navy" />
-                <span className="text-[10px] font-semibold text-op-navy uppercase tracking-wide">Autopilot Active</span>
-              </div>
-              <p className="text-xl font-bold font-manrope text-op-navy">12</p>
-              <p className="text-[10px] text-op-muted mt-0.5">Systems running</p>
-            </div>
-
-            {/* Needs Attention */}
-            <div className="bg-red-50 border border-red-200 rounded-xl p-3">
-              <div className="flex items-center gap-1.5 mb-1">
-                <Bell size={11} className="text-op-red" />
-                <span className="text-[10px] font-semibold text-op-red uppercase tracking-wide">Needs Attention</span>
-              </div>
-              <p className="text-xl font-bold font-manrope text-op-navy">3</p>
-              <p className="text-[10px] text-op-muted mt-0.5">Items to review</p>
+              <p className="text-2xl font-bold font-manrope text-op-navy">$7,190</p>
+              <p className="text-[10px] text-op-muted mt-1">3 open leaks</p>
             </div>
           </div>
 
@@ -133,17 +99,17 @@ export default function DashboardMockup() {
             <MiniChart />
           </div>
 
-          {/* Recent Activity */}
+          {/* Activity — real names, real situations */}
           <div>
-            <span className="text-xs font-semibold font-manrope text-op-navy block mb-2">Recent Activity</span>
+            <span className="text-xs font-semibold font-manrope text-op-navy block mb-2">Today&apos;s Activity</span>
             <ul className="flex flex-col gap-1.5">
               {activity.map(({ icon: Icon, label, time, color }) => (
-                <li key={label} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Icon size={11} className={color} />
-                    <span className="text-[11px] text-op-body font-inter">{label}</span>
+                <li key={label} className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Icon size={11} className={`${color} shrink-0`} />
+                    <span className="text-[11px] text-op-body font-inter truncate">{label}</span>
                   </div>
-                  <span className="text-[10px] text-op-muted">{time}</span>
+                  <span className="text-[10px] text-op-muted shrink-0">{time}</span>
                 </li>
               ))}
             </ul>

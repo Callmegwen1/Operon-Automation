@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   ArrowRight,
   CheckCircle2,
@@ -23,21 +24,22 @@ export const metadata: Metadata = {
     'Find and fix the leaks costing your business customers. Operon helps small businesses recover missed leads, grow reviews, and automate follow-up.',
 }
 
+/* Stat-anchored problem statements */
 const problemStatements = [
   {
-    statement: 'Most leads go unanswered — and call your competitor next.',
-    detail:
-      'Every missed call, slow response, or ignored estimate is revenue walking out the door. The first business to follow up wins the job.',
+    stat: '78%',
+    statement: 'of businesses never follow up on a missed call.',
+    detail: 'Every unanswered call is a lead that calls your competitor next. The first to follow up wins the job.',
   },
   {
-    statement: 'Reviews drive search rankings. Most businesses never ask.',
-    detail:
-      "Businesses with strong review systems rank higher and get chosen first. Happy customers won't leave reviews unless you ask — and most never do.",
+    stat: '21×',
+    statement: 'more likely to convert if you respond within 5 minutes.',
+    detail: 'Speed matters more than most owners realize. After an hour, that lead has already moved on.',
   },
   {
-    statement: "Your best leads are customers you've stopped talking to.",
-    detail:
-      "Past clients who've gone quiet can be reactivated at a fraction of the cost of new lead acquisition. Most businesses just never reach back out.",
+    stat: '5×',
+    statement: 'cheaper to reactivate a past client than find a new one.',
+    detail: "Past clients who've gone quiet can come back. Most businesses just never reach back out.",
   },
 ]
 
@@ -57,7 +59,16 @@ const howSteps = [
   { num: '05', title: 'Get a weekly owner report',    desc: 'See what is running, what recovered, and what needs attention — every week.' },
 ]
 
-/* slight hand-placed feel on the decorative numbers */
+/* "0" stays grey — the digit gets its own color */
+const digitColors = [
+  'text-op-amber',
+  'text-op-navy',
+  'text-op-green',
+  'text-op-amber',
+  'text-op-navy',
+]
+
+/* Slight hand-placed rotations on decorative numbers */
 const numRotations = ['rotate-0', '-rotate-2', 'rotate-1', '-rotate-1', 'rotate-2']
 
 const industries = [
@@ -73,14 +84,23 @@ const industries = [
   { icon: Users,       label: 'Local Services'     },
 ]
 
-/* three drip dots — placed below key "leak" words */
-function DripDots() {
+/* Proper teardrop SVG — reads as drip, not dots */
+function DripDrop() {
   return (
-    <span className="flex flex-col items-center gap-px absolute left-1/2 -translate-x-1/2 -bottom-3.5" aria-hidden="true">
-      <span className="w-1.5 h-1.5 rounded-full bg-op-amber" />
-      <span className="w-1 h-1 rounded-full bg-op-amber/55" />
-      <span className="w-0.5 h-0.5 rounded-full bg-op-amber/25" />
-    </span>
+    <svg
+      className="absolute left-1/2 -translate-x-1/2 -bottom-5"
+      width="13"
+      height="17"
+      viewBox="0 0 13 17"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M6.5 0 C10 4.5 13 9.5 6.5 17 C0 9.5 3 4.5 6.5 0Z"
+        fill="#D97706"
+        fillOpacity="0.75"
+      />
+    </svg>
   )
 }
 
@@ -92,20 +112,23 @@ export default function HomePage() {
         <div className="container-wide">
           <div className="flex flex-col lg:flex-row items-center gap-14 lg:gap-20">
 
-            {/* Left copy */}
             <div className="flex-none w-full lg:w-[480px] text-center lg:text-left">
-              <p className="eyebrow mb-5">Revenue Recovery System</p>
+              {/* Eyebrow with more voice */}
+              <p className="eyebrow mb-5">Something&apos;s leaking.</p>
+
               <h1 className="text-5xl sm:text-6xl lg:text-[68px] font-extrabold font-manrope text-op-primary leading-[1.06] mb-7">
                 Find and fix the{' '}
-                <span className="relative inline-block text-op-amber pb-4">
+                <span className="relative inline-block text-op-amber pb-5">
                   leaks
-                  <DripDots />
+                  <DripDrop />
                 </span>{' '}
                 costing you customers.
               </h1>
+
               <p className="text-base text-op-muted leading-relaxed mb-8 max-w-md mx-auto lg:mx-0">
                 Operon scans your business and shows exactly where leads, reviews, and revenue are slipping away.
               </p>
+
               <div className="flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-4">
                 <Link href="/scanner" className="btn-primary px-7 py-3.5 text-sm">
                   Scan My Business Free
@@ -120,7 +143,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right: Dashboard — slight clockwise tilt */}
+            {/* Slight clockwise tilt — feels placed, not rendered */}
             <div className="flex-1 w-full lg:rotate-1">
               <DashboardMockup />
             </div>
@@ -132,13 +155,17 @@ export default function HomePage() {
       <section className="bg-white section-pad border-t border-op-border">
         <div className="container-wide">
           <p className="eyebrow mb-10">The Problem</p>
-          <div className="flex flex-col gap-10 max-w-3xl">
-            {problemStatements.map(({ statement, detail }, i) => (
-              <div key={statement} className="border-l-[3px] border-op-amber pl-6">
+          <div className="flex flex-col gap-12 max-w-3xl">
+            {problemStatements.map(({ stat, statement, detail }, i) => (
+              <div key={stat} className="border-l-[3px] border-op-amber pl-6">
                 <span className="text-[11px] font-bold tracking-[0.15em] text-op-amber block mb-2">
                   0{i + 1}
                 </span>
-                <p className="text-2xl font-semibold font-manrope text-op-primary leading-snug mb-2">
+                {/* Big amber stat anchors every problem visually */}
+                <p className="text-5xl font-extrabold font-manrope text-op-amber leading-none mb-2">
+                  {stat}
+                </p>
+                <p className="text-xl font-semibold font-manrope text-op-primary leading-snug mb-2">
                   {statement}
                 </p>
                 <p className="text-sm text-op-muted leading-relaxed">{detail}</p>
@@ -148,21 +175,35 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ─── SOCIAL PROOF ─────────────────────────────────────── */}
+      {/* ─── SOCIAL PROOF — founder photo ─────────────────────── */}
       <section className="bg-[#FAFAFA] border-y border-op-border py-14">
-        <div className="container-wide max-w-2xl relative">
-          <span
-            className="absolute -top-6 -left-2 text-[120px] font-serif leading-none text-op-amber/10 select-none pointer-events-none"
-            aria-hidden="true"
-          >
-            &ldquo;
-          </span>
-          <p className="text-lg font-manrope text-op-primary leading-relaxed mb-3 relative">
-            &ldquo;Built this because I watched good businesses lose revenue to problems they didn&apos;t know they had.&rdquo;
-          </p>
-          <p className="text-sm text-op-muted">
-            — Leonardo Diaz, Founder, Operon Automation
-          </p>
+        <div className="container-wide max-w-2xl">
+          <div className="flex items-start gap-5">
+            {/* Real founder photo — save image to public/images/founder.jpg */}
+            <div className="shrink-0 w-16 h-16 rounded-full overflow-hidden border-2 border-op-border shadow-sm">
+              <Image
+                src="/images/founder.jpg"
+                alt="Leonardo Diaz, Founder of Operon Automation"
+                width={64}
+                height={64}
+                className="w-full h-full object-cover object-top"
+              />
+            </div>
+
+            <div className="relative flex-1">
+              <span
+                className="absolute -top-5 -left-1 text-[80px] font-serif leading-none text-op-amber/10 select-none pointer-events-none"
+                aria-hidden="true"
+              >
+                &ldquo;
+              </span>
+              <p className="text-lg font-manrope text-op-primary leading-relaxed mb-3 relative">
+                &ldquo;Built this because I watched good businesses lose revenue to problems they didn&apos;t know they had.&rdquo;
+              </p>
+              <p className="text-sm font-semibold text-op-navy">Leonardo Diaz</p>
+              <p className="text-xs text-op-muted">Founder, Operon Automation</p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -197,7 +238,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Slight counter-clockwise tilt — mirrors hero */}
+            {/* Counter-clockwise tilt — mirrors hero */}
             <div className="flex-1 w-full max-w-lg mx-auto lg:mx-0 lg:-rotate-1">
               <DashboardMockup />
             </div>
@@ -215,8 +256,10 @@ export default function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-6">
             {howSteps.map(({ num, title, desc }, i) => (
               <div key={num} className="flex flex-col">
-                <span className={`text-[72px] font-extrabold font-manrope text-op-border leading-none mb-4 select-none inline-block ${numRotations[i]}`}>
-                  {num}
+                {/* "0" grey, digit gets its own color */}
+                <span className={`text-[72px] font-extrabold font-manrope leading-none mb-4 select-none inline-block ${numRotations[i]}`}>
+                  <span className="text-op-border">0</span>
+                  <span className={digitColors[i]}>{num[1]}</span>
                 </span>
                 <h3 className="text-sm font-semibold text-op-primary mb-2">{title}</h3>
                 <p className="text-xs text-op-muted leading-relaxed">{desc}</p>
@@ -303,9 +346,9 @@ export default function HomePage() {
         <div className="container-wide max-w-2xl">
           <h2 className="text-3xl md:text-[2.5rem] font-extrabold font-manrope text-white leading-tight mb-4">
             Ready to see where your business is{' '}
-            <span className="relative inline-block text-op-amber pb-3">
+            <span className="relative inline-block text-op-amber pb-4">
               leaking
-              <DripDots />
+              <DripDrop />
             </span>{' '}
             revenue?
           </h2>
