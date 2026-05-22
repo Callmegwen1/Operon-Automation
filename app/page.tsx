@@ -32,12 +32,12 @@ const problemStatements = [
   {
     statement: 'Reviews drive search rankings. Most businesses never ask.',
     detail:
-      'Businesses with strong review systems rank higher and get chosen first. Happy customers won\'t leave reviews unless you ask — and most never do.',
+      "Businesses with strong review systems rank higher and get chosen first. Happy customers won't leave reviews unless you ask — and most never do.",
   },
   {
-    statement: 'Your best leads are customers you\'ve stopped talking to.',
+    statement: "Your best leads are customers you've stopped talking to.",
     detail:
-      'Past clients who\'ve gone quiet can be reactivated at a fraction of the cost of new lead acquisition. Most businesses just never reach back out.',
+      "Past clients who've gone quiet can be reactivated at a fraction of the cost of new lead acquisition. Most businesses just never reach back out.",
   },
 ]
 
@@ -50,41 +50,56 @@ const autopilotFeatures = [
 ]
 
 const howSteps = [
-  { num: '01', title: 'Scan your business',            desc: 'Answer a few questions about your leads, follow-up, reviews, and marketing.' },
-  { num: '02', title: 'See your revenue leaks',        desc: 'Get a Revenue Leak Score and a clear view of where customers may be slipping away.' },
-  { num: '03', title: 'Activate recommended fixes',    desc: 'Revenue Autopilot recommends the exact systems to activate for your business.' },
-  { num: '04', title: 'Recover missed opportunities',  desc: 'Automated follow-up, review requests, and reactivation campaigns run on your behalf.' },
-  { num: '05', title: 'Get a weekly owner report',     desc: 'See what is running, what recovered, and what needs attention — every week.' },
+  { num: '01', title: 'Scan your business',           desc: 'Answer a few questions about your leads, follow-up, reviews, and marketing.' },
+  { num: '02', title: 'See your revenue leaks',       desc: 'Get a Revenue Leak Score and a clear view of where customers may be slipping away.' },
+  { num: '03', title: 'Activate recommended fixes',   desc: 'Revenue Autopilot recommends the exact systems to activate for your business.' },
+  { num: '04', title: 'Recover missed opportunities', desc: 'Automated follow-up, review requests, and reactivation campaigns run on your behalf.' },
+  { num: '05', title: 'Get a weekly owner report',    desc: 'See what is running, what recovered, and what needs attention — every week.' },
 ]
 
+/* slight hand-placed feel on the decorative numbers */
+const numRotations = ['rotate-0', '-rotate-2', 'rotate-1', '-rotate-1', 'rotate-2']
+
 const industries = [
-  { icon: Home,         label: 'Home Services'     },
-  { icon: Sparkles,     label: 'Med Spas'          },
-  { icon: Car,          label: 'Auto Shops'         },
-  { icon: Dumbbell,     label: 'Fitness Studios'    },
-  { icon: Smile,        label: 'Dental Offices'     },
-  { icon: Stethoscope,  label: 'Clinics'            },
-  { icon: Wrench,       label: 'Cleaning Companies' },
-  { icon: Building2,    label: 'Contractors'        },
-  { icon: TrendingUp,   label: 'Real Estate'        },
-  { icon: Users,        label: 'Local Services'     },
+  { icon: Home,        label: 'Home Services'     },
+  { icon: Sparkles,    label: 'Med Spas'          },
+  { icon: Car,         label: 'Auto Shops'         },
+  { icon: Dumbbell,    label: 'Fitness Studios'    },
+  { icon: Smile,       label: 'Dental Offices'     },
+  { icon: Stethoscope, label: 'Clinics'            },
+  { icon: Wrench,      label: 'Cleaning Companies' },
+  { icon: Building2,   label: 'Contractors'        },
+  { icon: TrendingUp,  label: 'Real Estate'        },
+  { icon: Users,       label: 'Local Services'     },
 ]
+
+/* three drip dots — placed below key "leak" words */
+function DripDots() {
+  return (
+    <span className="flex flex-col items-center gap-px absolute left-1/2 -translate-x-1/2 -bottom-3.5" aria-hidden="true">
+      <span className="w-1.5 h-1.5 rounded-full bg-op-amber" />
+      <span className="w-1 h-1 rounded-full bg-op-amber/55" />
+      <span className="w-0.5 h-0.5 rounded-full bg-op-amber/25" />
+    </span>
+  )
+}
 
 export default function HomePage() {
   return (
     <>
       {/* ─── HERO ─────────────────────────────────────────────── */}
-      <section className="bg-white pt-20 md:pt-28 pb-4 overflow-hidden">
+      <section className="bg-white pt-20 md:pt-28 pb-8 overflow-hidden">
         <div className="container-wide">
           <div className="flex flex-col lg:flex-row items-center gap-14 lg:gap-20">
 
             {/* Left copy */}
             <div className="flex-none w-full lg:w-[480px] text-center lg:text-left">
               <p className="eyebrow mb-5">Revenue Recovery System</p>
-              <h1 className="text-5xl sm:text-6xl lg:text-[68px] font-extrabold font-manrope text-op-primary leading-[1.06] mb-5">
+              <h1 className="text-5xl sm:text-6xl lg:text-[68px] font-extrabold font-manrope text-op-primary leading-[1.06] mb-7">
                 Find and fix the{' '}
-                <span className="text-op-amber italic underline decoration-wavy decoration-amber-300 underline-offset-4">
+                <span className="relative inline-block text-op-amber pb-4">
                   leaks
+                  <DripDots />
                 </span>{' '}
                 costing you customers.
               </h1>
@@ -105,8 +120,8 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right: Dashboard */}
-            <div className="flex-1 w-full">
+            {/* Right: Dashboard — slight clockwise tilt */}
+            <div className="flex-1 w-full lg:rotate-1">
               <DashboardMockup />
             </div>
           </div>
@@ -136,7 +151,10 @@ export default function HomePage() {
       {/* ─── SOCIAL PROOF ─────────────────────────────────────── */}
       <section className="bg-[#FAFAFA] border-y border-op-border py-14">
         <div className="container-wide max-w-2xl relative">
-          <span className="absolute -top-6 -left-2 text-[120px] font-serif leading-none text-op-amber/10 select-none pointer-events-none" aria-hidden="true">
+          <span
+            className="absolute -top-6 -left-2 text-[120px] font-serif leading-none text-op-amber/10 select-none pointer-events-none"
+            aria-hidden="true"
+          >
             &ldquo;
           </span>
           <p className="text-lg font-manrope text-op-primary leading-relaxed mb-3 relative">
@@ -179,7 +197,8 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="flex-1 w-full max-w-lg mx-auto lg:mx-0">
+            {/* Slight counter-clockwise tilt — mirrors hero */}
+            <div className="flex-1 w-full max-w-lg mx-auto lg:mx-0 lg:-rotate-1">
               <DashboardMockup />
             </div>
           </div>
@@ -194,9 +213,9 @@ export default function HomePage() {
             Five steps. Fully automatic.
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-6">
-            {howSteps.map(({ num, title, desc }) => (
+            {howSteps.map(({ num, title, desc }, i) => (
               <div key={num} className="flex flex-col">
-                <span className="text-[72px] font-extrabold font-manrope text-op-border leading-none mb-4 select-none">
+                <span className={`text-[72px] font-extrabold font-manrope text-op-border leading-none mb-4 select-none inline-block ${numRotations[i]}`}>
                   {num}
                 </span>
                 <h3 className="text-sm font-semibold text-op-primary mb-2">{title}</h3>
@@ -269,7 +288,10 @@ export default function HomePage() {
                 <span className="text-sm text-op-muted group-hover:text-op-navy transition-colors font-medium leading-tight flex-1">
                   {label}
                 </span>
-                <ArrowRight size={11} className="text-op-border shrink-0 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-op-navy transition-all duration-200" />
+                <ArrowRight
+                  size={11}
+                  className="shrink-0 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-op-navy transition-all duration-200"
+                />
               </Link>
             ))}
           </div>
@@ -281,8 +303,9 @@ export default function HomePage() {
         <div className="container-wide max-w-2xl">
           <h2 className="text-3xl md:text-[2.5rem] font-extrabold font-manrope text-white leading-tight mb-4">
             Ready to see where your business is{' '}
-            <span className="text-op-amber italic underline decoration-wavy decoration-amber-400 underline-offset-4">
+            <span className="relative inline-block text-op-amber pb-3">
               leaking
+              <DripDots />
             </span>{' '}
             revenue?
           </h2>

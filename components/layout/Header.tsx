@@ -54,6 +54,7 @@ export default function Header() {
             Login
           </Link>
           <Link href="/scanner" className="btn-primary text-sm px-5 py-2.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse shrink-0" />
             Scan Free
           </Link>
         </div>
@@ -95,6 +96,7 @@ export default function Header() {
                 onClick={() => setOpen(false)}
                 className="btn-primary w-full justify-center"
               >
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse shrink-0" />
                 Scan Free
               </Link>
             </div>
