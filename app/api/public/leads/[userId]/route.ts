@@ -22,6 +22,7 @@ export async function POST(
     const name: string = body.name?.trim()
     const email: string = body.email?.trim() ?? ''
     const phone: string = body.phone?.trim() ?? ''
+    const message: string = body.message?.trim() ?? ''
     const source: string = body.source?.trim() || 'Website Form'
 
     if (!name) return NextResponse.json({ error: 'name is required' }, { status: 400 })
@@ -46,6 +47,13 @@ export async function POST(
       })
       .select('id')
       .single()
+
+    // Store the message in the notes field if present (graceful — column may not exist yet)
+    if (message && contact?.id) {
+      try {
+        await supabase.from('contacts').update({ notes: message }).eq('id', contact.id)
+      } catch { /* notes column not yet available */ }
+    }
 
     if (error) throw error
 

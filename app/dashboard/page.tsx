@@ -4,6 +4,7 @@ import { ArrowRight, Zap, CheckCircle2, Circle, Bot, User, BarChart2, Star, Mail
 import { createClient } from '@/lib/supabase/server'
 import { generateLeaks } from '@/lib/leaks'
 import { calculateSubScores } from '@/lib/scanner/subscores'
+import MarkFixedButton from '@/components/dashboard/MarkFixedButton'
 
 type Impact = 'low' | 'medium' | 'high'
 
@@ -320,10 +321,15 @@ export default async function DashboardPage() {
                       )}
                     </div>
                     {!isFixed && (
-                      <div className="shrink-0">
-                        <Link href="/dashboard/agents" className="btn-primary text-sm px-4 py-2 whitespace-nowrap">
-                          Activate Fix <ArrowRight size={14} />
-                        </Link>
+                      <div className="flex gap-2 shrink-0">
+                        {leak.id
+                          ? <MarkFixedButton leakId={leak.id} initialFixed={false} />
+                          : (
+                            <Link href="/dashboard/agents" className="btn-primary text-sm px-4 py-2 whitespace-nowrap">
+                              Activate Fix <ArrowRight size={14} />
+                            </Link>
+                          )
+                        }
                       </div>
                     )}
                   </div>

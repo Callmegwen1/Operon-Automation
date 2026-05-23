@@ -104,13 +104,13 @@ const LEAD_SOURCES = [
   },
 ]
 
-const PLATFORMS = [
-  { id: 'wordpress', label: 'WordPress', instruction: 'Install WPForms or Contact Form 7 → go to form settings → Webhooks → paste the URL.' },
-  { id: 'wix',       label: 'Wix',       instruction: 'In Wix Editor → your form → Settings → Submissions → Connect a Webhook → paste the URL.' },
-  { id: 'squarespace', label: 'Squarespace', instruction: 'Form block → Edit → Storage → Add Connected Account → Webhooks → paste the URL.' },
-  { id: 'typeform',  label: 'Typeform',  instruction: 'Open your form → Connect → Webhooks → New Webhook → paste the URL.' },
-  { id: 'zapier',    label: 'Zapier',    instruction: 'Create a Zap → choose your form as trigger → Action: Webhooks by Zapier → POST → paste the URL.' },
-  { id: 'other',     label: 'Other tool', instruction: 'Most form tools support webhooks. Look for "Webhooks", "Integrations", or "Notifications" in settings and paste the URL.' },
+const EMBED_PLATFORMS = [
+  { id: 'wordpress',   label: 'WordPress',   instruction: 'Go to the page editor → click + to add a block → search "Custom HTML" → paste the embed code → Update.' },
+  { id: 'wix',         label: 'Wix',         instruction: 'In Wix Editor → Add Element → Embed Code → Custom Embeds → HTML iFrame → paste the embed code → Apply.' },
+  { id: 'squarespace', label: 'Squarespace', instruction: 'Edit a page → click + to add a block → choose Embed → paste the embed code → Apply.' },
+  { id: 'webflow',     label: 'Webflow',     instruction: 'Add an Embed element to your page → paste the embed code → Save & Publish.' },
+  { id: 'showit',      label: 'Showit',      instruction: 'Open the canvas → drag in a Code widget → paste the embed code → publish.' },
+  { id: 'other',       label: 'Other',       instruction: 'Look for an HTML block, Embed, or Custom Code option in your page editor. Paste the embed code there and save.' },
 ]
 
 function LeadFollowupWizard({ userId, initialConfig, onComplete }: {
@@ -118,10 +118,12 @@ function LeadFollowupWizard({ userId, initialConfig, onComplete }: {
   initialConfig: AgentConfig
   onComplete: (config: AgentConfig) => void
 }) {
-  const webhookUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://operonauto.com'}/api/public/leads/${userId}`
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://operonauto.com'
+  const webhookUrl = `${origin}/api/public/leads/${userId}`
+  const embedCode  = `<iframe src="${origin}/form/${userId}" width="100%" height="480" frameborder="0" style="border-radius:12px;border:none;"></iframe>`
   const [step, setStep] = useState(0)
   const [source, setSource] = useState<LeadSource | null>(null)
-  const [platform, setPlatform] = useState(PLATFORMS[0].id)
+  const [platform, setPlatform] = useState(EMBED_PLATFORMS[0].id)
   const [importCount, setImportCount] = useState<number | null>(null)
   const [importing, setImporting] = useState(false)
   const [importError, setImportError] = useState('')
@@ -130,7 +132,7 @@ function LeadFollowupWizard({ userId, initialConfig, onComplete }: {
   const fileRef = useRef<HTMLInputElement>(null)
 
   const totalSteps = 4
-  const platformInfo = PLATFORMS.find((p) => p.id === platform) ?? PLATFORMS[0]
+  const platformInfo = EMBED_PLATFORMS.find((p) => p.id === platform) ?? EMBED_PLATFORMS[0]
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -215,16 +217,18 @@ function LeadFollowupWizard({ userId, initialConfig, onComplete }: {
       {/* Step 1 — source-specific setup */}
       {step === 1 && source === 'website' && (
         <div className="flex-1">
-          <h2 className="text-xl font-bold font-manrope text-op-navy mb-1">Connect your contact form</h2>
-          <p className="text-sm text-op-muted mb-5">Every form submission will automatically become a contact and start the follow-up sequence.</p>
+          <h2 className="text-xl font-bold font-manrope text-op-navy mb-1">Add a contact form to your site</h2>
+          <p className="text-sm text-op-muted mb-5">
+            Copy the code below and paste it into your website. Your visitors fill it out on your site — leads arrive in Operon automatically.
+          </p>
 
-          <p className="text-xs font-bold text-op-navy mb-2">Your unique webhook URL</p>
-          <CopyField value={webhookUrl} />
-          <p className="text-xs text-op-muted mt-2 mb-5">Copy this and paste it into your form tool's webhook/notification settings.</p>
+          <p className="text-xs font-bold text-op-navy mb-2">Your embed code</p>
+          <CopyField value={embedCode} />
+          <p className="text-xs text-op-muted mt-2 mb-5">One copy-paste. No plugins, no developer needed.</p>
 
-          <p className="text-xs font-bold text-op-navy mb-2">Which platform are you using?</p>
+          <p className="text-xs font-bold text-op-navy mb-2">Which website builder are you using?</p>
           <div className="grid grid-cols-3 gap-2 mb-3">
-            {PLATFORMS.map((p) => (
+            {EMBED_PLATFORMS.map((p) => (
               <button
                 key={p.id}
                 onClick={() => setPlatform(p.id)}
@@ -236,12 +240,24 @@ function LeadFollowupWizard({ userId, initialConfig, onComplete }: {
               </button>
             ))}
           </div>
-          <div className="bg-op-bg border border-op-border rounded-lg px-4 py-3 mb-5">
+          <div className="bg-op-bg border border-op-border rounded-lg px-4 py-3 mb-4">
             <p className="text-xs text-op-body leading-relaxed">{platformInfo.instruction}</p>
           </div>
+
+          {/* Advanced: raw webhook for developers */}
+          <details className="mb-5">
+            <summary className="text-xs text-op-muted cursor-pointer hover:text-op-navy select-none">
+              Developer option — use a raw webhook instead
+            </summary>
+            <div className="mt-2">
+              <p className="text-xs text-op-muted mb-1">POST name, email, phone, and message to this URL from any form tool:</p>
+              <CopyField value={webhookUrl} />
+            </div>
+          </details>
+
           <div className="flex gap-3">
             <button onClick={() => setStep(0)} className="btn-secondary flex items-center gap-1.5"><ArrowLeft size={14} /> Back</button>
-            <button onClick={() => setStep(2)} className="btn-primary flex-1 justify-center">I've connected it <ArrowRight size={15} /></button>
+            <button onClick={() => setStep(2)} className="btn-primary flex-1 justify-center">I've added it <ArrowRight size={15} /></button>
           </div>
         </div>
       )}
