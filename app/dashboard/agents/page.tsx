@@ -1,8 +1,12 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { Mail, Star, BarChart2, Loader2, CheckCircle2, FileText, DollarSign, RefreshCw, Send, AlertCircle, Link2, Copy, Check } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import {
+  Mail, Star, BarChart2, Loader2, CheckCircle2,
+  FileText, DollarSign, RefreshCw, Send, ChevronDown, ChevronUp, Zap,
+} from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import AgentSetupWizard from '@/components/dashboard/AgentSetupWizard'
 
 type AgentType = 'lead_followup' | 'review_request' | 'weekly_report'
 
@@ -30,193 +34,88 @@ interface ActivityEntry {
 
 const AGENT_META = [
   {
-    type: 'lead_followup' as AgentType,
-    icon: Mail,
-    name: 'Lead Follow-Up Agent',
-    description:
-      'When you add a new lead, this agent automatically sends a follow-up email sequence at 15 minutes, 2 days, and 5 days — so no lead goes cold.',
-    timing: 'Sends at 15 min, 2 days, and 5 days after a lead is added.',
-    requiredFields: ['fromName', 'replyToEmail'],
-    fields: [
-      { key: 'fromName',     label: 'Your Name',             placeholder: 'John Smith'           },
-      { key: 'replyToEmail', label: 'Your Email (reply-to)', placeholder: 'you@yourbusiness.com' },
-      { key: 'phone',        label: 'Business Phone',         placeholder: '(555) 000-0000'       },
-    ],
+    type:        'lead_followup' as AgentType,
+    icon:        Mail,
+    color:       'text-op-navy',
+    activeBg:    'bg-op-navy',
+    name:        'Lead Follow-Up Agent',
+    tagline:     'Never let a lead go cold.',
+    description: 'When a new lead comes in — from your website, an import, or manual entry — this agent sends a 3-email follow-up sequence at 15 minutes, Day 2, and Day 5. Completely automatic.',
+    timing:      '15 min · Day 2 · Day 5 after a lead is added',
   },
   {
-    type: 'review_request' as AgentType,
-    icon: Star,
-    name: 'Review Request Agent',
-    description:
-      "Sends a personalized review request to any customer you select from your contacts. Drives more Google reviews without manual effort.",
-    timing: 'Sends immediately when you click "Review Request" on a contact.',
-    requiredFields: ['reviewLink', 'fromName', 'replyToEmail'],
-    fields: [
-      { key: 'reviewLink',   label: 'Google Review Link',    placeholder: 'https://g.page/r/...' },
-      { key: 'fromName',     label: 'Your Name',             placeholder: 'John Smith'           },
-      { key: 'replyToEmail', label: 'Your Email (reply-to)', placeholder: 'you@yourbusiness.com' },
-    ],
+    type:        'review_request' as AgentType,
+    icon:        Star,
+    color:       'text-op-amber',
+    activeBg:    'bg-op-amber',
+    name:        'Review Request Agent',
+    tagline:     'Turn happy customers into 5-star reviews.',
+    description: 'One click sends a personalized review request to any customer in your contacts. They get a direct link to leave you a review — no awkward asks, no manual emails.',
+    timing:      'Fires instantly when you click ⭐ Review on a contact',
   },
   {
-    type: 'weekly_report' as AgentType,
-    icon: BarChart2,
-    name: 'Weekly Owner Report',
-    description:
-      'Every Monday morning, receive a summary of your Revenue Leak Score, open leaks, and agent activity directly in your inbox.',
-    timing: 'Sends every Monday at 8:00 AM.',
-    requiredFields: ['reportEmail'],
-    fields: [
-      { key: 'reportEmail', label: 'Send report to', placeholder: 'you@yourbusiness.com' },
-    ],
+    type:        'weekly_report' as AgentType,
+    icon:        BarChart2,
+    color:       'text-op-green',
+    activeBg:    'bg-op-green',
+    name:        'Weekly Owner Report',
+    tagline:     'Know your business health every Monday.',
+    description: 'A clear summary lands in your inbox every Monday at 8:00 AM — Revenue Leak Score, open leaks, what\'s been fixed, and agent activity. No dashboard check-in required.',
+    timing:      'Every Monday at 8:00 AM',
   },
 ]
 
 const COMING_SOON = [
-  {
-    icon: FileText,
-    name: 'Estimate Follow-Up Agent',
-    description: 'Automatically follows up on unanswered estimates after 24 hours and 3 days — turning cold quotes into booked jobs.',
-  },
-  {
-    icon: DollarSign,
-    name: 'Invoice Reminder Agent',
-    description: 'Sends friendly payment reminders for overdue invoices at 3, 7, and 14 days — reducing collections calls.',
-  },
-  {
-    icon: RefreshCw,
-    name: 'Customer Reactivation Agent',
-    description: 'Re-engages customers who haven\'t booked in 60+ days with a personalized win-back message.',
-  },
+  { icon: FileText,  name: 'Estimate Follow-Up Agent',  description: 'Automatically follows up on unanswered estimates after 24 hours and 3 days — turning cold quotes into booked jobs.' },
+  { icon: DollarSign, name: 'Invoice Reminder Agent',   description: 'Sends friendly payment reminders for overdue invoices at 3, 7, and 14 days — reducing collections calls.' },
+  { icon: RefreshCw,  name: 'Customer Reactivation Agent', description: "Re-engages customers who haven't booked in 60+ days with a personalized win-back message." },
 ]
 
-function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) {
-  return (
-    <button
-      onClick={onToggle}
-      className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${enabled ? 'bg-op-navy' : 'bg-gray-200'}`}
-      aria-label={enabled ? 'Disable agent' : 'Enable agent'}
-    >
-      <span
-        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${enabled ? 'translate-x-5' : 'translate-x-0'}`}
-      />
-    </button>
-  )
-}
-
-function WebhookBox({ userId }: { userId: string }) {
-  const url = `${typeof window !== 'undefined' ? window.location.origin : 'https://operonauto.com'}/api/public/leads/${userId}`
-  const [copied, setCopied] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(url)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2500)
-  }
-
-  return (
-    <div className="border-t border-op-border pt-4 mt-4">
-      <div className="flex items-center gap-2 mb-2">
-        <Link2 size={13} className="text-op-navy shrink-0" />
-        <p className="text-xs font-bold text-op-navy">Your Lead Capture Webhook</p>
-      </div>
-      <p className="text-xs text-op-muted mb-3 leading-relaxed">
-        Paste this URL into any form tool (your website, Typeform, Google Forms, Zapier, etc.). Every submission will automatically appear in Contacts and trigger the follow-up sequence.
-      </p>
-      <div className="flex gap-2">
-        <input
-          ref={inputRef}
-          readOnly
-          value={url}
-          onClick={() => inputRef.current?.select()}
-          className="flex-1 border border-op-border rounded-lg px-3 py-2 text-xs text-op-muted font-mono bg-op-bg focus:outline-none focus:border-op-navy cursor-text truncate"
-        />
-        <button
-          onClick={handleCopy}
-          className="btn-secondary text-xs px-3 py-2 shrink-0 flex items-center gap-1.5"
-        >
-          {copied ? <Check size={13} className="text-op-green" /> : <Copy size={13} />}
-          {copied ? 'Copied!' : 'Copy'}
-        </button>
-      </div>
-      <p className="text-[10px] text-op-muted/70 mt-2">
-        POST to this URL with: <span className="font-mono">&#123; name, email, phone, source &#125;</span>
-      </p>
-    </div>
-  )
-}
+const inputClass =
+  'w-full border border-op-border rounded-lg px-4 py-2.5 text-sm text-op-body placeholder-op-muted focus:outline-none focus:ring-2 focus:ring-op-navy/20 focus:border-op-navy transition-all bg-white'
 
 function AgentCard({ meta, row, activity, userId, onUpdate }: {
   meta: typeof AGENT_META[number]
   row: AgentRow
   activity: ActivityEntry[]
-  userId?: string
+  userId: string
   onUpdate: (type: AgentType, updates: Partial<AgentRow>) => void
 }) {
   const Icon = meta.icon
-  const [config, setConfig] = useState<AgentConfig>(row.config ?? {})
+  const [showWizard, setShowWizard] = useState(false)
+  const [showEdit, setShowEdit] = useState(false)
+  const [editConfig, setEditConfig] = useState<AgentConfig>(row.config ?? {})
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [toggling, setToggling] = useState(false)
-  const [validationError, setValidationError] = useState('')
-  const [liveMsg, setLiveMsg] = useState('')
-  const [testing, setTesting] = useState(false)
+  const [disabling, setDisabling] = useState(false)
   const [testMsg, setTestMsg] = useState('')
+  const [testing, setTesting] = useState(false)
 
-  const liveMessages: Record<string, string> = {
-    lead_followup:  'Agent is live. Every new lead you add will automatically receive a 3-email follow-up sequence.',
-    review_request: 'Ready. Use the ⭐ Review button on any contact to send a personalized review request.',
-    weekly_report:  'Set. You\'ll receive a weekly performance report every Monday at 8:00 AM.',
+  const handleWizardComplete = (config: AgentConfig) => {
+    onUpdate(meta.type, { enabled: true, config })
+    setEditConfig(config)
+    setShowWizard(false)
   }
 
-  const missingRequired = meta.requiredFields.filter(
-    (k) => !(config as Record<string, string>)[k]?.trim()
-  )
-
-  const handleToggle = async () => {
-    const next = !row.enabled
-    if (next && missingRequired.length > 0) {
-      setValidationError(`Fill in required fields before enabling: ${missingRequired.map((k) => {
-        const f = meta.fields.find((f) => f.key === k)
-        return f?.label ?? k
-      }).join(', ')}`)
-      return
-    }
-    setValidationError('')
-    setToggling(true)
-
-    // Auto-save config when enabling, so user doesn't have to remember to click Save first
-    if (next) {
-      await fetch('/api/agents/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: meta.type, config }),
-      })
-      onUpdate(meta.type, { config })
-    }
-
+  const handleDisable = async () => {
+    setDisabling(true)
     await fetch('/api/agents/toggle', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: meta.type, enabled: next }),
+      body: JSON.stringify({ type: meta.type, enabled: false }),
     })
-    onUpdate(meta.type, { enabled: next })
-    setToggling(false)
-
-    if (next) {
-      setLiveMsg(liveMessages[meta.type] ?? 'Agent is now active.')
-      setTimeout(() => setLiveMsg(''), 10000)
-    }
+    onUpdate(meta.type, { enabled: false })
+    setDisabling(false)
   }
 
-  const handleSave = async () => {
+  const handleSaveEdit = async () => {
     setSaving(true)
     await fetch('/api/agents/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: meta.type, config }),
+      body: JSON.stringify({ type: meta.type, config: editConfig }),
     })
-    onUpdate(meta.type, { config })
+    onUpdate(meta.type, { config: editConfig })
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
@@ -224,7 +123,6 @@ function AgentCard({ meta, row, activity, userId, onUpdate }: {
 
   const handleTest = async () => {
     setTesting(true)
-    setTestMsg('')
     const res = await fetch('/api/agents/test', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -232,139 +130,154 @@ function AgentCard({ meta, row, activity, userId, onUpdate }: {
     })
     const data = await res.json()
     setTesting(false)
-    setTestMsg(res.ok ? 'Test sent — check your inbox.' : (data.error ?? 'Failed to send test'))
+    setTestMsg(res.ok ? 'Test sent — check your inbox.' : (data.error ?? 'Failed'))
     setTimeout(() => setTestMsg(''), 5000)
   }
 
-  const inputClass =
-    'w-full border border-op-border rounded-lg px-4 py-2.5 text-sm text-op-body placeholder-op-muted focus:outline-none focus:ring-2 focus:ring-op-navy/20 focus:border-op-navy transition-all bg-white'
+  const editFields = AGENT_META.find((m) => m.type === meta.type) ? (() => {
+    if (meta.type === 'lead_followup') return [
+      { key: 'fromName',     label: 'Your Name',             placeholder: 'John Smith'           },
+      { key: 'replyToEmail', label: 'Reply-to Email',        placeholder: 'you@yourbusiness.com' },
+      { key: 'phone',        label: 'Business Phone',        placeholder: '(555) 000-0000'       },
+    ]
+    if (meta.type === 'review_request') return [
+      { key: 'reviewLink',   label: 'Review Link',           placeholder: 'https://g.page/r/...' },
+      { key: 'fromName',     label: 'Your Name',             placeholder: 'John Smith'           },
+      { key: 'replyToEmail', label: 'Reply-to Email',        placeholder: 'you@yourbusiness.com' },
+    ]
+    return [
+      { key: 'reportEmail',  label: 'Send Report To',        placeholder: 'you@yourbusiness.com' },
+    ]
+  })() : []
 
   return (
-    <div className={`card border-2 transition-colors ${row.enabled ? 'border-op-navy/20' : 'border-op-border'}`}>
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4 mb-3">
-        <div className="flex items-start gap-3">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${row.enabled ? 'bg-op-navy' : 'bg-op-bg'}`}>
-            <Icon size={18} className={row.enabled ? 'text-white' : 'text-op-muted'} />
+    <>
+      <div className={`card border-2 transition-all ${row.enabled ? 'border-op-navy/20' : 'border-op-border'}`}>
+        {/* Header */}
+        <div className="flex items-start gap-4">
+          <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${row.enabled ? meta.activeBg : 'bg-op-bg'}`}>
+            <Icon size={20} className={row.enabled ? 'text-white' : 'text-op-muted'} />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-op-navy font-manrope">{meta.name}</h3>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-bold text-op-navy font-manrope">{meta.name}</h3>
               {row.enabled && (
-                <span className="text-xs font-bold text-op-green bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
+                <span className="text-[11px] font-bold text-op-green bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
                   Active
                 </span>
               )}
             </div>
-            <p className="text-sm text-op-muted mt-0.5 leading-relaxed">{meta.description}</p>
-            <p className="text-xs text-op-muted mt-1 italic">{meta.timing}</p>
+            <p className={`text-xs font-semibold mt-0.5 ${meta.color}`}>{meta.tagline}</p>
+            <p className="text-sm text-op-muted mt-1 leading-relaxed">{meta.description}</p>
+            <p className="text-xs text-op-muted/70 mt-1.5 italic">⏱ {meta.timing}</p>
           </div>
         </div>
-        {toggling ? (
-          <Loader2 size={20} className="animate-spin text-op-muted shrink-0 mt-1" />
-        ) : (
-          <Toggle enabled={row.enabled} onToggle={handleToggle} />
+
+        {/* Not enabled — single prominent button */}
+        {!row.enabled && (
+          <button
+            onClick={() => setShowWizard(true)}
+            className="btn-primary w-full mt-5 justify-center text-sm"
+          >
+            <Zap size={15} /> Set Up &amp; Activate
+          </button>
+        )}
+
+        {/* Enabled — controls */}
+        {row.enabled && (
+          <div className="mt-4 border-t border-op-border pt-4">
+            <div className="flex items-center gap-3 flex-wrap">
+              <button
+                onClick={() => setShowEdit((v) => !v)}
+                className="btn-secondary text-xs px-3 py-2 flex items-center gap-1.5"
+              >
+                {showEdit ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                Edit Settings
+              </button>
+              <button
+                onClick={handleTest}
+                disabled={testing}
+                className="btn-secondary text-xs px-3 py-2 flex items-center gap-1.5"
+              >
+                {testing ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
+                Send Test
+              </button>
+              {testMsg && (
+                <span className={`text-xs font-semibold ${testMsg.includes('sent') ? 'text-op-green' : 'text-op-red'}`}>
+                  {testMsg}
+                </span>
+              )}
+              <button
+                onClick={handleDisable}
+                disabled={disabling}
+                className="ml-auto text-xs text-op-muted hover:text-op-red transition-colors"
+              >
+                {disabling ? <Loader2 size={13} className="animate-spin" /> : 'Disable'}
+              </button>
+            </div>
+
+            {/* Editable config */}
+            {showEdit && (
+              <div className="mt-4 flex flex-col gap-3">
+                {editFields.map((field) => (
+                  <div key={field.key}>
+                    <label className="block text-xs font-semibold text-op-navy mb-1">{field.label}</label>
+                    <input
+                      className={inputClass}
+                      placeholder={field.placeholder}
+                      value={(editConfig as Record<string, string>)[field.key] ?? ''}
+                      onChange={(e) => setEditConfig((c) => ({ ...c, [field.key]: e.target.value }))}
+                    />
+                  </div>
+                ))}
+                <div className="flex items-center gap-3">
+                  <button onClick={handleSaveEdit} disabled={saving} className="btn-secondary text-xs px-4 py-2">
+                    {saving ? <Loader2 size={13} className="animate-spin" /> : 'Save Changes'}
+                  </button>
+                  {saved && (
+                    <span className="flex items-center gap-1 text-xs text-op-green font-semibold">
+                      <CheckCircle2 size={13} /> Saved
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Delivery log */}
+            {activity.length > 0 && (
+              <div className="mt-4 border-t border-op-border pt-4">
+                <p className="text-xs font-semibold text-op-muted uppercase tracking-wide mb-2">Recent Deliveries</p>
+                <div className="flex flex-col gap-1.5">
+                  {activity.map((entry) => (
+                    <div key={entry.id} className="flex items-center justify-between gap-3 text-xs">
+                      <div className="min-w-0">
+                        <span className="text-op-navy font-medium truncate block">{entry.subject ?? 'Email sent'}</span>
+                        {entry.recipient_email && (
+                          <span className="text-op-muted truncate block">{entry.recipient_email}</span>
+                        )}
+                      </div>
+                      <span className="text-op-muted shrink-0">
+                        {new Date(entry.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
-      {validationError && (
-        <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
-          <AlertCircle size={14} className="text-op-amber shrink-0 mt-0.5" />
-          <p className="text-xs text-op-amber">{validationError}</p>
-        </div>
+      {showWizard && (
+        <AgentSetupWizard
+          type={meta.type}
+          userId={userId}
+          initialConfig={row.config ?? {}}
+          onComplete={handleWizardComplete}
+          onClose={() => setShowWizard(false)}
+        />
       )}
-
-      {liveMsg && (
-        <div className="flex items-start gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2 mb-3">
-          <CheckCircle2 size={14} className="text-op-green shrink-0 mt-0.5" />
-          <p className="text-xs text-op-green font-medium">{liveMsg}</p>
-        </div>
-      )}
-
-      {/* Config fields */}
-      <div className="border-t border-op-border pt-4 mt-4">
-        <p className="text-xs font-semibold text-op-muted uppercase tracking-wide mb-3">Configuration</p>
-        <div className="grid gap-3">
-          {meta.fields.map((field) => (
-            <div key={field.key}>
-              <label className="block text-xs font-semibold text-op-navy mb-1">
-                {field.label}
-                {meta.requiredFields.includes(field.key) && (
-                  <span className="text-op-red ml-0.5">*</span>
-                )}
-              </label>
-              <input
-                className={inputClass}
-                value={(config as Record<string, string>)[field.key] ?? ''}
-                onChange={(e) => {
-                  setConfig((c) => ({ ...c, [field.key]: e.target.value }))
-                  setValidationError('')
-                }}
-                placeholder={field.placeholder}
-              />
-            </div>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-3 mt-4 flex-wrap">
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="btn-secondary text-sm px-4 py-2"
-          >
-            {saving ? <Loader2 size={14} className="animate-spin" /> : 'Save Config'}
-          </button>
-          <button
-            onClick={handleTest}
-            disabled={testing || missingRequired.length > 0}
-            className="btn-secondary text-sm px-4 py-2 flex items-center gap-1.5 disabled:opacity-50"
-            title={missingRequired.length > 0 ? 'Fill required fields first' : 'Send a test to yourself'}
-          >
-            {testing ? <Loader2 size={14} className="animate-spin" /> : <Send size={13} />}
-            Send Test
-          </button>
-          {saved && (
-            <span className="flex items-center gap-1.5 text-sm text-op-green font-semibold">
-              <CheckCircle2 size={14} /> Saved
-            </span>
-          )}
-          {testMsg && (
-            <span className={`text-xs font-semibold ${testMsg.includes('sent') ? 'text-op-green' : 'text-op-red'}`}>
-              {testMsg}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Webhook URL — only for lead_followup */}
-      {meta.type === 'lead_followup' && userId && (
-        <WebhookBox userId={userId} />
-      )}
-
-      {/* Delivery log */}
-      {activity.length > 0 && (
-        <div className="border-t border-op-border pt-4 mt-4">
-          <p className="text-xs font-semibold text-op-muted uppercase tracking-wide mb-2">Recent Deliveries</p>
-          <div className="flex flex-col gap-1.5">
-            {activity.map((entry) => (
-              <div key={entry.id} className="flex items-center justify-between gap-3 text-xs">
-                <div className="min-w-0">
-                  <span className="text-op-navy font-medium truncate block">
-                    {entry.subject ?? 'Email sent'}
-                  </span>
-                  {entry.recipient_email && (
-                    <span className="text-op-muted truncate block">{entry.recipient_email}</span>
-                  )}
-                </div>
-                <span className="text-op-muted shrink-0 whitespace-nowrap">
-                  {new Date(entry.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
+    </>
   )
 }
 
@@ -382,9 +295,7 @@ function ComingSoonCard({ icon: Icon, name, description }: {
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <h3 className="font-semibold text-op-navy font-manrope">{name}</h3>
-            <span className="text-xs font-bold text-op-muted bg-op-bg border border-op-border px-2 py-0.5 rounded-full">
-              Coming Soon
-            </span>
+            <span className="text-xs font-bold text-op-muted bg-op-bg border border-op-border px-2 py-0.5 rounded-full">Coming Soon</span>
           </div>
           <p className="text-sm text-op-muted mt-0.5 leading-relaxed">{description}</p>
         </div>
@@ -417,6 +328,7 @@ export default function AgentsPage() {
           .order('created_at', { ascending: false })
           .limit(50),
       ])
+
       if (agentData) {
         const map = { ...agents }
         agentData.forEach((row: AgentRow) => {
@@ -455,7 +367,7 @@ export default function AgentsPage() {
       <div className="max-w-2xl">
         <h1 className="text-2xl font-bold font-manrope text-op-navy mb-1">Autopilot Agents</h1>
         <p className="text-sm text-op-muted mb-8">
-          Fill in the configuration, then enable each agent. Required fields are marked with <span className="text-op-red">*</span>.
+          Click "Set Up &amp; Activate" on any agent — we'll walk you through connecting it so it actually works.
         </p>
 
         <div className="flex flex-col gap-5">
