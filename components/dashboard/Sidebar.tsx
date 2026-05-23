@@ -38,7 +38,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="px-5 py-5 border-b border-op-border">
-        <Link href="/" className="inline-block">
+        <Link href="/dashboard" className="inline-block">
           <Image src="/logos/logo-light.png" alt="Operon" width={130} height={32} className="h-8 w-auto" />
         </Link>
       </div>
@@ -54,7 +54,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
               onClick={onClose}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                 active
-                  ? 'bg-op-blue text-white shadow-sm'
+                  ? 'bg-op-navy text-white shadow-sm'
                   : 'text-op-body hover:bg-op-bg hover:text-op-navy'
               }`}
             >
@@ -70,7 +70,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
         <Link
           href="/scanner"
           onClick={onClose}
-          className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold text-op-blue bg-blue-50 hover:bg-blue-100 transition-colors"
+          className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold text-op-navy bg-slate-50 hover:bg-slate-100 transition-colors"
         >
           <Zap size={15} />
           Scan My Business

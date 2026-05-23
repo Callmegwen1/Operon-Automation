@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Plus, Loader2, Mail, Star, User, X, ChevronRight } from 'lucide-react'
+import { Plus, Loader2, Mail, Star, User, X, ChevronRight, Search } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface Contact {
@@ -19,14 +19,25 @@ interface Contact {
 type FilterStatus = 'all' | 'new' | 'contacted' | 'converted' | 'lost'
 
 const statusColors: Record<string, string> = {
-  new:       'bg-blue-50 text-op-blue',
+  new:       'bg-op-navy/10 text-op-navy',
   contacted: 'bg-amber-50 text-op-amber',
   converted: 'bg-green-50 text-op-green',
   lost:      'bg-red-50 text-op-red',
 }
 
 const inputClass =
-  'w-full border border-op-border rounded-lg px-4 py-2.5 text-sm text-op-body placeholder-op-muted focus:outline-none focus:ring-2 focus:ring-op-blue/40 focus:border-op-blue transition-all bg-white'
+  'w-full border border-op-border rounded-lg px-4 py-2.5 text-sm text-op-body placeholder-op-muted focus:outline-none focus:ring-2 focus:ring-op-navy/20 focus:border-op-navy transition-all bg-white'
+
+const sourceOptions = [
+  'Google Search',
+  'Google Maps',
+  'Referral',
+  'Facebook / Instagram',
+  'Website Form',
+  'Cold Call / Walk-in',
+  'Yelp',
+  'Other',
+]
 
 function AddContactForm({ onAdd, onCancel }: {
   onAdd: (contact: Contact) => void
@@ -57,7 +68,7 @@ function AddContactForm({ onAdd, onCancel }: {
   }
 
   return (
-    <div className="card border-2 border-op-blue/30 mb-6">
+    <div className="card border-2 border-op-navy/20 mb-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-semibold font-manrope text-op-navy">Add New Contact</h3>
         <button onClick={onCancel} className="text-op-muted hover:text-op-navy transition-colors"><X size={18} /></button>
@@ -84,7 +95,10 @@ function AddContactForm({ onAdd, onCancel }: {
         </div>
         <div>
           <label className="block text-xs font-semibold text-op-navy mb-1">Source</label>
-          <input className={inputClass} value={form.source} onChange={(e) => set('source', e.target.value)} placeholder="Google, Referral, etc." />
+          <select className={inputClass} value={form.source} onChange={(e) => set('source', e.target.value)}>
+            <option value="">Select source</option>
+            {sourceOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
         </div>
         <div className="sm:col-span-2">
           <label className="block text-xs font-semibold text-op-navy mb-1">Notes</label>
@@ -118,10 +132,10 @@ function ContactRow({ contact, onReviewRequest, sending }: {
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <Link href={`/dashboard/contacts/${contact.id}`} className="font-semibold text-op-navy text-sm hover:text-op-blue transition-colors">
+          <Link href={`/dashboard/contacts/${contact.id}`} className="font-semibold text-op-navy text-sm hover:text-op-navy/70 transition-colors">
             {contact.name}
           </Link>
-          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${contact.type === 'lead' ? 'bg-blue-50 text-op-blue' : 'bg-purple-50 text-purple-600'}`}>
+          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${contact.type === 'lead' ? 'bg-op-navy/10 text-op-navy' : 'bg-purple-50 text-purple-600'}`}>
             {contact.type === 'lead' ? 'Lead' : 'Customer'}
           </span>
           <span className={`text-xs font-semibold px-2 py-0.5 rounded-full capitalize ${statusColors[contact.status] ?? 'bg-gray-50 text-op-muted'}`}>
@@ -168,6 +182,7 @@ export default function ContactsPage() {
   const [sending, setSending] = useState<string | null>(null)
   const [sentMsg, setSentMsg] = useState('')
   const [filter, setFilter] = useState<FilterStatus>('all')
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     const load = async () => {
@@ -194,7 +209,13 @@ export default function ContactsPage() {
     setTimeout(() => setSentMsg(''), 5000)
   }
 
-  const filtered = filter === 'all' ? contacts : contacts.filter((c) => c.status === filter)
+  const filtered = contacts
+    .filter((c) => filter === 'all' || c.status === filter)
+    .filter((c) => {
+      if (!search) return true
+      const q = search.toLowerCase()
+      return c.name.toLowerCase().includes(q) || c.email?.toLowerCase().includes(q) || c.phone?.includes(q)
+    })
 
   if (loading) {
     return (
@@ -225,6 +246,20 @@ export default function ContactsPage() {
 
         {showAdd && <AddContactForm onAdd={handleAdd} onCancel={() => setShowAdd(false)} />}
 
+        {/* Search */}
+        {contacts.length > 0 && (
+          <div className="relative mb-3">
+            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-op-muted pointer-events-none" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, email, or phone…"
+              className="w-full border border-op-border rounded-lg pl-9 pr-4 py-2.5 text-sm text-op-body placeholder-op-muted focus:outline-none focus:ring-2 focus:ring-op-navy/20 focus:border-op-navy transition-all bg-white"
+            />
+          </div>
+        )}
+
         {/* Filter tabs */}
         {contacts.length > 0 && (
           <div className="flex gap-1 mb-4 flex-wrap">
@@ -236,7 +271,7 @@ export default function ContactsPage() {
                   onClick={() => setFilter(value)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                     filter === value
-                      ? 'bg-op-blue text-white'
+                      ? 'bg-op-navy text-white'
                       : 'bg-op-bg text-op-muted hover:bg-op-border hover:text-op-navy'
                   }`}
                 >

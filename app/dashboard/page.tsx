@@ -1,15 +1,15 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowRight, Zap, CheckCircle2, Circle, Bot, User, BarChart2 } from 'lucide-react'
+import { ArrowRight, Zap, CheckCircle2, Circle, Bot, User, BarChart2, Star, Mail, TrendingDown, TrendingUp, DollarSign } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { generateLeaks } from '@/lib/leaks'
 
 type Impact = 'low' | 'medium' | 'high'
 
 const impactConfig: Record<Impact, { label: string; color: string; bg: string; border: string }> = {
-  high:   { label: 'High Impact',   color: 'text-op-red',   bg: 'bg-red-50',   border: 'border-red-200'   },
-  medium: { label: 'Medium Impact', color: 'text-op-amber', bg: 'bg-amber-50', border: 'border-amber-200' },
-  low:    { label: 'Low Impact',    color: 'text-op-blue',  bg: 'bg-blue-50',  border: 'border-blue-200'  },
+  high:   { label: 'High Impact',   color: 'text-op-red',   bg: 'bg-red-50',    border: 'border-red-200'   },
+  medium: { label: 'Medium Impact', color: 'text-op-amber', bg: 'bg-amber-50',  border: 'border-amber-200' },
+  low:    { label: 'Low Impact',    color: 'text-op-navy',  bg: 'bg-slate-50',  border: 'border-slate-200' },
 }
 
 type Activity = {
@@ -22,17 +22,17 @@ type Activity = {
 
 function activityLabel(a: Activity): string {
   const d = a.details ?? {}
-  if (a.action === 'review_request_sent') return `Review request sent to ${d.customer_name ?? 'a customer'}`
+  if (a.action === 'review_request_sent')     return `Review request sent to ${d.customer_name ?? 'a customer'}`
   if (a.action === 'lead_followup_scheduled') return `Follow-up sequence started for ${d.contact_name ?? 'a lead'}`
-  if (a.action === 'weekly_report_sent') return 'Weekly report sent'
+  if (a.action === 'weekly_report_sent')      return 'Weekly report sent'
   return a.action.replace(/_/g, ' ')
 }
 
-function agentIcon(agentType: string) {
-  if (agentType === 'review_request') return '⭐'
-  if (agentType === 'lead_followup')  return '📧'
-  if (agentType === 'weekly_report')  return '📊'
-  return '🤖'
+function AgentIcon({ type }: { type: string }) {
+  if (type === 'review_request') return <Star size={13} className="text-op-amber shrink-0" />
+  if (type === 'lead_followup')  return <Mail size={13} className="text-op-navy shrink-0" />
+  if (type === 'weekly_report')  return <BarChart2 size={13} className="text-op-green shrink-0" />
+  return <Bot size={13} className="text-op-muted shrink-0" />
 }
 
 function timeAgo(iso: string): string {
@@ -50,37 +50,54 @@ export default async function DashboardPage() {
   if (!user) redirect('/login')
 
   const [
-    { data: scan },
+    { data: scans },
     { data: business },
     { data: dbLeaks },
     { data: agents },
     { data: recentActivity },
   ] = await Promise.all([
-    supabase.from('scans').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).single(),
+    supabase.from('scans').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(2),
     supabase.from('businesses').select('*').eq('user_id', user.id).single(),
     supabase.from('leaks').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
     supabase.from('agents').select('type, enabled').eq('user_id', user.id).eq('enabled', true),
     supabase.from('agent_activity').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(7),
   ])
 
+  const scan     = scans?.[0] ?? null
+  const prevScan = scans?.[1] ?? null
+
   const businessName = business?.name ?? user.user_metadata?.business_name ?? 'your business'
   const leaks = (dbLeaks && dbLeaks.length > 0) ? dbLeaks : (scan ? generateLeaks(scan) : [])
-  const openLeaks = leaks.filter((l: { status?: string }) => l.status !== 'fixed')
+  const openLeaks  = leaks.filter((l: { status?: string }) => l.status !== 'fixed')
   const fixedLeaks = leaks.length - openLeaks.length
 
+  const avgJobValue = business?.avg_job_value ?? 0
+  const dollarOpportunity = openLeaks.length * avgJobValue
+
+  // Score delta
+  const scoreDelta = (scan && prevScan) ? scan.score - prevScan.score : null
+
   // Onboarding steps
-  const hasProfile   = !!(business?.name)
-  const hasScan      = !!scan
-  const hasAgent     = !!(agents && agents.length > 0)
+  const hasProfile     = !!(business?.name)
+  const hasScan        = !!scan
+  const hasAgent       = !!(agents && agents.length > 0)
   const onboardingDone = hasProfile && hasScan && hasAgent
+
+  // scoreColor — higher score = more leaks = worse
+  const scoreColor = scan
+    ? scan.score >= 75 ? 'text-op-red' : scan.score >= 55 ? 'text-op-amber' : 'text-op-green'
+    : 'text-op-muted'
+  const scoreLabel = scan
+    ? scan.score >= 75 ? 'Critical Risk' : scan.score >= 55 ? 'High Risk' : 'Moderate Risk'
+    : ''
 
   // No scan yet — empty state
   if (!scan) {
     return (
       <main className="flex-1 p-6 md:p-10 flex flex-col items-center justify-center">
         <div className="max-w-md text-center">
-          <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
-            <Zap size={28} className="text-op-blue" />
+          <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
+            <Zap size={28} className="text-op-navy" />
           </div>
           <h1 className="text-2xl font-bold font-manrope text-op-navy mb-2">
             Welcome to Revenue Autopilot
@@ -96,9 +113,6 @@ export default async function DashboardPage() {
       </main>
     )
   }
-
-  const scoreColor = scan.score >= 75 ? 'text-op-red' : scan.score >= 55 ? 'text-op-amber' : 'text-op-blue'
-  const scoreLabel = scan.score >= 75 ? 'Critical Risk' : scan.score >= 55 ? 'High Risk' : 'Moderate Risk'
 
   return (
     <main className="flex-1 p-6 md:p-8 overflow-auto">
@@ -118,9 +132,9 @@ export default async function DashboardPage() {
 
       {/* Onboarding checklist */}
       {!onboardingDone && (
-        <div className="card border border-op-blue/20 bg-blue-50/40 mb-6">
+        <div className="card border border-op-navy/20 bg-op-navy/[0.03] mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <BarChart2 size={16} className="text-op-blue" />
+            <BarChart2 size={16} className="text-op-navy" />
             <h2 className="text-sm font-bold text-op-navy">Get the most out of Operon</h2>
           </div>
           <div className="flex flex-col gap-2">
@@ -133,16 +147,16 @@ export default async function DashboardPage() {
                 key={label}
                 href={done ? '#' : href}
                 className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all ${
-                  done ? 'text-op-muted pointer-events-none' : 'text-op-navy hover:bg-blue-100'
+                  done ? 'text-op-muted pointer-events-none' : 'text-op-navy hover:bg-op-navy/10'
                 }`}
               >
                 {done
                   ? <CheckCircle2 size={16} className="text-op-green shrink-0" />
-                  : <Circle size={16} className="text-op-blue shrink-0" />
+                  : <Circle size={16} className="text-op-navy/40 shrink-0" />
                 }
                 <Icon size={14} className="shrink-0 text-op-muted" />
                 <span className={done ? 'line-through' : ''}>{label}</span>
-                {!done && <ArrowRight size={13} className="ml-auto text-op-blue" />}
+                {!done && <ArrowRight size={13} className="ml-auto text-op-navy/50" />}
               </Link>
             ))}
           </div>
@@ -150,23 +164,60 @@ export default async function DashboardPage() {
       )}
 
       {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="card text-center">
-          <p className="text-xs font-semibold text-op-muted uppercase tracking-wide mb-2">Revenue Leak Score</p>
-          <p className={`text-5xl font-bold font-manrope ${scoreColor}`}>
-            {scan.score}<span className="text-xl text-op-muted font-normal">/100</span>
+          <p className="text-xs font-semibold text-op-muted uppercase tracking-wide mb-2">Leak Score</p>
+          <p className={`text-4xl font-bold font-manrope ${scoreColor}`}>
+            {scan.score}<span className="text-lg text-op-muted font-normal">/100</span>
           </p>
-          <p className={`text-xs font-bold mt-2 ${scoreColor}`}>{scoreLabel}</p>
+          <div className="flex items-center justify-center gap-1 mt-2">
+            <p className={`text-xs font-bold ${scoreColor}`}>{scoreLabel}</p>
+            {scoreDelta !== null && (
+              <span className={`text-xs font-semibold flex items-center gap-0.5 ml-1 ${scoreDelta > 0 ? 'text-op-red' : 'text-op-green'}`}>
+                {scoreDelta > 0
+                  ? <TrendingUp size={10} />
+                  : <TrendingDown size={10} />
+                }
+                {Math.abs(scoreDelta)}
+              </span>
+            )}
+          </div>
         </div>
+
         <div className="card text-center">
           <p className="text-xs font-semibold text-op-muted uppercase tracking-wide mb-2">Open Leaks</p>
-          <p className="text-5xl font-bold font-manrope text-op-navy">{openLeaks.length}</p>
+          <p className="text-4xl font-bold font-manrope text-op-navy">{openLeaks.length}</p>
           <p className="text-xs font-semibold mt-2 text-op-muted">Need attention</p>
         </div>
+
         <div className="card text-center">
           <p className="text-xs font-semibold text-op-muted uppercase tracking-wide mb-2">Resolved</p>
-          <p className="text-5xl font-bold font-manrope text-op-green">{fixedLeaks}</p>
+          <p className="text-4xl font-bold font-manrope text-op-green">{fixedLeaks}</p>
           <p className="text-xs font-semibold mt-2 text-op-green">Leaks fixed</p>
+        </div>
+
+        <div className="card text-center">
+          <p className="text-xs font-semibold text-op-muted uppercase tracking-wide mb-2">At Risk</p>
+          {avgJobValue > 0 ? (
+            <>
+              <p className="text-4xl font-bold font-manrope text-op-amber">
+                ${dollarOpportunity >= 1000
+                  ? `${(dollarOpportunity / 1000).toFixed(0)}k`
+                  : dollarOpportunity.toLocaleString()
+                }
+              </p>
+              <p className="text-xs font-semibold mt-2 text-op-amber">Est. revenue exposure</p>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-center mt-1 mb-1">
+                <DollarSign size={28} className="text-op-muted" />
+              </div>
+              <Link href="/dashboard/profile" className="text-xs text-op-navy hover:underline">
+                Add job value →
+              </Link>
+            </>
+          )}
         </div>
       </div>
 
@@ -208,7 +259,7 @@ export default async function DashboardPage() {
                     </div>
                     {!isFixed && (
                       <div className="shrink-0">
-                        <Link href="/contact" className="btn-primary text-sm px-4 py-2 whitespace-nowrap">
+                        <Link href="/dashboard/agents" className="btn-primary text-sm px-4 py-2 whitespace-nowrap">
                           Activate Fix <ArrowRight size={14} />
                         </Link>
                       </div>
@@ -227,14 +278,14 @@ export default async function DashboardPage() {
             <div className="flex flex-col gap-2">
               {(recentActivity as Activity[]).map((a) => (
                 <div key={a.id} className="card py-3 px-4 flex items-start gap-3">
-                  <span className="text-base shrink-0">{agentIcon(a.agent_type)}</span>
+                  <span className="mt-0.5"><AgentIcon type={a.agent_type} /></span>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-op-body leading-snug">{activityLabel(a)}</p>
                     <p className="text-xs text-op-muted mt-0.5">{timeAgo(a.created_at)}</p>
                   </div>
                 </div>
               ))}
-              <Link href="/dashboard/agents" className="text-xs text-op-blue hover:underline mt-1 pl-1">
+              <Link href="/dashboard/agents" className="text-xs text-op-navy hover:text-op-navy/70 mt-1 pl-1 transition-colors">
                 View all agents →
               </Link>
             </div>

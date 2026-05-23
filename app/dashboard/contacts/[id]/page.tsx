@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Loader2, Save, Star, Mail, Trash2 } from 'lucide-react'
+import { ArrowLeft, Loader2, Save, Star, Mail, Trash2, Bot, BarChart2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface Contact {
@@ -29,7 +29,7 @@ interface Activity {
 const statusOptions = ['new', 'contacted', 'converted', 'lost']
 
 const statusColors: Record<string, string> = {
-  new:       'bg-blue-50 text-op-blue border-blue-200',
+  new:       'bg-op-navy/10 text-op-navy border-op-navy/20',
   contacted: 'bg-amber-50 text-op-amber border-amber-200',
   converted: 'bg-green-50 text-op-green border-green-200',
   lost:      'bg-red-50 text-op-red border-red-200',
@@ -42,11 +42,11 @@ function activityLabel(a: Activity): string {
   return a.action.replace(/_/g, ' ')
 }
 
-function agentIcon(type: string): string {
-  if (type === 'review_request') return '⭐'
-  if (type === 'lead_followup')  return '📧'
-  if (type === 'weekly_report')  return '📊'
-  return '🤖'
+function AgentIcon({ type }: { type: string }) {
+  if (type === 'review_request') return <Star size={14} className="text-op-amber" />
+  if (type === 'lead_followup')  return <Mail size={14} className="text-op-navy" />
+  if (type === 'weekly_report')  return <BarChart2 size={14} className="text-op-green" />
+  return <Bot size={14} className="text-op-muted" />
 }
 
 function timeAgo(iso: string): string {
@@ -59,7 +59,7 @@ function timeAgo(iso: string): string {
 }
 
 const inputClass =
-  'w-full border border-op-border rounded-lg px-4 py-2.5 text-sm text-op-body placeholder-op-muted focus:outline-none focus:ring-2 focus:ring-op-blue/40 focus:border-op-blue transition-all bg-white'
+  'w-full border border-op-border rounded-lg px-4 py-2.5 text-sm text-op-body placeholder-op-muted focus:outline-none focus:ring-2 focus:ring-op-navy/20 focus:border-op-navy transition-all bg-white'
 
 export default function ContactDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -71,8 +71,9 @@ export default function ContactDetailPage() {
   const [saved, setSaved] = useState(false)
   const [sendingReview, setSendingReview] = useState(false)
   const [reviewMsg, setReviewMsg] = useState('')
-  const [status, setStatus]   = useState('')
-  const [notes, setNotes]     = useState('')
+  const [status, setStatus]     = useState('')
+  const [notes, setNotes]       = useState('')
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -104,6 +105,12 @@ export default function ContactDetailPage() {
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
+  }
+
+  const handleDelete = async () => {
+    const supabase = createClient()
+    await supabase.from('contacts').delete().eq('id', id)
+    router.push('/dashboard/contacts')
   }
 
   const handleReviewRequest = async () => {
@@ -139,7 +146,7 @@ export default function ContactDetailPage() {
           <div>
             <h1 className="text-2xl font-bold font-manrope text-op-navy">{contact.name}</h1>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${contact.type === 'lead' ? 'bg-blue-50 text-op-blue border-blue-200' : 'bg-purple-50 text-purple-600 border-purple-200'}`}>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${contact.type === 'lead' ? 'bg-op-navy/10 text-op-navy border-op-navy/20' : 'bg-purple-50 text-purple-600 border-purple-200'}`}>
                 {contact.type === 'lead' ? 'Lead' : 'Customer'}
               </span>
               {contact.source && (
@@ -208,8 +215,8 @@ export default function ContactDetailPage() {
                       onClick={() => setStatus(s)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-semibold border capitalize transition-all ${
                         status === s
-                          ? (statusColors[s] ?? 'bg-op-blue text-white border-op-blue')
-                          : 'bg-white text-op-muted border-op-border hover:border-op-blue'
+                          ? (statusColors[s] ?? 'bg-op-navy text-white border-op-navy')
+                          : 'bg-white text-op-muted border-op-border hover:border-op-navy'
                       }`}
                     >
                       {s}
@@ -249,7 +256,7 @@ export default function ContactDetailPage() {
             <div className="flex flex-col gap-2">
               {activity.map((a) => (
                 <div key={a.id} className="card py-3 px-4 flex items-start gap-3">
-                  <span className="text-base shrink-0">{agentIcon(a.agent_type)}</span>
+                  <span className="shrink-0 mt-0.5"><AgentIcon type={a.agent_type} /></span>
                   <div className="flex-1">
                     <p className="text-sm text-op-body">{activityLabel(a)}</p>
                     <p className="text-xs text-op-muted mt-0.5">{timeAgo(a.created_at)}</p>
@@ -262,17 +269,30 @@ export default function ContactDetailPage() {
 
         {/* Danger zone */}
         <div className="mt-8 pt-6 border-t border-op-border">
-          <button
-            onClick={async () => {
-              if (!confirm(`Delete ${contact.name}? This cannot be undone.`)) return
-              const supabase = createClient()
-              await supabase.from('contacts').delete().eq('id', id)
-              router.push('/dashboard/contacts')
-            }}
-            className="flex items-center gap-2 text-xs text-op-muted hover:text-op-red transition-colors"
-          >
-            <Trash2 size={13} /> Delete this contact
-          </button>
+          {confirmDelete ? (
+            <div className="flex items-center gap-3">
+              <p className="text-xs text-op-red font-semibold">Delete {contact.name}? This cannot be undone.</p>
+              <button
+                onClick={handleDelete}
+                className="text-xs font-semibold text-white bg-op-red px-3 py-1.5 rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Yes, delete
+              </button>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                className="text-xs text-op-muted hover:text-op-navy transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmDelete(true)}
+              className="flex items-center gap-2 text-xs text-op-muted hover:text-op-red transition-colors"
+            >
+              <Trash2 size={13} /> Delete this contact
+            </button>
+          )}
         </div>
       </div>
     </main>

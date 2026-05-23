@@ -25,6 +25,7 @@ type ProfileForm = {
   phone: string
   city_state: string
   main_service: string
+  avg_job_value: string
 }
 
 export default function ProfilePage() {
@@ -39,6 +40,7 @@ export default function ProfilePage() {
     phone: '',
     city_state: '',
     main_service: '',
+    avg_job_value: '',
   })
 
   useEffect(() => {
@@ -57,12 +59,13 @@ export default function ProfilePage() {
 
       if (data) {
         setForm({
-          name:         data.name         ?? '',
-          website_url:  data.website_url  ?? '',
-          industry:     data.industry     ?? '',
-          phone:        data.phone        ?? '',
-          city_state:   data.city_state   ?? '',
-          main_service: data.main_service ?? '',
+          name:          data.name          ?? '',
+          website_url:   data.website_url   ?? '',
+          industry:      data.industry      ?? '',
+          phone:         data.phone         ?? '',
+          city_state:    data.city_state    ?? '',
+          main_service:  data.main_service  ?? '',
+          avg_job_value: data.avg_job_value != null ? String(data.avg_job_value) : '',
         })
       } else if (user.user_metadata?.business_name) {
         setForm((f) => ({ ...f, name: user.user_metadata.business_name }))
@@ -84,8 +87,14 @@ export default function ProfilePage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
+    const { avg_job_value, ...rest } = form
     await supabase.from('businesses').upsert(
-      { user_id: user.id, ...form, updated_at: new Date().toISOString() },
+      {
+        user_id: user.id,
+        ...rest,
+        avg_job_value: avg_job_value !== '' ? Number(avg_job_value) : null,
+        updated_at: new Date().toISOString(),
+      },
       { onConflict: 'user_id' }
     )
 
@@ -95,7 +104,7 @@ export default function ProfilePage() {
   }
 
   const inputClass =
-    'w-full border border-op-border rounded-lg px-4 py-3 text-sm text-op-body placeholder-op-muted focus:outline-none focus:ring-2 focus:ring-op-blue/40 focus:border-op-blue transition-all bg-white'
+    'w-full border border-op-border rounded-lg px-4 py-3 text-sm text-op-body placeholder-op-muted focus:outline-none focus:ring-2 focus:ring-op-navy/20 focus:border-op-navy transition-all bg-white'
 
   if (loading) {
     return (
@@ -193,6 +202,24 @@ export default function ProfilePage() {
                 onChange={(e) => set('main_service', e.target.value)}
                 placeholder="e.g. Residential plumbing"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-op-navy mb-1.5">
+                Average Job / Sale Value ($)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                className={inputClass}
+                value={form.avg_job_value}
+                onChange={(e) => set('avg_job_value', e.target.value)}
+                placeholder="e.g. 850"
+              />
+              <p className="text-xs text-op-muted mt-1">
+                Used to estimate your total revenue opportunity from open leaks.
+              </p>
             </div>
 
             <div className="flex items-center gap-3 pt-1">
