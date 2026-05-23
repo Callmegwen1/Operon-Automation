@@ -20,6 +20,14 @@ interface AgentRow {
   config: AgentConfig
 }
 
+interface ActivityEntry {
+  id: string
+  type: string
+  recipient_email: string | null
+  subject: string | null
+  created_at: string
+}
+
 const AGENT_META = [
   {
     type: 'lead_followup' as AgentType,
@@ -95,9 +103,10 @@ function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void 
   )
 }
 
-function AgentCard({ meta, row, onUpdate }: {
+function AgentCard({ meta, row, activity, onUpdate }: {
   meta: typeof AGENT_META[number]
   row: AgentRow
+  activity: ActivityEntry[]
   onUpdate: (type: AgentType, updates: Partial<AgentRow>) => void
 }) {
   const Icon = meta.icon
@@ -252,6 +261,30 @@ function AgentCard({ meta, row, onUpdate }: {
           )}
         </div>
       </div>
+
+      {/* Delivery log */}
+      {activity.length > 0 && (
+        <div className="border-t border-op-border pt-4 mt-4">
+          <p className="text-xs font-semibold text-op-muted uppercase tracking-wide mb-2">Recent Deliveries</p>
+          <div className="flex flex-col gap-1.5">
+            {activity.map((entry) => (
+              <div key={entry.id} className="flex items-center justify-between gap-3 text-xs">
+                <div className="min-w-0">
+                  <span className="text-op-navy font-medium truncate block">
+                    {entry.subject ?? 'Email sent'}
+                  </span>
+                  {entry.recipient_email && (
+                    <span className="text-op-muted truncate block">{entry.recipient_email}</span>
+                  )}
+                </div>
+                <span className="text-op-muted shrink-0 whitespace-nowrap">
+                  {new Date(entry.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -287,18 +320,34 @@ export default function AgentsPage() {
     review_request: { type: 'review_request', enabled: false, config: {} },
     weekly_report:  { type: 'weekly_report',  enabled: false, config: {} },
   })
+  const [activityByType, setActivityByType] = useState<Record<string, ActivityEntry[]>>({})
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const load = async () => {
       const supabase = createClient()
-      const { data } = await supabase.from('agents').select('*')
-      if (data) {
+      const [{ data: agentData }, { data: activityData }] = await Promise.all([
+        supabase.from('agents').select('*'),
+        supabase
+          .from('agent_activity')
+          .select('id, type, recipient_email, subject, created_at')
+          .order('created_at', { ascending: false })
+          .limit(50),
+      ])
+      if (agentData) {
         const map = { ...agents }
-        data.forEach((row: AgentRow) => {
+        agentData.forEach((row: AgentRow) => {
           map[row.type] = { type: row.type, enabled: row.enabled, config: row.config ?? {} }
         })
         setAgents(map)
+      }
+      if (activityData) {
+        const grouped: Record<string, ActivityEntry[]> = {}
+        activityData.forEach((entry: ActivityEntry) => {
+          if (!grouped[entry.type]) grouped[entry.type] = []
+          if (grouped[entry.type].length < 5) grouped[entry.type].push(entry)
+        })
+        setActivityByType(grouped)
       }
       setLoading(false)
     }
@@ -332,6 +381,7 @@ export default function AgentsPage() {
               key={meta.type}
               meta={meta}
               row={agents[meta.type]}
+              activity={activityByType[meta.type] ?? []}
               onUpdate={handleUpdate}
             />
           ))}

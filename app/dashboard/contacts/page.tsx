@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { Plus, Loader2, Mail, Star, User, X, ChevronRight, Search } from 'lucide-react'
+import { Plus, Loader2, Mail, Star, User, X, ChevronRight, Search, AlertTriangle, Upload, List, Kanban, CheckCircle2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import ContactPipeline from '@/components/dashboard/ContactPipeline'
 
 interface Contact {
   id: string
@@ -17,6 +18,7 @@ interface Contact {
 }
 
 type FilterStatus = 'all' | 'new' | 'contacted' | 'converted' | 'lost'
+type ViewMode = 'list' | 'pipeline'
 
 const statusColors: Record<string, string> = {
   new:       'bg-op-navy/10 text-op-navy',
@@ -38,6 +40,18 @@ const sourceOptions = [
   'Yelp',
   'Other',
 ]
+
+function parseCSV(text: string): Record<string, string>[] {
+  const lines = text.trim().split(/\r?\n/)
+  if (lines.length < 2) return []
+  const headers = lines[0].split(',').map((h) => h.trim().toLowerCase().replace(/\s+/g, '_'))
+  return lines.slice(1).map((line) => {
+    const values = line.split(',').map((v) => v.trim().replace(/^"|"$/g, ''))
+    const row: Record<string, string> = {}
+    headers.forEach((h, i) => { row[h] = values[i] ?? '' })
+    return row
+  })
+}
 
 function AddContactForm({ onAdd, onCancel }: {
   onAdd: (contact: Contact) => void
@@ -183,6 +197,10 @@ export default function ContactsPage() {
   const [sentMsg, setSentMsg] = useState('')
   const [filter, setFilter] = useState<FilterStatus>('all')
   const [search, setSearch] = useState('')
+  const [view, setView] = useState<ViewMode>('list')
+  const [importing, setImporting] = useState(false)
+  const [importResult, setImportResult] = useState<{ count: number } | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -209,6 +227,36 @@ export default function ContactsPage() {
     setTimeout(() => setSentMsg(''), 5000)
   }
 
+  const handleCSVImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setImporting(true)
+    setImportResult(null)
+    const text = await file.text()
+    const rows = parseCSV(text)
+    const res = await fetch('/api/contacts/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rows }),
+    })
+    const data = await res.json()
+    if (res.ok) {
+      setImportResult({ count: data.imported })
+      // Reload contacts to show imported ones
+      const supabase = createClient()
+      const { data: fresh } = await supabase.from('contacts').select('*').order('created_at', { ascending: false })
+      setContacts((fresh as Contact[]) ?? [])
+    }
+    setImporting(false)
+    if (fileRef.current) fileRef.current.value = ''
+    setTimeout(() => setImportResult(null), 6000)
+  }
+
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+  const staleNewContacts = contacts.filter(
+    (c) => c.status === 'new' && new Date(c.created_at) < sevenDaysAgo
+  )
+
   const filtered = contacts
     .filter((c) => filter === 'all' || c.status === filter)
     .filter((c) => {
@@ -227,17 +275,84 @@ export default function ContactsPage() {
 
   return (
     <main className="flex-1 p-6 md:p-8 overflow-auto">
-      <div className="max-w-2xl">
-        <div className="flex items-center justify-between mb-6">
+      <div className={view === 'pipeline' ? 'max-w-5xl' : 'max-w-2xl'}>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold font-manrope text-op-navy">Contacts</h1>
             <p className="text-sm text-op-muted mt-0.5">{contacts.length} total · {contacts.filter(c => c.status === 'new').length} new</p>
           </div>
-          <button onClick={() => setShowAdd(true)} className="btn-primary text-sm">
-            <Plus size={15} /> Add Contact
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* View toggle */}
+            <div className="flex border border-op-border rounded-lg overflow-hidden">
+              <button
+                onClick={() => setView('list')}
+                className={`px-3 py-2 text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                  view === 'list' ? 'bg-op-navy text-white' : 'bg-white text-op-muted hover:text-op-navy'
+                }`}
+              >
+                <List size={13} /> List
+              </button>
+              <button
+                onClick={() => setView('pipeline')}
+                className={`px-3 py-2 text-xs font-semibold flex items-center gap-1.5 transition-colors border-l border-op-border ${
+                  view === 'pipeline' ? 'bg-op-navy text-white' : 'bg-white text-op-muted hover:text-op-navy'
+                }`}
+              >
+                <Kanban size={13} /> Pipeline
+              </button>
+            </div>
+            {/* CSV import */}
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".csv"
+              className="hidden"
+              onChange={handleCSVImport}
+            />
+            <button
+              onClick={() => fileRef.current?.click()}
+              disabled={importing}
+              className="btn-secondary text-sm flex items-center gap-1.5"
+            >
+              {importing ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
+              Import CSV
+            </button>
+            <button onClick={() => setShowAdd(true)} className="btn-primary text-sm">
+              <Plus size={15} /> Add Contact
+            </button>
+          </div>
         </div>
 
+        {/* Needs follow-up alert */}
+        {staleNewContacts.length > 0 && (
+          <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-5">
+            <AlertTriangle size={16} className="text-op-amber shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-op-amber">
+                {staleNewContacts.length} contact{staleNewContacts.length > 1 ? 's' : ''} need{staleNewContacts.length === 1 ? 's' : ''} follow-up
+              </p>
+              <p className="text-xs text-amber-700 mt-0.5">
+                {staleNewContacts.slice(0, 3).map(c => c.name).join(', ')}
+                {staleNewContacts.length > 3 ? ` and ${staleNewContacts.length - 3} more` : ''}
+                {' '}— still &ldquo;New&rdquo; after 7 days.{' '}
+                <button onClick={() => setFilter('new')} className="underline font-semibold hover:text-amber-900 transition-colors">
+                  View them
+                </button>
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Import success */}
+        {importResult && (
+          <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-5 text-sm text-op-green font-semibold">
+            <CheckCircle2 size={15} />
+            {importResult.count} contact{importResult.count !== 1 ? 's' : ''} imported successfully.
+          </div>
+        )}
+
+        {/* Sent review message */}
         {sentMsg && (
           <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-4 text-sm text-op-green font-semibold">
             {sentMsg}
@@ -246,68 +361,75 @@ export default function ContactsPage() {
 
         {showAdd && <AddContactForm onAdd={handleAdd} onCancel={() => setShowAdd(false)} />}
 
-        {/* Search */}
-        {contacts.length > 0 && (
-          <div className="relative mb-3">
-            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-op-muted pointer-events-none" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name, email, or phone…"
-              className="w-full border border-op-border rounded-lg pl-9 pr-4 py-2.5 text-sm text-op-body placeholder-op-muted focus:outline-none focus:ring-2 focus:ring-op-navy/20 focus:border-op-navy transition-all bg-white"
-            />
-          </div>
-        )}
-
-        {/* Filter tabs */}
-        {contacts.length > 0 && (
-          <div className="flex gap-1 mb-4 flex-wrap">
-            {FILTERS.map(({ value, label }) => {
-              const count = value === 'all' ? contacts.length : contacts.filter(c => c.status === value).length
-              return (
-                <button
-                  key={value}
-                  onClick={() => setFilter(value)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                    filter === value
-                      ? 'bg-op-navy text-white'
-                      : 'bg-op-bg text-op-muted hover:bg-op-border hover:text-op-navy'
-                  }`}
-                >
-                  {label} {count > 0 && <span className="opacity-70">({count})</span>}
-                </button>
-              )
-            })}
-          </div>
-        )}
-
-        {filtered.length === 0 && !showAdd ? (
-          <div className="card text-center py-12">
-            <User size={32} className="text-op-muted mx-auto mb-3" />
-            <p className="font-semibold text-op-navy mb-1">
-              {filter === 'all' ? 'No contacts yet' : `No ${filter} contacts`}
-            </p>
-            <p className="text-sm text-op-muted mb-4">
-              {filter === 'all' ? 'Add your first lead or customer to get started.' : `No contacts with status "${filter}" yet.`}
-            </p>
-            {filter === 'all' && (
-              <button onClick={() => setShowAdd(true)} className="btn-primary text-sm mx-auto">
-                <Plus size={14} /> Add First Contact
-              </button>
-            )}
-          </div>
+        {/* Pipeline view */}
+        {view === 'pipeline' ? (
+          <ContactPipeline initialContacts={contacts} />
         ) : (
-          <div className="flex flex-col gap-3">
-            {filtered.map((c) => (
-              <ContactRow
-                key={c.id}
-                contact={c}
-                onReviewRequest={handleReviewRequest}
-                sending={sending === c.id}
-              />
-            ))}
-          </div>
+          <>
+            {/* Search */}
+            {contacts.length > 0 && (
+              <div className="relative mb-3">
+                <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-op-muted pointer-events-none" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search by name, email, or phone…"
+                  className="w-full border border-op-border rounded-lg pl-9 pr-4 py-2.5 text-sm text-op-body placeholder-op-muted focus:outline-none focus:ring-2 focus:ring-op-navy/20 focus:border-op-navy transition-all bg-white"
+                />
+              </div>
+            )}
+
+            {/* Filter tabs */}
+            {contacts.length > 0 && (
+              <div className="flex gap-1 mb-4 flex-wrap">
+                {FILTERS.map(({ value, label }) => {
+                  const count = value === 'all' ? contacts.length : contacts.filter(c => c.status === value).length
+                  return (
+                    <button
+                      key={value}
+                      onClick={() => setFilter(value)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                        filter === value
+                          ? 'bg-op-navy text-white'
+                          : 'bg-op-bg text-op-muted hover:bg-op-border hover:text-op-navy'
+                      }`}
+                    >
+                      {label} {count > 0 && <span className="opacity-70">({count})</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+
+            {filtered.length === 0 && !showAdd ? (
+              <div className="card text-center py-12">
+                <User size={32} className="text-op-muted mx-auto mb-3" />
+                <p className="font-semibold text-op-navy mb-1">
+                  {filter === 'all' ? 'No contacts yet' : `No ${filter} contacts`}
+                </p>
+                <p className="text-sm text-op-muted mb-4">
+                  {filter === 'all' ? 'Add your first lead or customer to get started.' : `No contacts with status "${filter}" yet.`}
+                </p>
+                {filter === 'all' && (
+                  <button onClick={() => setShowAdd(true)} className="btn-primary text-sm mx-auto">
+                    <Plus size={14} /> Add First Contact
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {filtered.map((c) => (
+                  <ContactRow
+                    key={c.id}
+                    contact={c}
+                    onReviewRequest={handleReviewRequest}
+                    sending={sending === c.id}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </main>

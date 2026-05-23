@@ -13,6 +13,7 @@ import {
   Zap,
   Bot,
   Users,
+  History,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -23,6 +24,7 @@ const navItems = [
   { href: '/dashboard',          icon: LayoutDashboard, label: 'Overview'  },
   { href: AGENTS_HREF,           icon: Bot,             label: 'Agents'    },
   { href: '/dashboard/contacts', icon: Users,           label: 'Contacts'  },
+  { href: '/dashboard/scans',    icon: History,         label: 'Scans'     },
   { href: '/dashboard/profile',  icon: User,            label: 'Profile'   },
 ]
 
