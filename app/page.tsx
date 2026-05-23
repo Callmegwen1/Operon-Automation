@@ -17,6 +17,7 @@ import {
   Users,
 } from 'lucide-react'
 import DashboardMockup from '@/components/dashboard/DashboardMockup'
+import AnimatedCounter from '@/components/ui/AnimatedCounter'
 
 export const metadata: Metadata = {
   title: 'Operon Automation | Revenue Recovery for Small Businesses',
@@ -27,17 +28,20 @@ export const metadata: Metadata = {
 /* Stat-anchored problem statements */
 const problemStatements = [
   {
-    stat: '78%',
+    value: 78,
+    suffix: '%',
     statement: 'of businesses never follow up on a missed call.',
     detail: 'Every unanswered call is a lead that calls your competitor next. The first to follow up wins the job.',
   },
   {
-    stat: '21×',
+    value: 21,
+    suffix: '×',
     statement: 'more likely to convert if you respond within 5 minutes.',
     detail: 'Speed matters more than most owners realize. After an hour, that lead has already moved on.',
   },
   {
-    stat: '5×',
+    value: 5,
+    suffix: '×',
     statement: 'cheaper to reactivate a past client than find a new one.',
     detail: "Past clients who've gone quiet can come back. Most businesses just never reach back out.",
   },
@@ -59,13 +63,13 @@ const howSteps = [
   { num: '05', title: 'Get a weekly owner report',    desc: 'See what is running, what recovered, and what needs attention — every week.' },
 ]
 
-/* "0" stays grey — the digit gets its own color */
+/* "0" stays grey — all digits are amber */
 const digitColors = [
   'text-op-amber',
-  'text-op-navy',
-  'text-op-green',
   'text-op-amber',
-  'text-op-navy',
+  'text-op-amber',
+  'text-op-amber',
+  'text-op-amber',
 ]
 
 /* Slight hand-placed rotations on decorative numbers */
@@ -175,15 +179,17 @@ export default function HomePage() {
         <div className="container-wide">
           <p className="eyebrow mb-10">The Problem</p>
           <div className="flex flex-col gap-12 max-w-3xl">
-            {problemStatements.map(({ stat, statement, detail }, i) => (
-              <div key={stat} className="border-l-[3px] border-op-amber pl-6">
+            {problemStatements.map(({ value, suffix, statement, detail }, i) => (
+              <div key={value} className="border-l-[3px] border-op-amber pl-6">
                 <span className="text-[11px] font-bold tracking-[0.15em] text-op-amber block mb-2">
                   0{i + 1}
                 </span>
-                {/* Big amber stat anchors every problem visually */}
-                <p className="text-5xl font-extrabold font-manrope text-op-amber leading-none mb-2">
-                  {stat}
-                </p>
+                {/* Big amber stat — counts up when scrolled into view */}
+                <AnimatedCounter
+                  value={value}
+                  suffix={suffix}
+                  className="text-5xl font-extrabold font-manrope text-op-amber leading-none mb-2 block"
+                />
                 <p className="text-xl font-semibold font-manrope text-op-primary leading-snug mb-2">
                   {statement}
                 </p>
