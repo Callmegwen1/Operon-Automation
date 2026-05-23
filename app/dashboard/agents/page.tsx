@@ -115,8 +115,15 @@ function AgentCard({ meta, row, activity, onUpdate }: {
   const [saved, setSaved] = useState(false)
   const [toggling, setToggling] = useState(false)
   const [validationError, setValidationError] = useState('')
+  const [liveMsg, setLiveMsg] = useState('')
   const [testing, setTesting] = useState(false)
   const [testMsg, setTestMsg] = useState('')
+
+  const liveMessages: Record<string, string> = {
+    lead_followup:  'Agent is live. Every new lead you add will automatically receive a 3-email follow-up sequence.',
+    review_request: 'Ready. Use the ⭐ Review button on any contact to send a personalized review request.',
+    weekly_report:  'Set. You\'ll receive a weekly performance report every Monday at 8:00 AM.',
+  }
 
   const missingRequired = meta.requiredFields.filter(
     (k) => !(config as Record<string, string>)[k]?.trim()
@@ -133,6 +140,17 @@ function AgentCard({ meta, row, activity, onUpdate }: {
     }
     setValidationError('')
     setToggling(true)
+
+    // Auto-save config when enabling, so user doesn't have to remember to click Save first
+    if (next) {
+      await fetch('/api/agents/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: meta.type, config }),
+      })
+      onUpdate(meta.type, { config })
+    }
+
     await fetch('/api/agents/toggle', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -140,6 +158,11 @@ function AgentCard({ meta, row, activity, onUpdate }: {
     })
     onUpdate(meta.type, { enabled: next })
     setToggling(false)
+
+    if (next) {
+      setLiveMsg(liveMessages[meta.type] ?? 'Agent is now active.')
+      setTimeout(() => setLiveMsg(''), 10000)
+    }
   }
 
   const handleSave = async () => {
@@ -204,6 +227,13 @@ function AgentCard({ meta, row, activity, onUpdate }: {
         <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
           <AlertCircle size={14} className="text-op-amber shrink-0 mt-0.5" />
           <p className="text-xs text-op-amber">{validationError}</p>
+        </div>
+      )}
+
+      {liveMsg && (
+        <div className="flex items-start gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2 mb-3">
+          <CheckCircle2 size={14} className="text-op-green shrink-0 mt-0.5" />
+          <p className="text-xs text-op-green font-medium">{liveMsg}</p>
         </div>
       )}
 

@@ -199,6 +199,11 @@ export default function ResultsDisplay() {
             // non-blocking
           }
         }
+      } else {
+        // Not logged in — mark scan as pending so dashboard can pick it up after signup
+        if (id && scanData && scanData !== DEMO) {
+          localStorage.setItem('operon_pending_scan_id', id)
+        }
       }
     }
     init()

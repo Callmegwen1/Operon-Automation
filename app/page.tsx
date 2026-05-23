@@ -207,8 +207,56 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ─── SCENARIOS — what Operon actually fixes ───────────── */}
+      <section className="bg-[#FAFAFA] section-pad border-t border-op-border">
+        <div className="container-wide">
+          <p className="eyebrow mb-4">What It Fixes</p>
+          <h2 className="text-3xl md:text-[2.5rem] font-extrabold font-manrope text-op-primary leading-tight mb-10">
+            Real situations. Real solutions.
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {[
+              {
+                situation: 'A lead fills out your form on a Saturday evening.',
+                without:   'You see it Monday. They\'ve already hired someone else.',
+                with:      'Operon sends a follow-up in 15 minutes, automatically — while you\'re off the clock.',
+              },
+              {
+                situation: 'A customer is happy with the job. They just didn\'t leave a review.',
+                without:   'You forget to ask. The moment passes. Your rating stays flat.',
+                with:      'One click sends a personalized review request. They post it that same day.',
+              },
+              {
+                situation: 'You\'re not sure which leads are converting or where they\'re coming from.',
+                without:   'You guess. You spend money on ads that may not be working.',
+                with:      'Your weekly report shows exactly what ran, what recovered, and what needs attention.',
+              },
+            ].map(({ situation, without, with: withText }) => (
+              <div key={situation} className="card flex flex-col gap-4">
+                <p className="text-sm font-semibold text-op-navy leading-snug">{situation}</p>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-start gap-2.5 bg-red-50 rounded-lg px-3 py-2.5">
+                    <span className="text-op-red font-bold text-xs shrink-0 mt-0.5">Without</span>
+                    <p className="text-xs text-op-muted leading-relaxed">{without}</p>
+                  </div>
+                  <div className="flex items-start gap-2.5 bg-green-50 rounded-lg px-3 py-2.5">
+                    <span className="text-op-green font-bold text-xs shrink-0 mt-0.5">With</span>
+                    <p className="text-xs text-op-muted leading-relaxed">{withText}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-8">
+            <Link href="/scanner" className="btn-primary text-sm inline-flex">
+              See Where Your Business Leaks <ArrowRight size={15} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* ─── SOCIAL PROOF — founder photo ─────────────────────── */}
-      <section className="bg-[#FAFAFA] border-y border-op-border py-14">
+      <section className="bg-white border-y border-op-border py-14">
         <div className="container-wide max-w-2xl">
           <div className="flex items-start gap-5">
             {/* Real founder photo — save image to public/images/founder.jpg */}
