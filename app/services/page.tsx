@@ -81,7 +81,7 @@ export default function ServicesPage() {
             {services.map(({ icon: Icon, title, desc }) => (
               <div key={title} className="card-hover">
                 <div className="w-11 h-11 rounded-xl bg-op-bg flex items-center justify-center mb-4">
-                  <Icon size={20} className="text-op-blue" />
+                  <Icon size={20} className="text-op-navy" />
                 </div>
                 <h3 className="font-semibold font-manrope text-op-navy mb-2">{title}</h3>
                 <p className="text-sm text-op-muted leading-relaxed">{desc}</p>
@@ -114,7 +114,7 @@ export default function ServicesPage() {
                   'Best for businesses ready to activate pre-built systems',
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm text-op-body">
-                    <CheckCircle2 size={14} className="text-op-blue mt-0.5 shrink-0" />
+                    <CheckCircle2 size={14} className="text-op-navy mt-0.5 shrink-0" />
                     {item}
                   </li>
                 ))}

@@ -131,9 +131,9 @@ export default function RevenueAutopilotPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
               { icon: AlertTriangle, color: 'text-op-amber', bg: 'bg-amber-50', title: 'Revenue Leak Detection', desc: 'Operon scans your business for common revenue leaks — missed calls, cold leads, missing reviews, uncollected invoices, and more.' },
-              { icon: TrendingUp,    color: 'text-op-blue',  bg: 'bg-blue-50',  title: 'Revenue Leak Score', desc: 'Get a single score out of 100 showing how much revenue may be at risk, with a breakdown by category.' },
+              { icon: TrendingUp,    color: 'text-op-navy',  bg: 'bg-slate-50',  title: 'Revenue Leak Score', desc: 'Get a single score out of 100 showing how much revenue may be at risk, with a breakdown by category.' },
               { icon: Zap,           color: 'text-op-green', bg: 'bg-green-50', title: 'Autopilot Agents', desc: 'Activate intelligent agents that handle follow-up, review requests, invoice reminders, and customer reactivation automatically.' },
-              { icon: BarChart2,     color: 'text-op-blue',  bg: 'bg-blue-50',  title: 'Revenue Trend Tracking', desc: 'Watch recovered revenue grow over time as your Autopilot Agents work in the background.' },
+              { icon: BarChart2,     color: 'text-op-navy',  bg: 'bg-slate-50',  title: 'Revenue Trend Tracking', desc: 'Watch recovered revenue grow over time as your Autopilot Agents work in the background.' },
               { icon: Users,         color: 'text-op-green', bg: 'bg-green-50', title: 'Customer Reactivation', desc: 'Identify past customers who have gone quiet and bring them back with targeted re-engagement sequences.' },
               { icon: FileText,      color: 'text-op-muted', bg: 'bg-slate-50', title: 'Weekly Owner Report', desc: 'A plain-language weekly summary of what ran, what recovered, and what needs your attention — delivered every Monday.' },
             ].map(({ icon: Icon, color, bg, title, desc }) => (
@@ -255,8 +255,8 @@ export default function RevenueAutopilotPage() {
                 ))}
               </ul>
             </div>
-            <div className="bg-op-blue/20 border border-op-blue/30 rounded-xl p-6">
-              <h3 className="font-semibold font-manrope text-op-blue text-sm mb-4 uppercase tracking-wide">Revenue Autopilot</h3>
+            <div className="bg-white/10 border border-white/20 rounded-xl p-6">
+              <h3 className="font-semibold font-manrope text-op-amber text-sm mb-4 uppercase tracking-wide">Revenue Autopilot</h3>
               <ul className="flex flex-col gap-3">
                 {[
                   'Highlights revenue leaks automatically',
@@ -293,7 +293,7 @@ export default function RevenueAutopilotPage() {
                 {i < howSteps.length - 1 && (
                   <div className="hidden lg:block absolute top-5 left-[calc(50%+24px)] w-full h-px bg-op-border" />
                 )}
-                <div className="w-10 h-10 rounded-full bg-op-blue text-white flex items-center justify-center font-bold font-manrope text-sm mb-4 z-10">
+                <div className="w-10 h-10 rounded-full bg-op-navy text-white flex items-center justify-center font-bold font-manrope text-sm mb-4 z-10">
                   {num}
                 </div>
                 <h3 className="font-semibold font-manrope text-op-navy text-sm mb-2">{title}</h3>
@@ -305,7 +305,7 @@ export default function RevenueAutopilotPage() {
       </section>
 
       {/* Final CTA */}
-      <section className="section-pad bg-op-blue text-white">
+      <section className="section-pad bg-op-navy text-white">
         <div className="container-wide text-center max-w-xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-extrabold font-manrope mb-5">
             Start with a free Revenue Leak Score.
@@ -313,7 +313,7 @@ export default function RevenueAutopilotPage() {
           <p className="text-lg text-white/80 mb-8">
             No credit card. No commitment. See your top leaks in under 2 minutes.
           </p>
-          <Link href="/scanner" className="inline-flex items-center gap-2 bg-white text-op-blue font-bold font-inter px-8 py-4 rounded-lg text-base hover:bg-blue-50 transition-colors">
+          <Link href="/scanner" className="inline-flex items-center gap-2 bg-white text-op-navy font-bold font-inter px-8 py-4 rounded-lg text-base hover:bg-slate-50 transition-colors">
             Scan My Business Free <ArrowRight size={18} />
           </Link>
         </div>

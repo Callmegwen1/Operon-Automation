@@ -18,8 +18,8 @@ const steps = [
     title: 'Scan your business',
     detail: 'The free Revenue Leak Scanner asks about your leads, follow-up process, review system, ads, and marketing. It takes under 2 minutes and requires no technical setup.',
     what: ['Business type and service area', 'Current follow-up and CRM systems', 'Review and reputation status', 'Ad tracking and lead source visibility'],
-    color: 'bg-blue-50 border-blue-200 text-op-blue',
-    iconBg: 'bg-op-blue',
+    color: 'bg-slate-50 border-slate-200 text-op-navy',
+    iconBg: 'bg-op-navy',
   },
   {
     num: '02',
@@ -45,8 +45,8 @@ const steps = [
     title: 'Recover missed opportunities',
     detail: 'Once activated, agents run automatically in the background. Leads get followed up, reviews get requested, invoices get reminders, and past customers get reactivated.',
     what: ['Instant lead response — no more cold leads', 'Review growth month over month', 'Estimate-to-job close rate improvement', 'Faster invoice collection', 'Past customers coming back'],
-    color: 'bg-blue-50 border-blue-200 text-op-blue',
-    iconBg: 'bg-op-blue',
+    color: 'bg-slate-50 border-slate-200 text-op-navy',
+    iconBg: 'bg-op-navy',
   },
   {
     num: '05',
@@ -134,8 +134,8 @@ export default function HowItWorksPage() {
               { label: 'Recover',  desc: 'Watch agents recover missed opportunities weekly.', icon: TrendingUp },
             ].map(({ label, desc, icon: Icon }) => (
               <div key={label} className="card text-center">
-                <div className="w-12 h-12 rounded-xl bg-op-blue/10 flex items-center justify-center mx-auto mb-4">
-                  <Icon size={20} className="text-op-blue" />
+                <div className="w-12 h-12 rounded-xl bg-op-navy/10 flex items-center justify-center mx-auto mb-4">
+                  <Icon size={20} className="text-op-navy" />
                 </div>
                 <h3 className="font-bold font-manrope text-op-navy mb-2">{label}</h3>
                 <p className="text-sm text-op-muted">{desc}</p>
@@ -146,11 +146,11 @@ export default function HowItWorksPage() {
       </section>
 
       {/* CTA */}
-      <section className="section-pad bg-op-blue text-white">
+      <section className="section-pad bg-op-navy text-white">
         <div className="container-wide text-center max-w-xl mx-auto">
           <h2 className="text-3xl font-extrabold font-manrope mb-5">Ready to see step one in action?</h2>
           <p className="text-lg text-white/70 mb-8">Scan your business free. No credit card. Results in under 2 minutes.</p>
-          <Link href="/scanner" className="inline-flex items-center gap-2 bg-white text-op-blue font-bold px-8 py-4 rounded-lg hover:bg-blue-50 transition-colors">
+          <Link href="/scanner" className="inline-flex items-center gap-2 bg-white text-op-navy font-bold px-8 py-4 rounded-lg hover:bg-slate-50 transition-colors">
             Scan My Business Free <ArrowRight size={17} />
           </Link>
         </div>

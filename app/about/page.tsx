@@ -102,7 +102,7 @@ export default function AboutPage() {
             title="Two ways to work with Operon."
           />
           <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="card border-2 border-op-blue">
+            <div className="card border-2 border-op-navy">
               <span className="badge-blue mb-4 inline-flex">Revenue Autopilot</span>
               <h3 className="font-bold font-manrope text-op-navy mb-3">The product side.</h3>
               <p className="text-sm text-op-muted leading-relaxed">
@@ -124,7 +124,7 @@ export default function AboutPage() {
       </section>
 
       {/* CTA */}
-      <section className="section-pad bg-op-blue text-white">
+      <section className="section-pad bg-op-navy text-white">
         <div className="container-wide text-center max-w-xl mx-auto">
           <h2 className="text-3xl font-extrabold font-manrope mb-5">
             Start with a free look at your business.
@@ -133,7 +133,7 @@ export default function AboutPage() {
             The Revenue Leak Scanner shows you exactly where customers may be slipping away — free, in under 2 minutes.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/scanner" className="inline-flex items-center gap-2 bg-white text-op-blue font-bold px-7 py-4 rounded-lg hover:bg-blue-50 transition-colors">
+            <Link href="/scanner" className="inline-flex items-center gap-2 bg-white text-op-navy font-bold px-7 py-4 rounded-lg hover:bg-slate-50 transition-colors">
               Scan My Business Free <ArrowRight size={17} />
             </Link>
             <Link href="/contact" className="btn-outline-white px-7 py-4">

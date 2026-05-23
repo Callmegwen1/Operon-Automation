@@ -115,14 +115,14 @@ export default function PricingPage() {
             {plans.map(({ name, badge, price, period, description, cta, ctaHref, ctaStyle, features, highlight }) => (
               <div
                 key={name}
-                className={`card flex flex-col ${highlight ? 'border-2 border-op-blue ring-1 ring-op-blue/20' : 'border border-op-border'}`}
+                className={`card flex flex-col ${highlight ? 'border-2 border-op-navy ring-1 ring-op-navy/10' : 'border border-op-border'}`}
               >
                 {/* Header */}
                 <div className="mb-5">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="font-bold font-manrope text-op-navy">{name}</h3>
                     {badge && (
-                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${highlight ? 'bg-op-blue text-white' : 'badge-blue'}`}>
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${highlight ? 'bg-op-navy text-white' : 'badge-blue'}`}>
                         {badge}
                       </span>
                     )}
@@ -139,7 +139,7 @@ export default function PricingPage() {
                 <ul className="flex flex-col gap-2.5 mb-6 flex-1">
                   {features.map((f) => (
                     <li key={f} className="flex items-start gap-2 text-xs text-op-body">
-                      <CheckCircle2 size={13} className={`${highlight ? 'text-op-blue' : 'text-op-green'} mt-0.5 shrink-0`} />
+                      <CheckCircle2 size={13} className="text-op-green mt-0.5 shrink-0" />
                       {f}
                     </li>
                   ))}
@@ -184,14 +184,14 @@ export default function PricingPage() {
       </section>
 
       {/* CTA */}
-      <section className="section-pad bg-op-blue text-white">
+      <section className="section-pad bg-op-navy text-white">
         <div className="container-wide text-center max-w-xl mx-auto">
           <Zap size={32} className="mx-auto mb-4 text-white/60" />
           <h2 className="text-3xl font-extrabold font-manrope mb-4">Start free. See your leaks today.</h2>
           <p className="text-white/70 mb-8">
             The scanner takes under 2 minutes and costs nothing. You will see exactly what is leaking — and what to fix first.
           </p>
-          <Link href="/scanner" className="inline-flex items-center gap-2 bg-white text-op-blue font-bold px-8 py-4 rounded-lg hover:bg-blue-50 transition-colors">
+          <Link href="/scanner" className="inline-flex items-center gap-2 bg-white text-op-navy font-bold px-8 py-4 rounded-lg hover:bg-slate-50 transition-colors">
             Scan My Business Free <ArrowRight size={17} />
           </Link>
         </div>

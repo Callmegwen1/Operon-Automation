@@ -17,6 +17,7 @@ import {
   Users,
 } from 'lucide-react'
 import DashboardMockup from '@/components/dashboard/DashboardMockup'
+import LeakScoreCard from '@/components/dashboard/LeakScoreCard'
 import AnimatedCounter from '@/components/ui/AnimatedCounter'
 
 export const metadata: Metadata = {
@@ -263,9 +264,9 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Counter-clockwise tilt — mirrors hero */}
-            <div className="flex-1 w-full max-w-lg mx-auto lg:mx-0 lg:-rotate-1">
-              <DashboardMockup />
+            {/* Leak Score card — distinct from the hero dashboard */}
+            <div className="flex-1 w-full max-w-lg mx-auto lg:mx-0 pb-6">
+              <LeakScoreCard />
             </div>
           </div>
         </div>

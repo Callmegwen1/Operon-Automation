@@ -131,7 +131,7 @@ export default function IndustriesPage() {
       </section>
 
       {/* CTA */}
-      <section className="section-pad bg-op-blue text-white">
+      <section className="section-pad bg-op-navy text-white">
         <div className="container-wide text-center max-w-xl mx-auto">
           <h2 className="text-3xl font-extrabold font-manrope mb-5">
             Don't see your industry? We still help.
@@ -139,7 +139,7 @@ export default function IndustriesPage() {
           <p className="text-lg text-white/70 mb-8">
             If you run a local or service business, you almost certainly have revenue leaks. The scanner works for any business. Try it free.
           </p>
-          <Link href="/scanner" className="inline-flex items-center gap-2 bg-white text-op-blue font-bold px-8 py-4 rounded-lg hover:bg-blue-50 transition-colors">
+          <Link href="/scanner" className="inline-flex items-center gap-2 bg-white text-op-navy font-bold px-8 py-4 rounded-lg hover:bg-slate-50 transition-colors">
             Scan My Business Free <ArrowRight size={17} />
           </Link>
         </div>
