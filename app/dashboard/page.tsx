@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { ArrowRight, Zap, CheckCircle2, Circle, Bot, User, BarChart2, Star, Mail, TrendingDown, TrendingUp, DollarSign } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { generateLeaks } from '@/lib/leaks'
+import { calculateSubScores } from '@/lib/scanner/subscores'
 
 type Impact = 'low' | 'medium' | 'high'
 
@@ -76,6 +77,20 @@ export default async function DashboardPage() {
 
   // Score delta
   const scoreDelta = (scan && prevScan) ? scan.score - prevScan.score : null
+
+  // Sub-score comparison (deterministic from scan answers)
+  const toAnswers = (s: Record<string, string>) => ({
+    runsAds:         s.runs_ads          ?? '',
+    usesCrm:         s.uses_crm          ?? '',
+    manualFollowUp:  s.manual_follow_up  ?? '',
+    asksReviews:     s.asks_reviews      ?? '',
+    tracksLeadSource:s.tracks_lead_source ?? '',
+    industry:        business?.industry  ?? '',
+  })
+  const currentSubScores = calculateSubScores(toAnswers(scan as unknown as Record<string, string>))
+  const prevSubScores = prevScan
+    ? calculateSubScores(toAnswers(prevScan as unknown as Record<string, string>))
+    : null
 
   // Onboarding steps
   const hasProfile     = !!(business?.name)
@@ -218,6 +233,53 @@ export default async function DashboardPage() {
               </Link>
             </>
           )}
+        </div>
+      </div>
+
+      {/* Sub-score health breakdown */}
+      <div className="card mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-sm font-bold font-manrope text-op-navy">Health by Category</h2>
+            <p className="text-xs text-op-muted mt-0.5">Higher = more revenue leaking in that area.</p>
+          </div>
+          {prevSubScores && (
+            <span className="text-xs text-op-muted border border-op-border rounded-full px-2.5 py-1">vs previous scan</span>
+          )}
+        </div>
+        <div className="flex flex-col gap-3">
+          {currentSubScores.map(({ name, score, color, label }, i) => {
+            const prev = prevSubScores?.[i]
+            const delta = prev ? score - prev.score : null
+            return (
+              <div key={name}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-medium text-op-navy">{name}</span>
+                  <div className="flex items-center gap-2">
+                    {delta !== null && delta !== 0 && (
+                      <span className={`text-xs font-semibold flex items-center gap-0.5 ${delta > 0 ? 'text-op-red' : 'text-op-green'}`}>
+                        {delta > 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
+                        {Math.abs(delta)}
+                      </span>
+                    )}
+                    <span className="text-xs font-semibold" style={{ color }}>{label}</span>
+                  </div>
+                </div>
+                <div className="relative w-full bg-op-border rounded-full h-2">
+                  {prev && (
+                    <div
+                      className="absolute inset-y-0 left-0 h-2 rounded-full opacity-30"
+                      style={{ width: `${prev.score}%`, backgroundColor: color }}
+                    />
+                  )}
+                  <div
+                    className="h-2 rounded-full transition-all duration-700"
+                    style={{ width: `${score}%`, backgroundColor: color }}
+                  />
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
 

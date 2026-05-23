@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
@@ -16,14 +16,17 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
+const AGENTS_HREF = '/dashboard/agents'
+const LAST_SEEN_KEY = 'operon_agents_last_seen'
+
 const navItems = [
   { href: '/dashboard',          icon: LayoutDashboard, label: 'Overview'  },
-  { href: '/dashboard/agents',   icon: Bot,             label: 'Agents'    },
+  { href: AGENTS_HREF,           icon: Bot,             label: 'Agents'    },
   { href: '/dashboard/contacts', icon: Users,           label: 'Contacts'  },
   { href: '/dashboard/profile',  icon: User,            label: 'Profile'   },
 ]
 
-function SidebarContent({ onClose }: { onClose?: () => void }) {
+function SidebarContent({ onClose, agentBadge }: { onClose?: () => void; agentBadge: number }) {
   const pathname = usePathname()
   const router = useRouter()
 
@@ -47,6 +50,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
       <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
         {navItems.map(({ href, icon: Icon, label }) => {
           const active = pathname === href
+          const isAgents = href === AGENTS_HREF
           return (
             <Link
               key={href}
@@ -59,7 +63,10 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
               }`}
             >
               <Icon size={16} />
-              {label}
+              <span className="flex-1">{label}</span>
+              {isAgents && agentBadge > 0 && !active && (
+                <span className="w-2 h-2 rounded-full bg-op-green shrink-0" />
+              )}
             </Link>
           )
         })}
@@ -93,12 +100,42 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
 
 export default function Sidebar() {
   const [open, setOpen] = useState(false)
+  const [agentBadge, setAgentBadge] = useState(0)
+  const pathname = usePathname()
+
+  useEffect(() => {
+    const load = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const lastSeen = localStorage.getItem(LAST_SEEN_KEY)
+      const since = lastSeen ?? new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+
+      const { count } = await supabase
+        .from('agent_activity')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .gt('created_at', since)
+
+      setAgentBadge(count ?? 0)
+    }
+    load()
+  }, [])
+
+  // Mark agents as seen when user visits /dashboard/agents
+  useEffect(() => {
+    if (pathname === AGENTS_HREF) {
+      localStorage.setItem(LAST_SEEN_KEY, new Date().toISOString())
+      setAgentBadge(0)
+    }
+  }, [pathname])
 
   return (
     <>
       {/* Desktop sidebar */}
       <aside className="hidden md:flex w-56 border-r border-op-border bg-white flex-col h-screen sticky top-0 shrink-0">
-        <SidebarContent />
+        <SidebarContent agentBadge={agentBadge} />
       </aside>
 
       {/* Mobile hamburger button */}
@@ -118,7 +155,7 @@ export default function Sidebar() {
             onClick={() => setOpen(false)}
           />
           <aside className="md:hidden fixed left-0 top-0 h-full w-56 bg-white z-50 border-r border-op-border">
-            <SidebarContent onClose={() => setOpen(false)} />
+            <SidebarContent agentBadge={agentBadge} onClose={() => setOpen(false)} />
           </aside>
         </>
       )}

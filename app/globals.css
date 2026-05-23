@@ -72,6 +72,11 @@
            text-xs font-semibold font-inter px-2.5 py-1 rounded-full;
   }
 
+  .badge-navy {
+    @apply inline-flex items-center gap-1 bg-op-navy/10 text-op-navy border border-op-navy/20
+           text-xs font-semibold font-inter px-2.5 py-1 rounded-full;
+  }
+
   .badge-red {
     @apply inline-flex items-center gap-1 bg-red-50 text-op-red border border-red-200
            text-xs font-semibold font-inter px-2.5 py-1 rounded-full;

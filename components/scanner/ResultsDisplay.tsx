@@ -130,13 +130,13 @@ function buildLeaks(data: ScanData): Leak[] {
 const impactColors: Record<string, string> = {
   High:   'badge-red',
   Medium: 'badge-amber',
-  Low:    'badge-blue',
+  Low:    'badge-navy',
 }
 
 const scoreLabel = (score: number) => {
-  if (score >= 75) return { label: 'Critical', color: 'text-op-red',   border: 'border-op-red',   bg: 'bg-red-50'   }
-  if (score >= 55) return { label: 'High',     color: 'text-op-amber', border: 'border-op-amber', bg: 'bg-amber-50' }
-  return               { label: 'Moderate',    color: 'text-op-blue',  border: 'border-op-blue',  bg: 'bg-blue-50'  }
+  if (score >= 75) return { label: 'Critical', color: 'text-op-red',   border: 'border-op-red',   bg: 'bg-red-50'    }
+  if (score >= 55) return { label: 'High',     color: 'text-op-amber', border: 'border-op-amber', bg: 'bg-amber-50'  }
+  return               { label: 'Moderate',    color: 'text-op-green', border: 'border-op-green', bg: 'bg-green-50'  }
 }
 
 const DEMO: ScanData = {
@@ -207,7 +207,7 @@ export default function ResultsDisplay() {
   if (!loaded) {
     return (
       <div className="flex items-center justify-center py-32">
-        <Loader2 size={28} className="animate-spin text-op-blue" />
+        <Loader2 size={28} className="animate-spin text-op-navy" />
       </div>
     )
   }
@@ -216,7 +216,7 @@ export default function ResultsDisplay() {
 
   const leaks = buildLeaks(scan)
   const sl = scoreLabel(scan.score)
-  const subScores: SubScore[] = scan.subScores ?? calculateSubScores(scan)
+  const subScores: SubScore[] = scan.subScores ?? calculateSubScores({ ...scan, industry: scan.industry })
   const benchmark = getBenchmark(scan.industry)
   const websiteAnalysis = scan.websiteAnalysis ?? null
   const passCount = websiteAnalysis
@@ -261,8 +261,8 @@ export default function ResultsDisplay() {
           </Link>
         </div>
       ) : !isLoggedIn ? (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-blue-50 border border-blue-200 rounded-xl px-5 py-4 mb-6">
-          <div className="w-9 h-9 bg-op-blue rounded-lg flex items-center justify-center shrink-0">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-op-navy/5 border border-op-navy/20 rounded-xl px-5 py-4 mb-6">
+          <div className="w-9 h-9 bg-op-navy rounded-lg flex items-center justify-center shrink-0">
             <Zap size={16} className="text-white" />
           </div>
           <div className="flex-1">
@@ -306,7 +306,7 @@ export default function ResultsDisplay() {
       {websiteAnalysis && (
         <div className="card mb-6">
           <div className="flex items-center gap-2 mb-1">
-            <Globe size={16} className="text-op-blue" />
+            <Globe size={16} className="text-op-navy" />
             <h3 className="font-bold font-manrope text-op-navy">Website Health Check</h3>
           </div>
           {!websiteAnalysis.accessible ? (
@@ -421,7 +421,7 @@ export default function ResultsDisplay() {
       </div>
 
       {/* Next steps */}
-      <div className="card border-2 border-op-blue mb-8">
+      <div className="card border-2 border-op-navy/20 mb-8">
         <h3 className="font-bold font-manrope text-op-navy mb-3">Recommended Next Steps</h3>
         <ol className="flex flex-col gap-3">
           {[
@@ -431,7 +431,7 @@ export default function ResultsDisplay() {
             'Review your weekly report to track what\'s recovering over time.',
           ].map((s, i) => (
             <li key={i} className="flex items-start gap-3 text-sm text-op-body">
-              <span className="w-5 h-5 rounded-full bg-op-blue text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{i + 1}</span>
+              <span className="w-5 h-5 rounded-full bg-op-navy text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">{i + 1}</span>
               {s}
             </li>
           ))}

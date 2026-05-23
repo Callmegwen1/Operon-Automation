@@ -10,7 +10,7 @@ function wrap(content: string): string {
         ${content}
         <tr><td style="padding:24px 0;text-align:center;">
           <p style="margin:0;color:#94A3B8;font-size:11px;">
-            Powered by <a href="https://operonauto.com" style="color:#2563EB;text-decoration:none;">Operon Automation</a> ·
+            Powered by <a href="https://operonauto.com" style="color:#1A2E4A;text-decoration:none;">Operon Automation</a> ·
             Reply STOP to opt out of follow-ups.
           </p>
         </td></tr>
@@ -143,7 +143,7 @@ export function reviewRequest({
         <p style="margin:0 0 28px;color:#334155;font-size:15px;line-height:1.6;text-align:left;">
           If you have a moment, a quick review would mean a lot to us — it helps other people find us and takes about 2 minutes.
         </p>
-        <a href="${reviewLink}" style="display:inline-block;background:#2563EB;color:#ffffff;font-size:15px;font-weight:700;padding:14px 32px;border-radius:8px;text-decoration:none;">
+        <a href="${reviewLink}" style="display:inline-block;background:#1A2E4A;color:#ffffff;font-size:15px;font-weight:700;padding:14px 32px;border-radius:8px;text-decoration:none;">
           Leave a Review →
         </a>
         <p style="margin:24px 0 0;color:#334155;font-size:14px;text-align:left;">Thank you again,<br><strong>${fromName}</strong><br><span style="color:#64748B;">${businessName}</span></p>
@@ -172,30 +172,30 @@ export function welcomeEmail({
           Your account is confirmed and your Revenue Autopilot dashboard is ready. Here's what to do first:
         </p>
         <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
-          <tr><td style="padding:12px;background:#F8FAFC;border-radius:8px;border-left:3px solid #2563EB;margin-bottom:8px;">
+          <tr><td style="padding:12px;background:#F8FAFC;border-radius:8px;border-left:3px solid #1A2E4A;margin-bottom:8px;">
             <p style="margin:0;color:#102A43;font-size:13px;font-weight:700;">1. Complete your business profile</p>
             <p style="margin:4px 0 0;color:#64748B;font-size:12px;">Add your business details so your agents know who they're representing.</p>
           </td></tr>
         </table>
         <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">
-          <tr><td style="padding:12px;background:#F8FAFC;border-radius:8px;border-left:3px solid #2563EB;">
+          <tr><td style="padding:12px;background:#F8FAFC;border-radius:8px;border-left:3px solid #1A2E4A;">
             <p style="margin:0;color:#102A43;font-size:13px;font-weight:700;">2. Run your Revenue Leak Scan</p>
             <p style="margin:4px 0 0;color:#64748B;font-size:12px;">See exactly where your business may be losing customers and revenue.</p>
           </td></tr>
         </table>
         <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
-          <tr><td style="padding:12px;background:#F8FAFC;border-radius:8px;border-left:3px solid #2563EB;">
+          <tr><td style="padding:12px;background:#F8FAFC;border-radius:8px;border-left:3px solid #1A2E4A;">
             <p style="margin:0;color:#102A43;font-size:13px;font-weight:700;">3. Activate your first agent</p>
             <p style="margin:4px 0 0;color:#64748B;font-size:12px;">The Lead Follow-Up Agent typically has the fastest impact — start there.</p>
           </td></tr>
         </table>
         <div style="text-align:center;">
-          <a href="${dashboardUrl}" style="display:inline-block;background:#2563EB;color:#ffffff;font-size:14px;font-weight:700;padding:14px 32px;border-radius:8px;text-decoration:none;">
+          <a href="${dashboardUrl}" style="display:inline-block;background:#1A2E4A;color:#ffffff;font-size:14px;font-weight:700;padding:14px 32px;border-radius:8px;text-decoration:none;">
             Open My Dashboard →
           </a>
         </div>
         <p style="margin:24px 0 0;color:#64748B;font-size:13px;text-align:center;">
-          Questions? Reply to this email or reach us at <a href="mailto:ceo@operonauto.com" style="color:#2563EB;">ceo@operonauto.com</a>
+          Questions? Reply to this email or reach us at <a href="mailto:ceo@operonauto.com" style="color:#1A2E4A;">ceo@operonauto.com</a>
         </p>
       </td></tr>`),
   }
@@ -217,7 +217,7 @@ export function weeklyReport({
   activityCount: number
   dashboardUrl: string
 }): { subject: string; html: string } {
-  const scoreColor = score >= 75 ? '#DC2626' : score >= 55 ? '#F59E0B' : '#2563EB'
+  const scoreColor = score >= 75 ? '#DC2626' : score >= 55 ? '#F59E0B' : '#22C55E'
   const scoreLabel = score >= 75 ? 'Critical' : score >= 55 ? 'High Risk' : 'Moderate'
 
   return {
@@ -250,7 +250,7 @@ export function weeklyReport({
           </tr>
         </table>
         <div style="text-align:center;">
-          <a href="${dashboardUrl}" style="display:inline-block;background:#2563EB;color:#ffffff;font-size:14px;font-weight:700;padding:12px 28px;border-radius:8px;text-decoration:none;">
+          <a href="${dashboardUrl}" style="display:inline-block;background:#1A2E4A;color:#ffffff;font-size:14px;font-weight:700;padding:12px 28px;border-radius:8px;text-decoration:none;">
             Open My Dashboard →
           </a>
         </div>
@@ -258,6 +258,86 @@ export function weeklyReport({
       <tr><td style="background:#F8FAFC;border-radius:0 0 12px 12px;padding:16px 36px;border-top:1px solid #E5E7EB;">
         <p style="margin:0;color:#94A3B8;font-size:12px;">
           Revenue Leak Scores are informational only. Operon does not guarantee specific financial results.
+        </p>
+      </td></tr>`),
+  }
+}
+
+// ── Onboarding Day 1 ─────────────────────────────────────────
+export function onboardingDay1({
+  businessName,
+  scannerUrl,
+}: {
+  businessName: string
+  scannerUrl: string
+}): { subject: string; html: string } {
+  return {
+    subject: 'Your biggest revenue leak is probably this one',
+    html: wrap(`
+      <tr><td style="background:#1A2E4A;border-radius:12px 12px 0 0;padding:28px 36px;">
+        <p style="margin:0 0 4px;color:#94A3B8;font-size:12px;text-transform:uppercase;letter-spacing:1px;">Day 1 — Operon</p>
+        <p style="margin:0;color:#ffffff;font-size:20px;font-weight:700;">The leak that costs most businesses the most</p>
+      </td></tr>
+      <tr><td style="background:#ffffff;border-radius:0 0 12px 12px;padding:36px;">
+        <p style="margin:0 0 16px;color:#334155;font-size:15px;">Hi ${businessName},</p>
+        <p style="margin:0 0 16px;color:#334155;font-size:15px;line-height:1.6;">
+          Leads that don't hear back within 5 minutes are <strong>80% less likely to convert.</strong>
+        </p>
+        <p style="margin:0 0 16px;color:#334155;font-size:15px;line-height:1.6;">
+          Most businesses lose 60–70% of their inbound leads not because the service is bad — but because the follow-up is slow or inconsistent. When someone reaches out, they're also reaching out to your competitors.
+        </p>
+        <p style="margin:0 0 24px;color:#334155;font-size:15px;line-height:1.6;">
+          Your Revenue Leak Scan shows exactly where this is happening in your business. If you haven't run it yet, it takes under 2 minutes.
+        </p>
+        <div style="text-align:center;">
+          <a href="${scannerUrl}" style="display:inline-block;background:#1A2E4A;color:#ffffff;font-size:14px;font-weight:700;padding:14px 32px;border-radius:8px;text-decoration:none;">
+            Run My Revenue Leak Scan →
+          </a>
+        </div>
+        <p style="margin:24px 0 0;color:#64748B;font-size:13px;">
+          — The Operon Team<br>
+          <a href="mailto:ceo@operonauto.com" style="color:#1A2E4A;">ceo@operonauto.com</a>
+        </p>
+      </td></tr>`),
+  }
+}
+
+// ── Onboarding Day 3 ─────────────────────────────────────────
+export function onboardingDay3({
+  businessName,
+  agentsUrl,
+}: {
+  businessName: string
+  agentsUrl: string
+}): { subject: string; html: string } {
+  return {
+    subject: 'One step that takes 2 minutes and runs forever',
+    html: wrap(`
+      <tr><td style="background:#1A2E4A;border-radius:12px 12px 0 0;padding:28px 36px;">
+        <p style="margin:0 0 4px;color:#94A3B8;font-size:12px;text-transform:uppercase;letter-spacing:1px;">Day 3 — Operon</p>
+        <p style="margin:0;color:#ffffff;font-size:20px;font-weight:700;">Activate your first agent</p>
+      </td></tr>
+      <tr><td style="background:#ffffff;border-radius:0 0 12px 12px;padding:36px;">
+        <p style="margin:0 0 16px;color:#334155;font-size:15px;">Hi ${businessName},</p>
+        <p style="margin:0 0 16px;color:#334155;font-size:15px;line-height:1.6;">
+          The Lead Follow-Up Agent is the single highest-impact thing most businesses can activate. Once it's on, every new lead gets a response within minutes — automatically, even when you're busy on a job.
+        </p>
+        <p style="margin:0 0 8px;color:#1A2E4A;font-size:14px;font-weight:700;">Here's all it takes:</p>
+        <table width="100%" cellpadding="12" cellspacing="0" style="margin-bottom:24px;background:#F8FAFC;border-radius:8px;border:1px solid #E5E7EB;">
+          <tr><td style="color:#334155;font-size:13px;line-height:1.6;">
+            1. Add your name and reply-to email<br>
+            2. Toggle it on<br>
+            3. It runs from there — every new lead, every time
+          </td></tr>
+        </table>
+        <div style="text-align:center;">
+          <a href="${agentsUrl}" style="display:inline-block;background:#1A2E4A;color:#ffffff;font-size:14px;font-weight:700;padding:14px 32px;border-radius:8px;text-decoration:none;">
+            Activate My First Agent →
+          </a>
+        </div>
+        <p style="margin:24px 0 0;color:#64748B;font-size:13px;">
+          — The Operon Team<br>
+          <a href="mailto:ceo@operonauto.com" style="color:#1A2E4A;">ceo@operonauto.com</a>
         </p>
       </td></tr>`),
   }

@@ -11,7 +11,7 @@ const OWNER_USER_ID = process.env.OWNER_USER_ID
 function scoreLabel(score: number) {
   if (score >= 75) return { label: 'Critical', color: '#ef4444' }
   if (score >= 55) return { label: 'High',     color: '#f59e0b' }
-  return               { label: 'Moderate',    color: '#3b82f6' }
+  return               { label: 'Moderate',    color: '#22c55e' }
 }
 
 function buildResultsEmail(data: Record<string, string>, score: number): string {
@@ -70,11 +70,12 @@ function buildResultsEmail(data: Record<string, string>, score: number): string 
         </td></tr>
 
         <tr><td style="background:#ffffff;padding:32px 40px;text-align:center;border-top:1px solid #e5e7eb;">
-          <p style="margin:0 0 20px;color:#1A2E4A;font-size:15px;font-weight:700;">Ready to fix these leaks?</p>
-          <a href="https://operonauto.com/revenue-autopilot" style="display:inline-block;background:#B8963E;color:#1A2E4A;font-size:14px;font-weight:700;padding:14px 32px;border-radius:8px;text-decoration:none;">
-            Activate Revenue Autopilot →
+          <p style="margin:0 0 6px;color:#1A2E4A;font-size:15px;font-weight:700;">Ready to fix these leaks?</p>
+          <p style="margin:0 0 20px;color:#6B7280;font-size:13px;line-height:1.5;">Create your free account to save your results, track fixes, and activate the agents that handle this automatically.</p>
+          <a href="https://operonauto.com/signup?email=${encodeURIComponent(data.email)}" style="display:inline-block;background:#1A2E4A;color:#ffffff;font-size:14px;font-weight:700;padding:14px 32px;border-radius:8px;text-decoration:none;">
+            Save My Results &amp; Fix Leaks →
           </a>
-          <p style="margin:16px 0 0;color:#6B7280;font-size:12px;">Or <a href="https://operonauto.com/contact" style="color:#3b82f6;">request setup help</a> from our team.</p>
+          <p style="margin:16px 0 0;color:#6B7280;font-size:12px;">Free forever · No credit card needed · <a href="https://operonauto.com/contact" style="color:#1A2E4A;">Talk to us first</a></p>
         </td></tr>
 
         <tr><td style="background:#1A2E4A;border-radius:0 0 12px 12px;padding:20px 40px;text-align:center;">

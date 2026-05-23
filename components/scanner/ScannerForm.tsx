@@ -4,6 +4,7 @@ import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronRight, ChevronLeft, Loader2 } from 'lucide-react'
 import { calculateSubScores } from '@/lib/scanner/subscores'
+import { getMultiplier } from '@/lib/scanner/industry'
 import type { WebsiteAnalysis } from '@/lib/scanner/types'
 
 interface FormData {
@@ -56,18 +57,29 @@ const steps = [
   { label: 'Your Challenge', fields: ['biggestProblem', 'email'] },
 ]
 
-function calculateScore(data: FormData): number {
-  let score = 35
+function calculateScore(data: FormData, websiteAnalysis?: WebsiteAnalysis | null): number {
+  const m = getMultiplier(data.industry)
+  let score = 0
 
-  if (data.runsAds === 'yes' && data.tracksLeadSource === 'no') score += 18
-  if (data.runsAds === 'yes' && data.tracksLeadSource === 'sometimes') score += 10
-  if (data.manualFollowUp === 'no') score += 20
-  if (data.manualFollowUp === 'manual') score += 12
-  if (data.asksReviews === 'no') score += 15
-  if (data.asksReviews === 'sometimes') score += 8
+  // Follow-up
+  if (data.manualFollowUp === 'no') score += Math.round(20 * m.followup)
+  else if (data.manualFollowUp === 'manual') score += Math.round(12 * m.followup)
+
+  // Reviews
+  if (data.asksReviews === 'no') score += Math.round(15 * m.reviews)
+  else if (data.asksReviews === 'sometimes') score += Math.round(8 * m.reviews)
+
+  // Ads + tracking
+  if (data.runsAds === 'yes' && data.tracksLeadSource === 'no') score += Math.round(18 * m.ads)
+  else if (data.runsAds === 'yes' && data.tracksLeadSource === 'sometimes') score += Math.round(10 * m.ads)
+
+  // CRM
   if (data.usesCrm === 'no') score += 10
+
+  // Lead source tracking (standalone)
   if (data.tracksLeadSource === 'no') score += 10
 
+  // Biggest problem bonus
   const problemBonus: Record<string, number> = {
     'Leads come in but don\'t convert': 8,
     'Hard to follow up consistently': 10,
@@ -78,6 +90,17 @@ function calculateScore(data: FormData): number {
     'Too much manual work / admin': 5,
   }
   score += problemBonus[data.biggestProblem] ?? 5
+
+  // Website analysis factors (only when site was reachable)
+  if (websiteAnalysis?.accessible) {
+    if (!websiteAnalysis.hasHttps)        score += 5
+    if (!websiteAnalysis.loadsFast)       score += 7
+    if (!websiteAnalysis.hasPhoneNumber)  score += 5
+    if (!websiteAnalysis.hasContactForm)  score += 6
+    if (!websiteAnalysis.hasCallToAction) score += 6
+    if (!websiteAnalysis.hasSocialProof)  score += 4
+    if (!websiteAnalysis.hasBookingWidget)score += 3
+  }
 
   return Math.min(score, 94)
 }
@@ -149,14 +172,16 @@ export default function ScannerForm({ defaultIndustry }: Props) {
     const finalProblem   = data.biggestProblem === 'Other' ? data.biggestProblemOther : data.biggestProblem
 
     const resolvedData = { ...data, industry: finalIndustry, biggestProblem: finalProblem }
-    const score = calculateScore(resolvedData)
-    const subScores = calculateSubScores(resolvedData)
 
+    // Resolve website analysis first so score can factor it in
     let websiteAnalysis: WebsiteAnalysis | null = null
     if (analysisRef.current) {
       const cap = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000))
       websiteAnalysis = await Promise.race([analysisRef.current, cap])
     }
+
+    const score = calculateScore(resolvedData, websiteAnalysis)
+    const subScores = calculateSubScores({ ...resolvedData, industry: finalIndustry })
 
     const id = Date.now().toString()
     const scanPayload = { ...resolvedData, score, subScores, websiteAnalysis, date: new Date().toISOString() }
@@ -176,14 +201,14 @@ export default function ScannerForm({ defaultIndustry }: Props) {
   }
 
   const inputClass = (field: keyof FormData) =>
-    `w-full border ${errors[field] ? 'border-op-red' : 'border-op-border'} rounded-lg px-4 py-3 text-sm text-op-body placeholder-op-muted focus:outline-none focus:ring-2 focus:ring-op-blue/40 focus:border-op-blue transition-all bg-white`
+    `w-full border ${errors[field] ? 'border-op-red' : 'border-op-border'} rounded-lg px-4 py-3 text-sm text-op-body placeholder-op-muted focus:outline-none focus:ring-2 focus:ring-op-navy/20 focus:border-op-navy transition-all bg-white`
 
   const radioClass = (active: boolean) =>
-    `flex items-center gap-3 border ${active ? 'border-op-blue bg-blue-50' : 'border-op-border bg-white'} rounded-lg px-4 py-3 cursor-pointer hover:border-op-blue hover:bg-blue-50/50 transition-all`
+    `flex items-center gap-3 border ${active ? 'border-op-navy bg-op-navy/10' : 'border-op-border bg-white'} rounded-lg px-4 py-3 cursor-pointer hover:border-op-navy hover:bg-op-navy/5 transition-all`
 
   const RadioDot = ({ active }: { active: boolean }) => (
-    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${active ? 'border-op-blue' : 'border-op-border'}`}>
-      {active && <div className="w-2 h-2 rounded-full bg-op-blue" />}
+    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${active ? 'border-op-navy' : 'border-op-border'}`}>
+      {active && <div className="w-2 h-2 rounded-full bg-op-navy" />}
     </div>
   )
 
@@ -199,7 +224,7 @@ export default function ScannerForm({ defaultIndustry }: Props) {
         </div>
         <div className="w-full bg-op-border rounded-full h-2">
           <div
-            className="bg-op-blue h-2 rounded-full transition-all duration-500"
+            className="bg-op-navy h-2 rounded-full transition-all duration-500"
             style={{ width: `${progress + 33}%` }}
           />
         </div>
