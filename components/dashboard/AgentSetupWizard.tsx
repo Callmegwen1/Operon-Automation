@@ -129,6 +129,10 @@ function LeadFollowupWizard({ userId, initialConfig, onComplete }: {
   const [importError, setImportError] = useState('')
   const [config, setConfig] = useState<AgentConfig>(initialConfig)
   const [saving, setSaving] = useState(false)
+  const [activationDone, setActivationDone] = useState(false)
+  const [verifyUrl, setVerifyUrl] = useState('')
+  const [verifying, setVerifying] = useState(false)
+  const [verifyResult, setVerifyResult] = useState<'found' | 'not-found' | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const totalSteps = 4
@@ -153,6 +157,20 @@ function LeadFollowupWizard({ userId, initialConfig, onComplete }: {
     if (fileRef.current) fileRef.current.value = ''
   }
 
+  const handleVerify = async () => {
+    if (!verifyUrl.trim()) return
+    setVerifying(true)
+    setVerifyResult(null)
+    try {
+      const res = await fetch(`/api/verify-embed?userId=${userId}&pageUrl=${encodeURIComponent(verifyUrl.trim())}`)
+      const data = await res.json()
+      setVerifyResult(data.found ? 'found' : 'not-found')
+    } catch {
+      setVerifyResult('not-found')
+    }
+    setVerifying(false)
+  }
+
   const handleFinish = async () => {
     setSaving(true)
     await fetch('/api/agents/config', {
@@ -165,8 +183,13 @@ function LeadFollowupWizard({ userId, initialConfig, onComplete }: {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'lead_followup', enabled: true }),
     })
+    await fetch('/api/agents/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'lead_followup' }),
+    })
     setSaving(false)
-    onComplete(config)
+    setActivationDone(true)
   }
 
   return (
@@ -254,6 +277,35 @@ function LeadFollowupWizard({ userId, initialConfig, onComplete }: {
               <CopyField value={webhookUrl} />
             </div>
           </details>
+
+          {/* Verify the embed is live */}
+          <div className="mb-5 border-t border-op-border pt-4">
+            <p className="text-xs font-bold text-op-navy mb-1">Verify it's on your site</p>
+            <p className="text-xs text-op-muted mb-2">Paste the page URL where you added the form — we'll confirm it's connected.</p>
+            <div className="flex gap-2">
+              <input
+                className="flex-1 border border-op-border rounded-lg px-3 py-2 text-xs text-op-body placeholder-op-muted focus:outline-none focus:border-op-navy bg-white transition-all"
+                placeholder="https://yoursite.com/contact"
+                value={verifyUrl}
+                onChange={(e) => setVerifyUrl(e.target.value)}
+              />
+              <button
+                onClick={handleVerify}
+                disabled={verifying || !verifyUrl.trim()}
+                className="btn-secondary text-xs px-3 py-2 shrink-0 flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {verifying ? <Loader2 size={13} className="animate-spin" /> : 'Check'}
+              </button>
+            </div>
+            {verifyResult === 'found' && (
+              <p className="text-xs text-op-green font-semibold mt-1.5 flex items-center gap-1">
+                <CheckCircle2 size={12} /> Form detected — you're all connected!
+              </p>
+            )}
+            {verifyResult === 'not-found' && (
+              <p className="text-xs text-op-red mt-1.5">Couldn't find the form on that page. Make sure you saved the page after pasting the code.</p>
+            )}
+          </div>
 
           <div className="flex gap-3">
             <button onClick={() => setStep(0)} className="btn-secondary flex items-center gap-1.5"><ArrowLeft size={14} /> Back</button>
@@ -390,31 +442,54 @@ function LeadFollowupWizard({ userId, initialConfig, onComplete }: {
         </div>
       )}
 
-      {/* Step 3 — done */}
+      {/* Step 3 — confirm + activate */}
       {step === 3 && (
         <div className="flex-1 flex flex-col items-center text-center">
-          <div className="w-16 h-16 rounded-2xl bg-op-navy flex items-center justify-center mb-5">
-            <Mail size={28} className="text-white" />
-          </div>
-          <h2 className="text-xl font-bold font-manrope text-op-navy mb-2">You're all set!</h2>
-          <p className="text-sm text-op-muted mb-6 max-w-sm">
-            Your Lead Follow-Up Agent is now active. Every new lead with an email will automatically receive a 3-email sequence — no action needed from you.
-          </p>
-          <div className="w-full text-left bg-op-bg border border-op-border rounded-xl px-4 py-4 mb-6 flex flex-col gap-2">
-            {[
-              { t: '15 minutes', d: 'Warm introduction email sent to the lead' },
-              { t: 'Day 2',      d: 'Follow-up — checking in, offering help' },
-              { t: 'Day 5',      d: 'Final nudge — soft close' },
-            ].map(({ t, d }) => (
-              <div key={t} className="flex items-center gap-3">
-                <span className="text-xs font-bold text-op-navy w-20 shrink-0">{t}</span>
-                <span className="text-xs text-op-muted">{d}</span>
+          {activationDone ? (
+            <>
+              <div className="w-16 h-16 rounded-2xl bg-op-green flex items-center justify-center mb-5">
+                <CheckCircle2 size={28} className="text-white" />
               </div>
-            ))}
-          </div>
-          <button onClick={handleFinish} disabled={saving} className="btn-primary w-full justify-center text-sm">
-            {saving ? <Loader2 size={15} className="animate-spin" /> : <><CheckCircle2 size={15} /> Activate Agent</>}
-          </button>
+              <h2 className="text-xl font-bold font-manrope text-op-navy mb-2">Agent is Live!</h2>
+              <p className="text-sm text-op-muted mb-5 max-w-sm">
+                Every new lead with an email will automatically receive a 3-email follow-up sequence — no action needed from you.
+              </p>
+              <div className="w-full bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-6 flex items-start gap-3 text-left">
+                <div className="w-2 h-2 rounded-full bg-op-green mt-1 shrink-0" />
+                <p className="text-xs text-green-700 font-medium">
+                  Test email sent to <strong>{config.replyToEmail}</strong> — check your inbox to confirm everything looks right.
+                </p>
+              </div>
+              <button onClick={() => onComplete(config)} className="btn-primary w-full justify-center text-sm">
+                Done
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="w-16 h-16 rounded-2xl bg-op-navy flex items-center justify-center mb-5">
+                <Mail size={28} className="text-white" />
+              </div>
+              <h2 className="text-xl font-bold font-manrope text-op-navy mb-2">Ready to activate</h2>
+              <p className="text-sm text-op-muted mb-6 max-w-sm">
+                Every new lead with an email will automatically receive a 3-email sequence. We'll send you a test email the moment you activate so you can confirm it's working.
+              </p>
+              <div className="w-full text-left bg-op-bg border border-op-border rounded-xl px-4 py-4 mb-6 flex flex-col gap-2">
+                {[
+                  { t: '15 minutes', d: 'Warm introduction email sent to the lead' },
+                  { t: 'Day 2',      d: 'Follow-up — checking in, offering help' },
+                  { t: 'Day 5',      d: 'Final nudge — soft close' },
+                ].map(({ t, d }) => (
+                  <div key={t} className="flex items-center gap-3">
+                    <span className="text-xs font-bold text-op-navy w-20 shrink-0">{t}</span>
+                    <span className="text-xs text-op-muted">{d}</span>
+                  </div>
+                ))}
+              </div>
+              <button onClick={handleFinish} disabled={saving} className="btn-primary w-full justify-center text-sm">
+                {saving ? <Loader2 size={15} className="animate-spin" /> : <><CheckCircle2 size={15} /> Activate Agent</>}
+              </button>
+            </>
+          )}
         </div>
       )}
     </div>
@@ -468,6 +543,15 @@ const REVIEW_PLATFORMS = [
   },
 ]
 
+function isValidReviewUrl(url: string): boolean {
+  if (!url.trim()) return true
+  try {
+    const { hostname } = new URL(url)
+    return ['g.page', 'google.com', 'yelp.com', 'facebook.com', 'tripadvisor.com', 'goo.gl']
+      .some((d) => hostname === d || hostname.endsWith('.' + d))
+  } catch { return false }
+}
+
 function ReviewRequestWizard({ initialConfig, onComplete }: {
   initialConfig: AgentConfig
   onComplete: (config: AgentConfig) => void
@@ -476,6 +560,7 @@ function ReviewRequestWizard({ initialConfig, onComplete }: {
   const [platform, setPlatform] = useState<ReviewPlatform | null>(null)
   const [config, setConfig] = useState<AgentConfig>(initialConfig)
   const [saving, setSaving] = useState(false)
+  const [activationDone, setActivationDone] = useState(false)
   const totalSteps = 4
   const platformInfo = REVIEW_PLATFORMS.find((p) => p.id === platform)
 
@@ -491,8 +576,13 @@ function ReviewRequestWizard({ initialConfig, onComplete }: {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'review_request', enabled: true }),
     })
+    await fetch('/api/agents/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'review_request' }),
+    })
     setSaving(false)
-    onComplete(config)
+    setActivationDone(true)
   }
 
   return (
@@ -538,7 +628,7 @@ function ReviewRequestWizard({ initialConfig, onComplete }: {
         <div className="flex-1">
           <h2 className="text-xl font-bold font-manrope text-op-navy mb-1">Get your review link</h2>
           <p className="text-sm text-op-muted mb-5">Follow these steps to find your link, then paste it below.</p>
-          <div className="flex flex-col gap-2 mb-5">
+          <div className="flex flex-col gap-2 mb-4">
             {platformInfo?.howTo.map((instruction, i) => (
               <div key={i} className="flex items-start gap-3 bg-op-bg rounded-lg px-4 py-3">
                 <span className="w-5 h-5 rounded-full bg-op-navy text-white text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
@@ -546,6 +636,18 @@ function ReviewRequestWizard({ initialConfig, onComplete }: {
               </div>
             ))}
           </div>
+
+          {platform === 'google' && (
+            <a
+              href="https://business.google.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-op-navy bg-op-navy/5 border border-op-navy/20 rounded-lg px-3 py-2 hover:bg-op-navy/10 transition-colors mb-4"
+            >
+              <ExternalLink size={12} /> Open Google Business Profile
+            </a>
+          )}
+
           <label className="block text-xs font-bold text-op-navy mb-1.5">Your review link <span className="text-op-red">*</span></label>
           <input
             className={inputClass}
@@ -553,6 +655,12 @@ function ReviewRequestWizard({ initialConfig, onComplete }: {
             value={config.reviewLink ?? ''}
             onChange={(e) => setConfig((c) => ({ ...c, reviewLink: e.target.value }))}
           />
+          {config.reviewLink && !isValidReviewUrl(config.reviewLink) && (
+            <p className="text-xs text-op-amber mt-1.5 font-medium">
+              This doesn't look like a review page URL — double-check the link you copied.
+            </p>
+          )}
+
           <div className="flex gap-3 mt-5">
             <button onClick={() => setStep(0)} className="btn-secondary flex items-center gap-1.5"><ArrowLeft size={14} /> Back</button>
             <button onClick={() => setStep(2)} disabled={!config.reviewLink?.trim()} className="btn-primary flex-1 justify-center disabled:opacity-50">
@@ -586,25 +694,48 @@ function ReviewRequestWizard({ initialConfig, onComplete }: {
         </div>
       )}
 
-      {/* Step 3 — done */}
+      {/* Step 3 — confirm + activate */}
       {step === 3 && (
         <div className="flex-1 flex flex-col items-center text-center">
-          <div className="w-16 h-16 rounded-2xl bg-op-amber flex items-center justify-center mb-5">
-            <Star size={28} className="text-white" />
-          </div>
-          <h2 className="text-xl font-bold font-manrope text-op-navy mb-2">Ready to collect reviews!</h2>
-          <p className="text-sm text-op-muted mb-6 max-w-sm">
-            Go to any customer in Contacts and click the ⭐ Review button. They'll receive a personalized review request email instantly.
-          </p>
-          <div className="w-full text-left bg-op-bg border border-op-border rounded-xl px-4 py-4 mb-6">
-            <p className="text-xs font-bold text-op-navy mb-2">How to use it</p>
-            <p className="text-xs text-op-muted leading-relaxed">
-              Contacts → find a customer → click ⭐ Review → done. The email goes out immediately and links directly to your review page.
-            </p>
-          </div>
-          <button onClick={handleFinish} disabled={saving} className="btn-primary w-full justify-center text-sm">
-            {saving ? <Loader2 size={15} className="animate-spin" /> : <><CheckCircle2 size={15} /> Activate Agent</>}
-          </button>
+          {activationDone ? (
+            <>
+              <div className="w-16 h-16 rounded-2xl bg-op-green flex items-center justify-center mb-5">
+                <CheckCircle2 size={28} className="text-white" />
+              </div>
+              <h2 className="text-xl font-bold font-manrope text-op-navy mb-2">Agent is Live!</h2>
+              <p className="text-sm text-op-muted mb-5 max-w-sm">
+                Go to any customer in Contacts and click ⭐ Review — they'll get a personalized request in seconds.
+              </p>
+              <div className="w-full bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-6 flex items-start gap-3 text-left">
+                <div className="w-2 h-2 rounded-full bg-op-green mt-1 shrink-0" />
+                <p className="text-xs text-green-700 font-medium">
+                  Test email sent to <strong>{config.replyToEmail}</strong> — check your inbox to see what your customers will receive.
+                </p>
+              </div>
+              <button onClick={() => onComplete(config)} className="btn-primary w-full justify-center text-sm">
+                Done
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="w-16 h-16 rounded-2xl bg-op-amber flex items-center justify-center mb-5">
+                <Star size={28} className="text-white" />
+              </div>
+              <h2 className="text-xl font-bold font-manrope text-op-navy mb-2">Ready to collect reviews!</h2>
+              <p className="text-sm text-op-muted mb-6 max-w-sm">
+                Go to any customer in Contacts and click the ⭐ Review button. We'll send you a test email the moment you activate so you can see exactly what your customers will receive.
+              </p>
+              <div className="w-full text-left bg-op-bg border border-op-border rounded-xl px-4 py-4 mb-6">
+                <p className="text-xs font-bold text-op-navy mb-2">How to use it</p>
+                <p className="text-xs text-op-muted leading-relaxed">
+                  Contacts → find a customer → click ⭐ Review → done. The email goes out immediately with a direct link to your review page.
+                </p>
+              </div>
+              <button onClick={handleFinish} disabled={saving} className="btn-primary w-full justify-center text-sm">
+                {saving ? <Loader2 size={15} className="animate-spin" /> : <><CheckCircle2 size={15} /> Activate Agent</>}
+              </button>
+            </>
+          )}
         </div>
       )}
     </div>
@@ -620,6 +751,7 @@ function WeeklyReportWizard({ initialConfig, onComplete }: {
   const [config, setConfig] = useState<AgentConfig>(initialConfig)
   const [step, setStep] = useState(0)
   const [saving, setSaving] = useState(false)
+  const [activationDone, setActivationDone] = useState(false)
 
   const handleFinish = async () => {
     setSaving(true)
@@ -633,8 +765,13 @@ function WeeklyReportWizard({ initialConfig, onComplete }: {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type: 'weekly_report', enabled: true }),
     })
+    await fetch('/api/agents/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'weekly_report' }),
+    })
     setSaving(false)
-    onComplete(config)
+    setActivationDone(true)
   }
 
   return (
@@ -670,24 +807,47 @@ function WeeklyReportWizard({ initialConfig, onComplete }: {
 
       {step === 1 && (
         <div className="flex-1 flex flex-col items-center text-center">
-          <div className="w-16 h-16 rounded-2xl bg-op-green flex items-center justify-center mb-5">
-            <BarChart2 size={28} className="text-white" />
-          </div>
-          <h2 className="text-xl font-bold font-manrope text-op-navy mb-2">Your report is scheduled</h2>
-          <p className="text-sm text-op-muted mb-6 max-w-sm">
-            Every Monday at 8:00 AM, a report lands in <strong>{config.reportEmail}</strong> — no action needed.
-          </p>
-          <div className="w-full text-left bg-op-bg border border-op-border rounded-xl px-4 py-4 mb-6 flex flex-col gap-2">
-            {['Revenue Leak Score (and change from last week)', 'Open leaks still needing attention', 'Leaks you\'ve fixed', 'Agent activity — emails sent, reviews requested'].map((item) => (
-              <div key={item} className="flex items-center gap-2 text-xs text-op-body">
-                <CheckCircle2 size={13} className="text-op-green shrink-0" />
-                {item}
+          {activationDone ? (
+            <>
+              <div className="w-16 h-16 rounded-2xl bg-op-green flex items-center justify-center mb-5">
+                <CheckCircle2 size={28} className="text-white" />
               </div>
-            ))}
-          </div>
-          <button onClick={handleFinish} disabled={saving} className="btn-primary w-full justify-center text-sm">
-            {saving ? <Loader2 size={15} className="animate-spin" /> : <><CheckCircle2 size={15} /> Activate Agent</>}
-          </button>
+              <h2 className="text-xl font-bold font-manrope text-op-navy mb-2">Report Scheduled!</h2>
+              <p className="text-sm text-op-muted mb-5 max-w-sm">
+                Every Monday at 8:00 AM, your business summary lands in <strong>{config.reportEmail}</strong>.
+              </p>
+              <div className="w-full bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-6 flex items-start gap-3 text-left">
+                <div className="w-2 h-2 rounded-full bg-op-green mt-1 shrink-0" />
+                <p className="text-xs text-green-700 font-medium">
+                  Sample report sent to <strong>{config.reportEmail}</strong> — check your inbox to see what you'll receive each Monday.
+                </p>
+              </div>
+              <button onClick={() => onComplete(config)} className="btn-primary w-full justify-center text-sm">
+                Done
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="w-16 h-16 rounded-2xl bg-op-green flex items-center justify-center mb-5">
+                <BarChart2 size={28} className="text-white" />
+              </div>
+              <h2 className="text-xl font-bold font-manrope text-op-navy mb-2">Ready to activate</h2>
+              <p className="text-sm text-op-muted mb-6 max-w-sm">
+                Every Monday at 8:00 AM, a report lands in <strong>{config.reportEmail}</strong>. We'll send you a sample right now so you know exactly what to expect.
+              </p>
+              <div className="w-full text-left bg-op-bg border border-op-border rounded-xl px-4 py-4 mb-6 flex flex-col gap-2">
+                {['Revenue Leak Score (and change from last week)', 'Open leaks still needing attention', "Leaks you've fixed", 'Agent activity — emails sent, reviews requested'].map((item) => (
+                  <div key={item} className="flex items-center gap-2 text-xs text-op-body">
+                    <CheckCircle2 size={13} className="text-op-green shrink-0" />
+                    {item}
+                  </div>
+                ))}
+              </div>
+              <button onClick={handleFinish} disabled={saving} className="btn-primary w-full justify-center text-sm">
+                {saving ? <Loader2 size={15} className="animate-spin" /> : <><CheckCircle2 size={15} /> Activate Agent</>}
+              </button>
+            </>
+          )}
         </div>
       )}
     </div>
