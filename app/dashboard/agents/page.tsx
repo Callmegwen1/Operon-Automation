@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Mail, Star, BarChart2, Loader2, CheckCircle2, FileText, DollarSign, RefreshCw, Send, AlertCircle } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Mail, Star, BarChart2, Loader2, CheckCircle2, FileText, DollarSign, RefreshCw, Send, AlertCircle, Link2, Copy, Check } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 type AgentType = 'lead_followup' | 'review_request' | 'weekly_report'
@@ -103,10 +103,54 @@ function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void 
   )
 }
 
-function AgentCard({ meta, row, activity, onUpdate }: {
+function WebhookBox({ userId }: { userId: string }) {
+  const url = `${typeof window !== 'undefined' ? window.location.origin : 'https://operonauto.com'}/api/public/leads/${userId}`
+  const [copied, setCopied] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(url)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2500)
+  }
+
+  return (
+    <div className="border-t border-op-border pt-4 mt-4">
+      <div className="flex items-center gap-2 mb-2">
+        <Link2 size={13} className="text-op-navy shrink-0" />
+        <p className="text-xs font-bold text-op-navy">Your Lead Capture Webhook</p>
+      </div>
+      <p className="text-xs text-op-muted mb-3 leading-relaxed">
+        Paste this URL into any form tool (your website, Typeform, Google Forms, Zapier, etc.). Every submission will automatically appear in Contacts and trigger the follow-up sequence.
+      </p>
+      <div className="flex gap-2">
+        <input
+          ref={inputRef}
+          readOnly
+          value={url}
+          onClick={() => inputRef.current?.select()}
+          className="flex-1 border border-op-border rounded-lg px-3 py-2 text-xs text-op-muted font-mono bg-op-bg focus:outline-none focus:border-op-navy cursor-text truncate"
+        />
+        <button
+          onClick={handleCopy}
+          className="btn-secondary text-xs px-3 py-2 shrink-0 flex items-center gap-1.5"
+        >
+          {copied ? <Check size={13} className="text-op-green" /> : <Copy size={13} />}
+          {copied ? 'Copied!' : 'Copy'}
+        </button>
+      </div>
+      <p className="text-[10px] text-op-muted/70 mt-2">
+        POST to this URL with: <span className="font-mono">&#123; name, email, phone, source &#125;</span>
+      </p>
+    </div>
+  )
+}
+
+function AgentCard({ meta, row, activity, userId, onUpdate }: {
   meta: typeof AGENT_META[number]
   row: AgentRow
   activity: ActivityEntry[]
+  userId?: string
   onUpdate: (type: AgentType, updates: Partial<AgentRow>) => void
 }) {
   const Icon = meta.icon
@@ -292,6 +336,11 @@ function AgentCard({ meta, row, activity, onUpdate }: {
         </div>
       </div>
 
+      {/* Webhook URL — only for lead_followup */}
+      {meta.type === 'lead_followup' && userId && (
+        <WebhookBox userId={userId} />
+      )}
+
       {/* Delivery log */}
       {activity.length > 0 && (
         <div className="border-t border-op-border pt-4 mt-4">
@@ -351,11 +400,15 @@ export default function AgentsPage() {
     weekly_report:  { type: 'weekly_report',  enabled: false, config: {} },
   })
   const [activityByType, setActivityByType] = useState<Record<string, ActivityEntry[]>>({})
+  const [userId, setUserId] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const load = async () => {
       const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) setUserId(user.id)
+
       const [{ data: agentData }, { data: activityData }] = await Promise.all([
         supabase.from('agents').select('*'),
         supabase
@@ -412,6 +465,7 @@ export default function AgentsPage() {
               meta={meta}
               row={agents[meta.type]}
               activity={activityByType[meta.type] ?? []}
+              userId={userId}
               onUpdate={handleUpdate}
             />
           ))}

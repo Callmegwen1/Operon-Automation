@@ -200,6 +200,8 @@ export default function ContactsPage() {
   const [view, setView] = useState<ViewMode>('list')
   const [importing, setImporting] = useState(false)
   const [importResult, setImportResult] = useState<{ count: number } | null>(null)
+  const [importFollowup, setImportFollowup] = useState(false)
+  const [showImportOptions, setShowImportOptions] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -232,17 +234,17 @@ export default function ContactsPage() {
     if (!file) return
     setImporting(true)
     setImportResult(null)
+    setShowImportOptions(false)
     const text = await file.text()
     const rows = parseCSV(text)
     const res = await fetch('/api/contacts/import', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rows }),
+      body: JSON.stringify({ rows, triggerFollowup: importFollowup }),
     })
     const data = await res.json()
     if (res.ok) {
       setImportResult({ count: data.imported })
-      // Reload contacts to show imported ones
       const supabase = createClient()
       const { data: fresh } = await supabase.from('contacts').select('*').order('created_at', { ascending: false })
       setContacts((fresh as Contact[]) ?? [])
@@ -310,14 +312,41 @@ export default function ContactsPage() {
               className="hidden"
               onChange={handleCSVImport}
             />
-            <button
-              onClick={() => fileRef.current?.click()}
-              disabled={importing}
-              className="btn-secondary text-sm flex items-center gap-1.5"
-            >
-              {importing ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
-              Import CSV
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowImportOptions((v) => !v)}
+                disabled={importing}
+                className="btn-secondary text-sm flex items-center gap-1.5"
+              >
+                {importing ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
+                Import CSV
+              </button>
+              {showImportOptions && (
+                <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-op-border rounded-xl shadow-lg p-4 z-20">
+                  <p className="text-xs font-bold text-op-navy mb-3">Import Options</p>
+                  <label className="flex items-start gap-3 cursor-pointer mb-4">
+                    <input
+                      type="checkbox"
+                      checked={importFollowup}
+                      onChange={(e) => setImportFollowup(e.target.checked)}
+                      className="mt-0.5 accent-op-navy shrink-0"
+                    />
+                    <div>
+                      <p className="text-xs font-semibold text-op-navy">Send follow-up sequence</p>
+                      <p className="text-xs text-op-muted mt-0.5">
+                        If Lead Follow-Up Agent is enabled, imported leads will automatically receive the 3-email sequence.
+                      </p>
+                    </div>
+                  </label>
+                  <button
+                    onClick={() => fileRef.current?.click()}
+                    className="btn-primary text-xs w-full justify-center"
+                  >
+                    Choose CSV File
+                  </button>
+                </div>
+              )}
+            </div>
             <button onClick={() => setShowAdd(true)} className="btn-primary text-sm">
               <Plus size={15} /> Add Contact
             </button>
