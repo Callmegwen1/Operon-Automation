@@ -31,9 +31,6 @@ export default function ScannerPage() {
             <div className="flex items-center gap-2 text-sm text-white/60">
               <Shield size={14} className="text-white/40" /> No credit card required
             </div>
-            <div className="flex items-center gap-2 text-sm text-white/60">
-              <AlertTriangle size={14} className="text-white/40" /> No guaranteed revenue claims
-            </div>
           </div>
         </div>
       </section>

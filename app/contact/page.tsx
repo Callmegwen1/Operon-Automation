@@ -52,7 +52,7 @@ export default function ContactPage() {
                       <p className="font-semibold text-op-navy text-sm mb-1">{label}</p>
                       <p className="text-xs text-op-muted mb-2">{desc}</p>
                       {href && cta && (
-                        <Link href={href} className="text-xs font-semibold text-op-blue hover:underline">
+                        <Link href={href} className="text-xs font-semibold text-op-navy hover:underline">
                           {cta} →
                         </Link>
                       )}
@@ -66,7 +66,7 @@ export default function ContactPage() {
                 <p className="text-xs text-white/60 mb-4">
                   The Revenue Leak Scanner is the fastest way to understand where your business is losing customers — and what to fix first.
                 </p>
-                <Link href="/scanner" className="inline-flex items-center gap-2 bg-op-blue text-white font-bold text-xs px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-colors">
+                <Link href="/scanner" className="inline-flex items-center gap-2 bg-white text-op-navy font-bold text-xs px-5 py-2.5 rounded-lg hover:bg-slate-50 transition-colors">
                   Scan My Business Free <ArrowRight size={13} />
                 </Link>
               </div>

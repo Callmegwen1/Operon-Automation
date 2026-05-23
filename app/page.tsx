@@ -140,7 +140,7 @@ export default function HomePage() {
               {/* Eyebrow with more voice */}
               <p className="eyebrow mb-5">Something&apos;s leaking.</p>
 
-              <h1 className="text-5xl sm:text-6xl lg:text-[68px] font-extrabold font-manrope text-op-primary leading-[1.06] mb-16">
+              <h1 className="text-5xl sm:text-6xl lg:text-[68px] font-extrabold font-manrope text-op-primary leading-[1.06] mb-10">
                 Find and fix the{' '}
                 <span className="relative inline-block text-op-amber">
                   leaks
@@ -165,6 +165,9 @@ export default function HomePage() {
                   See how it works
                 </Link>
               </div>
+              <p className="text-xs text-op-muted mt-4 text-center lg:text-left">
+                No credit card · Results in 2 minutes · Free for any local service business
+              </p>
             </div>
 
             {/* Slight clockwise tilt — feels placed, not rendered */}
@@ -178,7 +181,10 @@ export default function HomePage() {
       {/* ─── PROBLEM ──────────────────────────────────────────── */}
       <section className="bg-white section-pad border-t border-op-border">
         <div className="container-wide">
-          <p className="eyebrow mb-10">The Problem</p>
+          <p className="eyebrow mb-4">The Problem</p>
+          <h2 className="text-3xl md:text-[2.5rem] font-extrabold font-manrope text-op-primary leading-tight mb-10">
+            The numbers most owners don&apos;t want to think about.
+          </h2>
           <div className="flex flex-col gap-12 max-w-3xl">
             {problemStatements.map(({ value, suffix, statement, detail }, i) => (
               <div key={value} className="border-l-[3px] border-op-amber pl-6">
@@ -277,7 +283,7 @@ export default function HomePage() {
         <div className="container-wide">
           <p className="eyebrow mb-4">How It Works</p>
           <h2 className="text-3xl md:text-[2.5rem] font-extrabold font-manrope text-op-primary leading-tight mb-14">
-            Five steps. Fully automatic.
+            Scan once. Autopilot handles the rest.
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-6">
             {howSteps.map(({ num, title, desc }, i) => (
@@ -301,12 +307,12 @@ export default function HomePage() {
           <div className="flex flex-col lg:flex-row items-start gap-16 lg:gap-20">
 
             <div className="flex-none w-full lg:w-[440px]">
-              <p className="eyebrow mb-4">Operon Services</p>
+              <p className="eyebrow mb-4">Two Ways to Work Together</p>
               <h2 className="text-3xl md:text-[2.5rem] font-extrabold font-manrope text-op-primary leading-tight mb-4">
-                Need a custom system?
+                Self-serve software or done-for-you systems.
               </h2>
               <p className="text-sm text-op-muted leading-relaxed mb-8">
-                Use Revenue Autopilot for self-serve revenue recovery, or work with Operon Services for custom automation built around your specific business.
+                Start free with Revenue Autopilot and activate agents yourself, or work directly with Operon to build a custom system around your business.
               </p>
               <Link href="/services" className="btn-primary text-sm inline-flex">
                 Request Setup Help <ArrowRight size={15} />
@@ -314,26 +320,26 @@ export default function HomePage() {
             </div>
 
             <div className="flex-1 grid sm:grid-cols-2 gap-4">
-              {[
-                {
-                  title: 'Revenue Autopilot',
-                  desc: 'Self-serve. Scan your business, see your score, and activate automation systems yourself.',
-                  badge: 'Software',
-                },
-                {
-                  title: 'Operon Services',
-                  desc: 'Done-for-you. Custom systems built around your specific business workflows and goals.',
-                  badge: 'Agency',
-                },
-              ].map(({ title, desc, badge }) => (
-                <div key={title} className="card">
-                  <span className="text-[10px] font-semibold uppercase tracking-widest text-op-muted mb-4 block">
-                    {badge}
-                  </span>
-                  <h3 className="font-semibold font-manrope text-op-primary text-sm mb-2">{title}</h3>
-                  <p className="text-xs text-op-muted leading-relaxed">{desc}</p>
-                </div>
-              ))}
+              <div className="card flex flex-col">
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-op-muted mb-4 block">Software</span>
+                <h3 className="font-semibold font-manrope text-op-primary text-sm mb-2">Revenue Autopilot</h3>
+                <p className="text-xs text-op-muted leading-relaxed mb-4 flex-1">
+                  Scan your business, get a Revenue Leak Score, and activate pre-built agents that run follow-up, reviews, and reactivation automatically.
+                </p>
+                <Link href="/revenue-autopilot" className="text-xs font-semibold text-op-navy hover:underline inline-flex items-center gap-1">
+                  See how it works <ArrowRight size={11} />
+                </Link>
+              </div>
+              <div className="card flex flex-col">
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-op-muted mb-4 block">Agency</span>
+                <h3 className="font-semibold font-manrope text-op-primary text-sm mb-2">Operon Services</h3>
+                <p className="text-xs text-op-muted leading-relaxed mb-4 flex-1">
+                  Custom CRM setup, multi-step automation, and done-for-you implementation built around your specific workflows and goals.
+                </p>
+                <Link href="/services" className="text-xs font-semibold text-op-navy hover:underline inline-flex items-center gap-1">
+                  See services <ArrowRight size={11} />
+                </Link>
+              </div>
             </div>
           </div>
         </div>
@@ -370,13 +376,9 @@ export default function HomePage() {
       {/* ─── FINAL CTA ────────────────────────────────────────── */}
       <section className="bg-op-navy section-pad">
         <div className="container-wide max-w-2xl">
-          <h2 className="text-3xl md:text-[2.5rem] font-extrabold font-manrope text-white leading-tight mb-16">
-            Ready to see where your business is{' '}
-            <span className="relative inline-block text-op-amber">
-              leaking
-              <DripDrop />
-            </span>{' '}
-            revenue?
+          <h2 className="text-3xl md:text-[2.5rem] font-extrabold font-manrope text-white leading-tight mb-10">
+            Your leaks are costing you right now.{' '}
+            <span className="text-op-amber">Find them free.</span>
           </h2>
           <p className="text-white/60 mb-8 text-base">
             Your free Revenue Leak Score shows exactly where customers may be slipping away.

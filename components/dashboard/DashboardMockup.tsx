@@ -65,7 +65,7 @@ export default function DashboardMockup() {
             <span className="w-2 h-2 rounded-full bg-op-green animate-pulse" />
             <span className="text-xs font-semibold font-inter text-op-navy">Rivera Home Services</span>
           </div>
-          <span className="text-[10px] text-op-muted font-inter">May 19 – 22, 2025</span>
+          <span className="text-[10px] text-op-muted font-inter">May 19 – 22, 2026</span>
         </div>
 
         <div className="p-4">
