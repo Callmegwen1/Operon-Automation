@@ -85,50 +85,40 @@ const industries = [
 ]
 
 /*
- * Three drops dripping directly from the word — all start at y=0 (text baseline).
- * Left = thin, just separating. Center = mid-fall. Right = large, about to splash.
- * SVG is positioned with top:100% so it begins exactly where the characters end.
+ * Three water drops hanging from the word — proper teardrop geometry:
+ * pointed tip at y=0 (text bottom), widens via bezier, caps with a semicircle.
+ * Glossy highlight ellipse on each drop makes them read as liquid.
+ * SVG fills the word width so drops spread naturally across "leaks"/"leaking".
  */
 function DripDrop() {
   return (
     <svg
-      className="absolute left-1/2 -translate-x-1/2"
-      style={{ top: 'calc(100% - 3px)' }}
-      width="76"
-      height="52"
-      viewBox="0 0 76 52"
+      className="absolute left-0 w-full pointer-events-none overflow-visible"
+      style={{ top: 'calc(100% - 2px)' }}
+      viewBox="0 0 154 42"
       fill="none"
       aria-hidden="true"
     >
-      {/* Drop 1 — left, thin, just detached from text */}
+      {/* Small drop — just detaching, cx=18 r=6 h=18 */}
       <path
-        d="M16 0 C18.5 3.5 20.5 9 16 16 C11.5 9 13.5 3.5 16 0Z"
-        fill="#D97706" fillOpacity="0.48"
+        d="M18,0 C19.2,3.6 24,6 24,12 A6,6 0 0 1 12,12 C12,6 16.8,3.6 18,0 Z"
+        fill="#D97706" fillOpacity="0.55"
       />
-      {/* Drop 2 — center, mid-fall, fuller shape */}
+      <ellipse cx="15" cy="4.5" rx="1.5" ry="2" fill="white" fillOpacity="0.42" transform="rotate(-20 15 4.5)" />
+
+      {/* Medium drop — mid-fall, cx=68 r=9 h=26 */}
       <path
-        d="M38 0 C43 6.5 46 18 38 28 C30 18 33 6.5 38 0Z"
-        fill="#D97706" fillOpacity="0.74"
+        d="M68,0 C69.8,5.1 77,8.5 77,17 A9,9 0 0 1 59,17 C59,8.5 66.2,5.1 68,0 Z"
+        fill="#D97706" fillOpacity="0.78"
       />
-      {/* Drop 3 — right, largest, nearly round, about to impact */}
+      <ellipse cx="64" cy="6.5" rx="2.5" ry="3.5" fill="white" fillOpacity="0.38" transform="rotate(-20 64 6.5)" />
+
+      {/* Large drop — nearly at impact, cx=128 r=12 h=36 */}
       <path
-        d="M60 0 C66.5 9 70 22 60 38 C50 22 53.5 9 60 0Z"
-        fill="#D97706" fillOpacity="0.94"
+        d="M128,0 C130.4,7.2 140,12 140,24 A12,12 0 0 1 116,24 C116,12 125.6,7.2 128,0 Z"
+        fill="#D97706" fillOpacity="0.92"
       />
-      {/* Thin amber tether line — shows drops are pulling off the word */}
-      <line x1="16" y1="0" x2="16" y2="3" stroke="#D97706" strokeWidth="1.2" strokeOpacity="0.3" />
-      <line x1="38" y1="0" x2="38" y2="4" stroke="#D97706" strokeWidth="1.5" strokeOpacity="0.3" />
-      <line x1="60" y1="0" x2="60" y2="5" stroke="#D97706" strokeWidth="2"   strokeOpacity="0.3" />
-      {/* Splash pool */}
-      <ellipse cx="40" cy="47" rx="26" ry="4" fill="#D97706" fillOpacity="0.14" />
-      {/* Crown spikes up from pool */}
-      <path d="M19 47 L15 39" stroke="#D97706" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.36" />
-      <path d="M40 43 L40 35" stroke="#D97706" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.5"  />
-      <path d="M61 47 L65 39" stroke="#D97706" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.36" />
-      {/* Tiny bounce droplets at spike tips */}
-      <circle cx="15" cy="37" r="1.8" fill="#D97706" fillOpacity="0.28" />
-      <circle cx="40" cy="33" r="2.2" fill="#D97706" fillOpacity="0.36" />
-      <circle cx="65" cy="37" r="1.8" fill="#D97706" fillOpacity="0.28" />
+      <ellipse cx="124" cy="9.5" rx="3.5" ry="5" fill="white" fillOpacity="0.35" transform="rotate(-20 124 9.5)" />
     </svg>
   )
 }
@@ -215,8 +205,7 @@ export default function HomePage() {
                 alt="Leonardo Diaz, Founder of Operon Automation"
                 width={96}
                 height={96}
-                className="w-full h-full object-cover"
-                style={{ objectPosition: '50% 8%' }}
+                className="w-full h-full object-cover object-center"
               />
             </div>
 
