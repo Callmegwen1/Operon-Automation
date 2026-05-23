@@ -84,33 +84,51 @@ const industries = [
   { icon: Users,       label: 'Local Services'     },
 ]
 
-/* Three drops cascading into a crown splash */
+/*
+ * Three drops dripping directly from the word — all start at y=0 (text baseline).
+ * Left = thin, just separating. Center = mid-fall. Right = large, about to splash.
+ * SVG is positioned with top:100% so it begins exactly where the characters end.
+ */
 function DripDrop() {
   return (
     <svg
-      className="absolute left-1/2 -translate-x-1/2 -bottom-2"
-      width="72"
-      height="46"
-      viewBox="0 0 72 46"
+      className="absolute left-1/2 -translate-x-1/2"
+      style={{ top: 'calc(100% - 3px)' }}
+      width="76"
+      height="52"
+      viewBox="0 0 76 52"
       fill="none"
       aria-hidden="true"
     >
-      {/* Left drop — small, highest */}
-      <path d="M14 0 C15.8 3 17.5 7 14 12 C10.5 7 12.2 3 14 0Z" fill="#D97706" fillOpacity="0.45" />
-      {/* Center drop — medium */}
-      <path d="M36 4 C39 9 41.5 17 36 25 C30.5 17 33 9 36 4Z" fill="#D97706" fillOpacity="0.72" />
-      {/* Right drop — large, lowest */}
-      <path d="M58 10 C62 16 65 26 58 36 C51 26 54 16 58 10Z" fill="#D97706" fillOpacity="0.92" />
+      {/* Drop 1 — left, thin, just detached from text */}
+      <path
+        d="M16 0 C18.5 3.5 20.5 9 16 16 C11.5 9 13.5 3.5 16 0Z"
+        fill="#D97706" fillOpacity="0.48"
+      />
+      {/* Drop 2 — center, mid-fall, fuller shape */}
+      <path
+        d="M38 0 C43 6.5 46 18 38 28 C30 18 33 6.5 38 0Z"
+        fill="#D97706" fillOpacity="0.74"
+      />
+      {/* Drop 3 — right, largest, nearly round, about to impact */}
+      <path
+        d="M60 0 C66.5 9 70 22 60 38 C50 22 53.5 9 60 0Z"
+        fill="#D97706" fillOpacity="0.94"
+      />
+      {/* Thin amber tether line — shows drops are pulling off the word */}
+      <line x1="16" y1="0" x2="16" y2="3" stroke="#D97706" strokeWidth="1.2" strokeOpacity="0.3" />
+      <line x1="38" y1="0" x2="38" y2="4" stroke="#D97706" strokeWidth="1.5" strokeOpacity="0.3" />
+      <line x1="60" y1="0" x2="60" y2="5" stroke="#D97706" strokeWidth="2"   strokeOpacity="0.3" />
       {/* Splash pool */}
-      <ellipse cx="38" cy="43" rx="24" ry="3.5" fill="#D97706" fillOpacity="0.16" />
-      {/* Crown spikes */}
-      <path d="M18 43 L14 36" stroke="#D97706" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.38" />
-      <path d="M38 39 L38 32" stroke="#D97706" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.5"  />
-      <path d="M57 43 L61 36" stroke="#D97706" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.38" />
-      {/* Tiny bounce drops at spike tips */}
-      <circle cx="14" cy="34" r="1.8" fill="#D97706" fillOpacity="0.3" />
-      <circle cx="38" cy="30" r="2.2" fill="#D97706" fillOpacity="0.38" />
-      <circle cx="61" cy="34" r="1.8" fill="#D97706" fillOpacity="0.3" />
+      <ellipse cx="40" cy="47" rx="26" ry="4" fill="#D97706" fillOpacity="0.14" />
+      {/* Crown spikes up from pool */}
+      <path d="M19 47 L15 39" stroke="#D97706" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.36" />
+      <path d="M40 43 L40 35" stroke="#D97706" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.5"  />
+      <path d="M61 47 L65 39" stroke="#D97706" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.36" />
+      {/* Tiny bounce droplets at spike tips */}
+      <circle cx="15" cy="37" r="1.8" fill="#D97706" fillOpacity="0.28" />
+      <circle cx="40" cy="33" r="2.2" fill="#D97706" fillOpacity="0.36" />
+      <circle cx="65" cy="37" r="1.8" fill="#D97706" fillOpacity="0.28" />
     </svg>
   )
 }
@@ -127,9 +145,9 @@ export default function HomePage() {
               {/* Eyebrow with more voice */}
               <p className="eyebrow mb-5">Something&apos;s leaking.</p>
 
-              <h1 className="text-5xl sm:text-6xl lg:text-[68px] font-extrabold font-manrope text-op-primary leading-[1.06] mb-7">
+              <h1 className="text-5xl sm:text-6xl lg:text-[68px] font-extrabold font-manrope text-op-primary leading-[1.06] mb-16">
                 Find and fix the{' '}
-                <span className="relative inline-block text-op-amber pb-14">
+                <span className="relative inline-block text-op-amber">
                   leaks
                   <DripDrop />
                 </span>{' '}
@@ -356,9 +374,9 @@ export default function HomePage() {
       {/* ─── FINAL CTA ────────────────────────────────────────── */}
       <section className="bg-op-navy section-pad">
         <div className="container-wide max-w-2xl">
-          <h2 className="text-3xl md:text-[2.5rem] font-extrabold font-manrope text-white leading-tight mb-4">
+          <h2 className="text-3xl md:text-[2.5rem] font-extrabold font-manrope text-white leading-tight mb-16">
             Ready to see where your business is{' '}
-            <span className="relative inline-block text-op-amber pb-14">
+            <span className="relative inline-block text-op-amber">
               leaking
               <DripDrop />
             </span>{' '}
