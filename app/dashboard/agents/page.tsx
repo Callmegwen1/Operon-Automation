@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import {
   Mail, Star, BarChart2, Loader2, CheckCircle2,
-  FileText, DollarSign, RefreshCw, Send, ChevronDown, ChevronUp, Zap, Copy, ExternalLink,
+  FileText, DollarSign, RefreshCw, Send, ChevronDown, ChevronUp,
+  Zap, Copy, ExternalLink, AlertTriangle, Clock, X,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import AgentSetupWizard from '@/components/dashboard/AgentSetupWizard'
@@ -33,50 +34,128 @@ interface ActivityEntry {
   created_at: string
 }
 
-const AGENT_META = [
+interface AgentTask {
+  id: string
+  agent_type: string
+  title: string
+  description: string | null
+  priority: 'low' | 'medium' | 'high' | 'urgent'
+  status: 'open' | 'done' | 'dismissed'
+  due_at: string | null
+  created_at: string
+  contact_id: string | null
+  contacts: { name: string; email: string | null; phone: string | null } | null
+}
+
+const SYSTEM_META = [
   {
     type:        'lead_followup' as AgentType,
     icon:        Mail,
     color:       'text-op-navy',
     activeBg:    'bg-op-navy',
-    name:        'Lead Follow-Up Agent',
-    tagline:     'Never let a lead go cold.',
-    description: 'When a new lead comes in — from your website, an import, or manual entry — this agent sends a 3-email follow-up sequence at 15 minutes, Day 2, and Day 5. Completely automatic.',
-    timing:      '15 min · Day 2 · Day 5 after a lead is added',
+    name:        'Lead Recovery Autopilot',
+    tagline:     'Recover every lead, automatically.',
+    description: 'When a new lead comes in, AI classifies urgency and intent, chooses the right follow-up playbook, personalizes the first message, and alerts you immediately if action is needed. Follow-ups run at 15 min, Day 2, and Day 5.',
+    timing:      'Fires within seconds of every new lead',
+    badge:       'AI-Powered',
   },
   {
     type:        'review_request' as AgentType,
     icon:        Star,
     color:       'text-op-amber',
     activeBg:    'bg-op-amber',
-    name:        'Review Request Agent',
+    name:        'Review Growth System',
     tagline:     'Turn happy customers into 5-star reviews.',
-    description: 'One click sends a personalized review request to any customer in your contacts. They get a direct link to leave you a review — no awkward asks, no manual emails.',
-    timing:      'Fires instantly when you click ⭐ Review on a contact',
+    description: 'One click sends a personalized review request to any customer. They get a direct link to leave a review on Google, Yelp, or Facebook — no awkward asks, no manual emails.',
+    timing:      'Fires instantly when you click Review on a contact',
+    badge:       null,
   },
   {
     type:        'weekly_report' as AgentType,
     icon:        BarChart2,
     color:       'text-op-green',
     activeBg:    'bg-op-green',
-    name:        'Weekly Owner Report',
-    tagline:     'Know your business health every Monday.',
+    name:        'Weekly Revenue Briefing',
+    tagline:     'Your business health, every Monday.',
     description: 'A clear summary lands in your inbox every Monday at 8:00 AM — Revenue Leak Score, open leaks, what\'s been fixed, and agent activity. No dashboard check-in required.',
     timing:      'Every Monday at 8:00 AM',
+    badge:       null,
   },
 ]
 
 const COMING_SOON = [
-  { icon: FileText,  name: 'Estimate Follow-Up Agent',  description: 'Automatically follows up on unanswered estimates after 24 hours and 3 days — turning cold quotes into booked jobs.' },
-  { icon: DollarSign, name: 'Invoice Reminder Agent',   description: 'Sends friendly payment reminders for overdue invoices at 3, 7, and 14 days — reducing collections calls.' },
-  { icon: RefreshCw,  name: 'Customer Reactivation Agent', description: "Re-engages customers who haven't booked in 60+ days with a personalized win-back message." },
+  { icon: FileText,   name: 'Estimate Recovery Autopilot',  description: 'Automatically follows up on unanswered estimates at 24h and 3 days — turning cold quotes into booked jobs.' },
+  { icon: DollarSign, name: 'Payment Reminder System',      description: 'Sends friendly, graduated payment reminders for overdue invoices — reducing collections calls.' },
+  { icon: RefreshCw,  name: 'Customer Reactivation Autopilot', description: "Re-engages customers who haven't booked in 60+ days with a personalized, industry-specific win-back message." },
 ]
+
+const PRIORITY_COLOR: Record<string, string> = {
+  urgent: 'text-op-red bg-red-50 border-red-200',
+  high:   'text-op-amber bg-amber-50 border-amber-200',
+  medium: 'text-op-navy bg-op-navy/5 border-op-navy/20',
+  low:    'text-op-muted bg-op-bg border-op-border',
+}
 
 const inputClass =
   'w-full border border-op-border rounded-lg px-4 py-2.5 text-sm text-op-body placeholder-op-muted focus:outline-none focus:ring-2 focus:ring-op-navy/20 focus:border-op-navy transition-all bg-white'
 
+// ── Task Panel ────────────────────────────────────────────────
+function TasksPanel({ tasks, onDismiss }: { tasks: AgentTask[]; onDismiss: (id: string) => void }) {
+  if (tasks.length === 0) return null
+  return (
+    <div className="card border-2 border-op-amber/30 bg-amber-50/30 mb-6">
+      <div className="flex items-center gap-2 mb-4">
+        <AlertTriangle size={16} className="text-op-amber" />
+        <h3 className="font-bold text-op-navy font-manrope text-sm">
+          {tasks.length} Action{tasks.length !== 1 ? 's' : ''} Needed
+        </h3>
+        <span className="text-xs text-op-muted">Created by your revenue systems</span>
+      </div>
+      <div className="flex flex-col gap-3">
+        {tasks.map((task) => (
+          <div key={task.id} className="bg-white rounded-xl border border-op-border p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wide ${PRIORITY_COLOR[task.priority]}`}>
+                    {task.priority}
+                  </span>
+                  {task.due_at && (
+                    <span className="text-[10px] text-op-muted flex items-center gap-1">
+                      <Clock size={10} /> Due {new Date(task.due_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm font-semibold text-op-navy">{task.title}</p>
+                {task.description && (
+                  <p className="text-xs text-op-muted mt-1 leading-relaxed line-clamp-2">{task.description}</p>
+                )}
+                {task.contacts && (
+                  <p className="text-xs text-op-muted mt-1.5">
+                    {task.contacts.name}
+                    {task.contacts.phone && <> · {task.contacts.phone}</>}
+                    {task.contacts.email && <> · {task.contacts.email}</>}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={() => onDismiss(task.id)}
+                className="shrink-0 text-op-muted hover:text-op-red transition-colors mt-0.5"
+                title="Dismiss"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── Agent Card ────────────────────────────────────────────────
 function AgentCard({ meta, row, activity, userId, onUpdate }: {
-  meta: typeof AGENT_META[number]
+  meta: typeof SYSTEM_META[number]
   row: AgentRow
   activity: ActivityEntry[]
   userId: string
@@ -84,15 +163,15 @@ function AgentCard({ meta, row, activity, userId, onUpdate }: {
 }) {
   const Icon = meta.icon
   const [showWizard, setShowWizard] = useState(false)
-  const [showEdit, setShowEdit] = useState(false)
-  const [showEmbed, setShowEmbed] = useState(false)
+  const [showEdit, setShowEdit]     = useState(false)
+  const [showEmbed, setShowEmbed]   = useState(false)
   const [editConfig, setEditConfig] = useState<AgentConfig>(row.config ?? {})
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
-  const [disabling, setDisabling] = useState(false)
-  const [testMsg, setTestMsg] = useState('')
-  const [testing, setTesting] = useState(false)
-  const [copiedKey, setCopiedKey] = useState<string | null>(null)
+  const [saving, setSaving]         = useState(false)
+  const [saved, setSaved]           = useState(false)
+  const [disabling, setDisabling]   = useState(false)
+  const [testMsg, setTestMsg]       = useState('')
+  const [testing, setTesting]       = useState(false)
+  const [copiedKey, setCopiedKey]   = useState<string | null>(null)
 
   const copyText = (text: string, key: string) => {
     navigator.clipboard.writeText(text)
@@ -143,22 +222,22 @@ function AgentCard({ meta, row, activity, userId, onUpdate }: {
     setTimeout(() => setTestMsg(''), 5000)
   }
 
-  const editFields = AGENT_META.find((m) => m.type === meta.type) ? (() => {
+  const editFields = (() => {
     if (meta.type === 'lead_followup') return [
-      { key: 'fromName',     label: 'Your Name',             placeholder: 'John Smith',                                  multiline: false },
-      { key: 'replyToEmail', label: 'Reply-to Email',        placeholder: 'you@yourbusiness.com',                        multiline: false },
-      { key: 'phone',        label: 'Business Phone',        placeholder: '(555) 000-0000',                              multiline: false },
-      { key: 'personalNote', label: 'Personal Note',         placeholder: 'e.g. We do same-day quotes — just call us!',  multiline: true  },
+      { key: 'fromName',     label: 'Your Name',       placeholder: 'John Smith',                                 multiline: false },
+      { key: 'replyToEmail', label: 'Reply-to Email',  placeholder: 'you@yourbusiness.com',                       multiline: false },
+      { key: 'phone',        label: 'Business Phone',  placeholder: '(555) 000-0000',                             multiline: false },
+      { key: 'personalNote', label: 'Personal Note',   placeholder: 'e.g. We do same-day quotes — just call us!', multiline: true  },
     ]
     if (meta.type === 'review_request') return [
-      { key: 'reviewLink',   label: 'Review Link',           placeholder: 'https://g.page/r/...',                        multiline: false },
-      { key: 'fromName',     label: 'Your Name',             placeholder: 'John Smith',                                  multiline: false },
-      { key: 'replyToEmail', label: 'Reply-to Email',        placeholder: 'you@yourbusiness.com',                        multiline: false },
+      { key: 'reviewLink',   label: 'Review Link',     placeholder: 'https://g.page/r/...',                       multiline: false },
+      { key: 'fromName',     label: 'Your Name',       placeholder: 'John Smith',                                 multiline: false },
+      { key: 'replyToEmail', label: 'Reply-to Email',  placeholder: 'you@yourbusiness.com',                       multiline: false },
     ]
     return [
-      { key: 'reportEmail',  label: 'Send Report To',        placeholder: 'you@yourbusiness.com',                        multiline: false },
+      { key: 'reportEmail',  label: 'Send Report To',  placeholder: 'you@yourbusiness.com',                       multiline: false },
     ]
-  })() : []
+  })()
 
   return (
     <>
@@ -176,6 +255,11 @@ function AgentCard({ meta, row, activity, userId, onUpdate }: {
                   Active
                 </span>
               )}
+              {meta.badge && (
+                <span className="text-[11px] font-bold text-op-navy bg-op-navy/8 border border-op-navy/20 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <Zap size={10} /> {meta.badge}
+                </span>
+              )}
             </div>
             <p className={`text-xs font-semibold mt-0.5 ${meta.color}`}>{meta.tagline}</p>
             <p className="text-sm text-op-muted mt-1 leading-relaxed">{meta.description}</p>
@@ -183,7 +267,7 @@ function AgentCard({ meta, row, activity, userId, onUpdate }: {
           </div>
         </div>
 
-        {/* Not enabled — single prominent button */}
+        {/* Not enabled */}
         {!row.enabled && (
           <button
             onClick={() => setShowWizard(true)}
@@ -274,7 +358,7 @@ function AgentCard({ meta, row, activity, userId, onUpdate }: {
 
             {/* Embed code panel — lead_followup only */}
             {meta.type === 'lead_followup' && showEmbed && (() => {
-              const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? (typeof window !== 'undefined' ? window.location.origin : '')
+              const appUrl = typeof window !== 'undefined' ? window.location.origin : ''
               const businessParam = row.config?.fromName ? `&business=${encodeURIComponent(row.config.fromName)}` : ''
               const formUrl = `${appUrl}/form/${userId}${businessParam}`
               const iframeSnippet = `<iframe src="${formUrl}" width="100%" height="520" style="border:none;border-radius:12px;" title="Contact Form"></iframe>`
@@ -282,43 +366,24 @@ function AgentCard({ meta, row, activity, userId, onUpdate }: {
                 <div className="mt-4 border-t border-op-border pt-4">
                   <p className="text-xs font-semibold text-op-muted uppercase tracking-wide mb-3">Embed Your Lead Form</p>
                   <p className="text-xs text-op-muted mb-3">Paste the iframe snippet into any page of your website to start capturing leads automatically.</p>
-
-                  {/* Direct URL */}
                   <div className="mb-3">
                     <p className="text-xs font-semibold text-op-navy mb-1">Form URL</p>
                     <div className="flex items-center gap-2">
-                      <code className="flex-1 bg-op-bg border border-op-border rounded-lg px-3 py-2 text-xs text-op-body font-mono truncate">
-                        {formUrl}
-                      </code>
-                      <button
-                        onClick={() => copyText(formUrl, 'url')}
-                        className="shrink-0 btn-secondary text-xs px-2 py-2 flex items-center gap-1"
-                      >
+                      <code className="flex-1 bg-op-bg border border-op-border rounded-lg px-3 py-2 text-xs text-op-body font-mono truncate">{formUrl}</code>
+                      <button onClick={() => copyText(formUrl, 'url')} className="shrink-0 btn-secondary text-xs px-2 py-2 flex items-center gap-1">
                         {copiedKey === 'url' ? <CheckCircle2 size={13} className="text-op-green" /> : <Copy size={13} />}
                         {copiedKey === 'url' ? 'Copied' : 'Copy'}
                       </button>
-                      <a
-                        href={formUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="shrink-0 btn-secondary text-xs px-2 py-2 flex items-center gap-1"
-                      >
+                      <a href={formUrl} target="_blank" rel="noopener noreferrer" className="shrink-0 btn-secondary text-xs px-2 py-2 flex items-center gap-1">
                         <ExternalLink size={13} /> Preview
                       </a>
                     </div>
                   </div>
-
-                  {/* iframe snippet */}
                   <div>
                     <p className="text-xs font-semibold text-op-navy mb-1">Embed Snippet (iframe)</p>
                     <div className="flex items-start gap-2">
-                      <code className="flex-1 bg-op-bg border border-op-border rounded-lg px-3 py-2 text-xs text-op-body font-mono break-all leading-relaxed">
-                        {iframeSnippet}
-                      </code>
-                      <button
-                        onClick={() => copyText(iframeSnippet, 'iframe')}
-                        className="shrink-0 btn-secondary text-xs px-2 py-2 flex items-center gap-1 mt-0.5"
-                      >
+                      <code className="flex-1 bg-op-bg border border-op-border rounded-lg px-3 py-2 text-xs text-op-body font-mono break-all leading-relaxed">{iframeSnippet}</code>
+                      <button onClick={() => copyText(iframeSnippet, 'iframe')} className="shrink-0 btn-secondary text-xs px-2 py-2 flex items-center gap-1 mt-0.5">
                         {copiedKey === 'iframe' ? <CheckCircle2 size={13} className="text-op-green" /> : <Copy size={13} />}
                         {copiedKey === 'iframe' ? 'Copied' : 'Copy'}
                       </button>
@@ -331,7 +396,7 @@ function AgentCard({ meta, row, activity, userId, onUpdate }: {
             {/* Delivery log */}
             {activity.length > 0 && (
               <div className="mt-4 border-t border-op-border pt-4">
-                <p className="text-xs font-semibold text-op-muted uppercase tracking-wide mb-2">Recent Deliveries</p>
+                <p className="text-xs font-semibold text-op-muted uppercase tracking-wide mb-2">Recent Activity</p>
                 <div className="flex flex-col gap-1.5">
                   {activity.map((entry) => (
                     <div key={entry.id} className="flex items-center justify-between gap-3 text-xs">
@@ -389,6 +454,7 @@ function ComingSoonCard({ icon: Icon, name, description }: {
   )
 }
 
+// ── Page ──────────────────────────────────────────────────────
 export default function AgentsPage() {
   const [agents, setAgents] = useState<Record<AgentType, AgentRow>>({
     lead_followup:  { type: 'lead_followup',  enabled: false, config: {} },
@@ -396,6 +462,7 @@ export default function AgentsPage() {
     weekly_report:  { type: 'weekly_report',  enabled: false, config: {} },
   })
   const [activityByType, setActivityByType] = useState<Record<string, ActivityEntry[]>>({})
+  const [tasks, setTasks]   = useState<AgentTask[]>([])
   const [userId, setUserId] = useState('')
   const [loading, setLoading] = useState(true)
 
@@ -405,13 +472,14 @@ export default function AgentsPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) setUserId(user.id)
 
-      const [{ data: agentData }, { data: activityData }] = await Promise.all([
+      const [{ data: agentData }, { data: activityData }, tasksRes] = await Promise.all([
         supabase.from('agents').select('*'),
         supabase
           .from('agent_activity')
           .select('id, agent_type, recipient_email, subject, created_at')
           .order('created_at', { ascending: false })
           .limit(50),
+        fetch('/api/agents/tasks'),
       ])
 
       if (agentData) {
@@ -429,6 +497,10 @@ export default function AgentsPage() {
         })
         setActivityByType(grouped)
       }
+      if (tasksRes.ok) {
+        const { tasks: t } = await tasksRes.json()
+        setTasks(t ?? [])
+      }
       setLoading(false)
     }
     load()
@@ -437,6 +509,15 @@ export default function AgentsPage() {
 
   const handleUpdate = (type: AgentType, updates: Partial<AgentRow>) => {
     setAgents((prev) => ({ ...prev, [type]: { ...prev[type], ...updates } }))
+  }
+
+  const handleDismissTask = async (id: string) => {
+    setTasks((t) => t.filter((task) => task.id !== id))
+    await fetch('/api/agents/tasks', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status: 'dismissed' }),
+    })
   }
 
   if (loading) {
@@ -450,13 +531,16 @@ export default function AgentsPage() {
   return (
     <main className="flex-1 p-6 md:p-8 overflow-auto">
       <div className="max-w-2xl">
-        <h1 className="text-2xl font-bold font-manrope text-op-navy mb-1">Autopilot Agents</h1>
+        <h1 className="text-2xl font-bold font-manrope text-op-navy mb-1">Revenue Systems</h1>
         <p className="text-sm text-op-muted mb-8">
-          Click "Set Up &amp; Activate" on any agent — we'll walk you through connecting it so it actually works.
+          Pre-built revenue recovery systems powered by AI. Activate one and it runs itself.
         </p>
 
+        {/* Tasks panel */}
+        <TasksPanel tasks={tasks} onDismiss={handleDismissTask} />
+
         <div className="flex flex-col gap-5">
-          {AGENT_META.map((meta) => (
+          {SYSTEM_META.map((meta) => (
             <AgentCard
               key={meta.type}
               meta={meta}

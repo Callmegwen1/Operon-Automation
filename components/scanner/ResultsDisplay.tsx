@@ -78,6 +78,21 @@ interface Leak {
   evidence: string[]
 }
 
+// Maps each leak type to the Operon system that fixes it
+const LEAK_TO_SYSTEM: Partial<Record<LeakType, { name: string }>> = {
+  followup:        { name: 'Lead Recovery Autopilot' },
+  followup_manual: { name: 'Lead Recovery Autopilot' },
+  ads:             { name: 'Lead Recovery Autopilot' },
+  lead_source:     { name: 'Lead Recovery Autopilot' },
+  reviews:         { name: 'Review Growth System' },
+  google_profile:  { name: 'Review Growth System' },
+  estimate:        { name: 'Estimate Recovery Autopilot' },
+  reactivation:    { name: 'Customer Reactivation Autopilot' },
+  reminders:       { name: 'Customer Reactivation Autopilot' },
+  website_form:    { name: 'Lead Capture System' },
+  website_phone:   { name: 'Lead Capture System' },
+}
+
 function buildLeaks(data: ScanData): { major: Leak[]; minor: Leak[] } {
   const major: Leak[] = []
   const minor: Leak[] = []
@@ -1012,10 +1027,28 @@ export default function ResultsDisplay() {
                 <p className="text-xs text-op-body">{fix}</p>
               </div>
 
-              <div className="flex items-center gap-2 text-xs text-op-green">
-                <CheckCircle2 size={13} className="shrink-0" />
-                <span><strong>Suggested Operon System:</strong> {automation}</span>
-              </div>
+              {/* Recommended Operon System */}
+              {operonHelps && (() => {
+                const sys = LEAK_TO_SYSTEM[leakType]
+                return sys ? (
+                  <div className="mt-1 border border-op-navy/15 bg-op-navy/3 rounded-lg p-3 print:hidden">
+                    <p className="text-[10px] font-bold text-op-muted uppercase tracking-wide mb-1">Recommended Operon System</p>
+                    <p className="text-xs font-bold text-op-navy mb-0.5">{sys.name}</p>
+                    <p className="text-xs text-op-muted leading-relaxed mb-2">{automation}</p>
+                    <Link
+                      href="/dashboard/agents"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-op-navy hover:underline"
+                    >
+                      Activate {sys.name} <ArrowRight size={11} />
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-xs text-op-green">
+                    <CheckCircle2 size={13} className="shrink-0" />
+                    <span>{automation}</span>
+                  </div>
+                )
+              })()}
 
               <div className="flex gap-2 mt-4 flex-wrap print:hidden">
                 <Link href="/revenue-autopilot" className="btn-primary text-xs px-4 py-2">See How Operon Helps</Link>

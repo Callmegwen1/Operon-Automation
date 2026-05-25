@@ -330,6 +330,106 @@ export function newLeadNotification({
   }
 }
 
+// ── Intelligent Lead Alert (owner) — AI-powered ───────────────
+export function intelligentLeadAlert({
+  businessName,
+  leadName,
+  leadEmail,
+  leadPhone,
+  leadMessage,
+  source,
+  dashboardUrl,
+  urgency,
+  alertPrefix,
+  aiSummary,
+  intent,
+  playbook,
+  requiresOwnerAttention,
+}: {
+  businessName: string
+  leadName: string
+  leadEmail: string
+  leadPhone: string
+  leadMessage?: string
+  source: string
+  dashboardUrl: string
+  urgency: string
+  alertPrefix: string
+  aiSummary: string
+  intent: string
+  playbook: string
+  requiresOwnerAttention: boolean
+}): { subject: string; html: string } {
+  const isUrgent = urgency === 'urgent' || urgency === 'high'
+  const headerBg = isUrgent ? '#7F1D1D' : '#102A43'
+  const urgencyBadgeBg = urgency === 'urgent' ? '#FEF2F2' : urgency === 'high' ? '#FFF7ED' : '#F0FDF4'
+  const urgencyBadgeColor = urgency === 'urgent' ? '#DC2626' : urgency === 'high' ? '#D97706' : '#16A34A'
+  const urgencyLabel = urgency === 'urgent' ? 'URGENT' : urgency === 'high' ? 'HIGH PRIORITY' : urgency === 'medium' ? 'NEW LEAD' : 'NEW LEAD'
+
+  return {
+    subject: isUrgent
+      ? `${alertPrefix}: ${leadName} needs immediate attention — ${businessName}`
+      : `New lead: ${leadName} via ${source} — ${businessName}`,
+    html: wrap(`
+      <tr><td style="background:${headerBg};border-radius:12px 12px 0 0;padding:28px 36px;">
+        <p style="margin:0 0 4px;color:${isUrgent ? '#FCA5A5' : '#22C55E'};font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">${alertPrefix} — ${businessName}</p>
+        <p style="margin:0;color:#ffffff;font-size:20px;font-weight:700;">${leadName} just reached out</p>
+      </td></tr>
+      <tr><td style="background:#ffffff;border-radius:0 0 12px 12px;padding:36px;">
+
+        ${requiresOwnerAttention ? `
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;margin-bottom:20px;">
+          <tr><td style="padding:14px 18px;">
+            <p style="margin:0;color:#DC2626;font-size:13px;font-weight:700;">⚡ Action Required — This lead may need a call</p>
+            <p style="margin:4px 0 0;color:#991B1B;font-size:12px;line-height:1.5;">${aiSummary}</p>
+          </td></tr>
+        </table>` : `
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;margin-bottom:20px;">
+          <tr><td style="padding:14px 18px;">
+            <p style="margin:0;color:#15803D;font-size:13px;font-weight:700;">🤖 Lead Recovery Autopilot — AI Summary</p>
+            <p style="margin:4px 0 0;color:#166534;font-size:12px;line-height:1.5;">${aiSummary}</p>
+          </td></tr>
+        </table>`}
+
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8FAFC;border-radius:8px;margin-bottom:20px;">
+          <tr><td style="padding:20px;">
+            <p style="margin:0 0 10px;color:#64748B;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Contact Info</p>
+            <p style="margin:0 0 6px;color:#102A43;font-size:16px;font-weight:700;">${leadName}</p>
+            ${leadEmail ? `<p style="margin:0 0 4px;color:#334155;font-size:14px;">📧 <a href="mailto:${leadEmail}" style="color:#1A2E4A;">${leadEmail}</a></p>` : ''}
+            ${leadPhone ? `<p style="margin:0 0 4px;color:#334155;font-size:14px;">📞 <strong>${leadPhone}</strong></p>` : ''}
+            <div style="margin-top:10px;display:inline-block;">
+              <span style="background:${urgencyBadgeBg};color:${urgencyBadgeColor};font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;">${urgencyLabel}</span>
+              <span style="margin-left:6px;background:#F1F5F9;color:#64748B;font-size:11px;font-weight:600;padding:3px 10px;border-radius:99px;">via ${source}</span>
+            </div>
+          </td></tr>
+        </table>
+
+        ${leadMessage ? `
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8FAFC;border-left:3px solid #1A2E4A;border-radius:0 8px 8px 0;margin-bottom:20px;">
+          <tr><td style="padding:16px 20px;">
+            <p style="margin:0 0 6px;color:#64748B;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Their Message</p>
+            <p style="margin:0;color:#334155;font-size:14px;line-height:1.6;">${leadMessage}</p>
+          </td></tr>
+        </table>` : ''}
+
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8FAFC;border-radius:8px;margin-bottom:24px;">
+          <tr><td style="padding:14px 18px;">
+            <p style="margin:0 0 4px;color:#64748B;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">System Status</p>
+            <p style="margin:0 0 2px;color:#334155;font-size:13px;">🎯 Intent detected: <strong>${intent}</strong></p>
+            <p style="margin:0 0 2px;color:#334155;font-size:13px;">📋 Playbook: <strong>${playbook.replace(/_/g, ' ')}</strong></p>
+            <p style="margin:0;color:#334155;font-size:13px;">✉️ Follow-up sequence started automatically</p>
+          </td></tr>
+        </table>
+
+        <div style="text-align:center;">
+          <a href="${dashboardUrl}" style="display:inline-block;background:#1A2E4A;color:#ffffff;font-size:14px;font-weight:700;padding:14px 32px;border-radius:8px;text-decoration:none;">
+            View Lead in Dashboard →
+          </a>
+        </div>
+      </td></tr>`),
+  }
+}
+
 // ── Onboarding Day 1 ─────────────────────────────────────────
 export function onboardingDay1({
   businessName,

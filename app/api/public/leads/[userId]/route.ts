@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail, minutesFromNow, daysFromNow } from '@/lib/email'
-import { leadFollowup1, leadFollowup2, leadFollowup3, newLeadNotification } from '@/lib/emails/templates'
+import { leadFollowup1, leadFollowup2, leadFollowup3, intelligentLeadAlert } from '@/lib/emails/templates'
 import { rateLimit } from '@/lib/rate-limit'
+import { classifyLead } from '@/lib/agents/classify'
+import { getPlaybook } from '@/lib/agents/playbooks'
 
 function getAdminClient() {
   return createClient(
@@ -40,7 +42,7 @@ export async function POST(
 
     const supabase = getAdminClient()
 
-    // Verify this userId exists (has a businesses or auth user record)
+    // Verify this userId exists
     const { data: { user } } = await supabase.auth.admin.getUserById(userId)
     if (!user) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
@@ -70,93 +72,217 @@ export async function POST(
       .select('id')
       .single()
 
-    // Store the message in the notes field if present (graceful — column may not exist yet)
     if (message && contact?.id) {
       try {
         await supabase.from('contacts').update({ notes: message }).eq('id', contact.id)
-      } catch { /* notes column not yet available */ }
+      } catch { /* graceful — notes column may not exist yet */ }
     }
 
     if (error) throw error
 
-    // Fire lead follow-up sequence if the agent is enabled
-    if (email) {
-      const { data: agent } = await supabase
-        .from('agents')
-        .select('enabled, config')
-        .eq('user_id', userId)
-        .eq('type', 'lead_followup')
+    // ── Agent: Lead Recovery Autopilot ───────────────────────────
+    const { data: agent } = await supabase
+      .from('agents')
+      .select('enabled, config')
+      .eq('user_id', userId)
+      .eq('type', 'lead_followup')
+      .single()
+
+    // Fetch business data (needed for classification + emails regardless of agent state)
+    const { data: business } = await supabase
+      .from('businesses')
+      .select('name, main_service, industry, avg_job_value')
+      .eq('user_id', userId)
+      .single()
+
+    const businessName = business?.name ?? 'Our Team'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://operonauto.com'
+    const dashboardUrl = `${appUrl}/dashboard/contacts`
+
+    if (agent?.enabled && email) {
+      const cfg = agent.config as {
+        fromName?: string
+        replyToEmail?: string
+        phone?: string
+        personalNote?: string
+      }
+
+      // ── 1. AI Classification ─────────────────────────────────
+      const classification = await classifyLead({
+        industry:     business?.industry ?? '',
+        businessName,
+        leadName:     name,
+        leadEmail:    email,
+        leadPhone:    phone,
+        leadMessage:  message,
+        leadSource:   source,
+        mainService:  business?.main_service,
+        avgJobValue:  business?.avg_job_value ?? undefined,
+      })
+
+      const playbook = getPlaybook(classification.recommendedPlaybook)
+
+      // ── 2. Create agent run record ───────────────────────────
+      const { data: agentRun } = await supabase
+        .from('agent_runs')
+        .insert({
+          user_id:      userId,
+          agent_type:   'lead_followup',
+          trigger_type: 'new_lead',
+          trigger_source: source,
+          contact_id:   contact.id,
+          status:       'started',
+          ai_summary:   classification.aiSummary,
+          ai_decision:  classification,
+          confidence:   classification.confidence,
+          actions_taken: [],
+        })
+        .select('id')
         .single()
 
-      if (agent?.enabled) {
-        const cfg = agent.config as { fromName?: string; replyToEmail?: string; phone?: string; personalNote?: string }
-        const { data: business } = await supabase
-          .from('businesses')
-          .select('name, main_service')
-          .eq('user_id', userId)
-          .single()
-
-        const businessName = business?.name ?? 'Our Team'
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://operonauto.com'
-        const unsubscribeUrl = `${appUrl}/api/unsubscribe?id=${contact.id}`
-        const emailArgs = {
-          leadName:       name,
-          businessName,
-          fromName:       cfg.fromName ?? businessName ?? 'The Team',
-          phone:          cfg.phone ?? '',
-          service:        business?.main_service,
-          personalNote:   cfg.personalNote,
-          unsubscribeUrl,
-        }
-        const replyTo = cfg.replyToEmail ?? undefined
-
-        const e1 = leadFollowup1(emailArgs)
-        const e2 = leadFollowup2(emailArgs)
-        const e3 = leadFollowup3({ leadName: name, businessName: emailArgs.businessName, fromName: emailArgs.fromName, unsubscribeUrl })
-
-        // Owner notification — instant, no schedule
-        const notif = newLeadNotification({
-          businessName,
-          leadName:    name,
-          leadEmail:   email,
-          leadPhone:   phone,
-          leadMessage: message || undefined,
-          source,
-          dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://operonauto.com'}/dashboard/contacts`,
-        })
-
-        await Promise.all([
-          // Notify the owner immediately
-          cfg.replyToEmail
-            ? sendEmail({ to: cfg.replyToEmail, subject: notif.subject, html: notif.html })
-            : sendEmail({ to: user.email!, subject: notif.subject, html: notif.html }),
-          // Lead follow-up sequence
-          sendEmail({ to: email, replyTo, subject: e1.subject, html: e1.html, scheduledAt: minutesFromNow(15) }),
-          sendEmail({ to: email, replyTo, subject: e2.subject, html: e2.html, scheduledAt: daysFromNow(2) }),
-          sendEmail({ to: email, replyTo, subject: e3.subject, html: e3.html, scheduledAt: daysFromNow(5) }),
-        ])
-
-        await supabase.from('contacts').update({ status: 'contacted' }).eq('id', contact.id)
-        await supabase.from('agent_activity').insert({
+      // ── 3. Create owner task for urgent leads ────────────────
+      if (classification.requiresOwnerAttention && playbook.createTask) {
+        await supabase.from('agent_tasks').insert({
           user_id:    userId,
+          contact_id: contact.id,
           agent_type: 'lead_followup',
-          action:     'follow_up_sequence_started',
-          details:    { contact_id: contact.id, lead_name: name, lead_email: email },
+          title:      playbook.taskTitle ? playbook.taskTitle(name, classification.intent) : `Follow up with ${name}`,
+          description: playbook.taskDescription
+            ? playbook.taskDescription(name, classification.aiSummary)
+            : classification.aiSummary,
+          priority:   classification.urgency === 'urgent' ? 'urgent' : 'high',
+          status:     'open',
+          due_at:     minutesFromNow(classification.urgency === 'urgent' ? 10 : 60),
         })
-      } else {
-        // Agent not enabled — still notify owner if they have an email
-        if (user.email) {
-          const notif = newLeadNotification({
-            businessName: '',
-            leadName:    name,
-            leadEmail:   email,
-            leadPhone:   phone,
-            leadMessage: message || undefined,
-            source,
-            dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://operonauto.com'}/dashboard/contacts`,
-          })
-          await sendEmail({ to: user.email, subject: notif.subject, html: notif.html })
-        }
+      }
+
+      // ── 4. Build email args ──────────────────────────────────
+      const unsubscribeUrl = `${appUrl}/api/unsubscribe?id=${contact.id}`
+      const replyTo = cfg.replyToEmail ?? undefined
+      const emailArgs = {
+        leadName:     name,
+        businessName,
+        fromName:     cfg.fromName ?? businessName,
+        phone:        cfg.phone ?? '',
+        service:      business?.main_service,
+        personalNote: cfg.personalNote,
+        unsubscribeUrl,
+      }
+
+      // Build email 1 with playbook opening override if available
+      const e1Base = leadFollowup1(emailArgs)
+      const e1 = playbook.email1Subject || playbook.email1Opening
+        ? {
+            subject: playbook.email1Subject ? playbook.email1Subject(businessName) : e1Base.subject,
+            html: e1Base.html, // Keep base HTML — opening tone is set via subject + timing
+          }
+        : e1Base
+      const e2 = leadFollowup2(emailArgs)
+      const e3 = leadFollowup3({ leadName: name, businessName, fromName: cfg.fromName ?? businessName, unsubscribeUrl })
+
+      // ── 5. Send owner alert + schedule follow-up sequence ────
+      const ownerEmail = cfg.replyToEmail ?? user.email!
+      const ownerAlert = intelligentLeadAlert({
+        businessName,
+        leadName:               name,
+        leadEmail:              email,
+        leadPhone:              phone,
+        leadMessage:            message || undefined,
+        source,
+        dashboardUrl,
+        urgency:                classification.urgency,
+        alertPrefix:            playbook.ownerAlertPrefix,
+        aiSummary:              classification.aiSummary,
+        intent:                 classification.intent,
+        playbook:               classification.recommendedPlaybook,
+        requiresOwnerAttention: classification.requiresOwnerAttention,
+      })
+
+      const e1ScheduledAt = minutesFromNow(playbook.email1DelayMinutes)
+      const e2ScheduledAt = daysFromNow(playbook.email2DelayDays)
+      const e3ScheduledAt = daysFromNow(playbook.email3DelayDays)
+
+      const [, msg1, msg2, msg3] = await Promise.all([
+        sendEmail({ to: ownerEmail, subject: ownerAlert.subject, html: ownerAlert.html }),
+        sendEmail({ to: email, replyTo, subject: e1.subject, html: e1.html, scheduledAt: e1ScheduledAt }),
+        sendEmail({ to: email, replyTo, subject: e2.subject, html: e2.html, scheduledAt: e2ScheduledAt }),
+        sendEmail({ to: email, replyTo, subject: e3.subject, html: e3.html, scheduledAt: e3ScheduledAt }),
+      ])
+
+      // ── 6. Track scheduled messages for future cancellation ──
+      const runId = agentRun?.id ?? null
+      await supabase.from('agent_messages').insert([
+        {
+          user_id: userId, contact_id: contact.id, agent_run_id: runId,
+          agent_type: 'lead_followup', channel: 'email', template_id: 'lead_followup_1',
+          subject: e1.subject, status: 'scheduled', scheduled_for: e1ScheduledAt,
+          external_provider_id: msg1?.id ?? null,
+        },
+        {
+          user_id: userId, contact_id: contact.id, agent_run_id: runId,
+          agent_type: 'lead_followup', channel: 'email', template_id: 'lead_followup_2',
+          subject: e2.subject, status: 'scheduled', scheduled_for: e2ScheduledAt,
+          external_provider_id: msg2?.id ?? null,
+        },
+        {
+          user_id: userId, contact_id: contact.id, agent_run_id: runId,
+          agent_type: 'lead_followup', channel: 'email', template_id: 'lead_followup_3',
+          subject: e3.subject, status: 'scheduled', scheduled_for: e3ScheduledAt,
+          external_provider_id: msg3?.id ?? null,
+        },
+      ])
+
+      // ── 7. Update contact + agent run ────────────────────────
+      await supabase.from('contacts').update({ status: 'contacted' }).eq('id', contact.id)
+
+      if (agentRun?.id) {
+        await supabase.from('agent_runs').update({
+          status: 'completed',
+          actions_taken: [
+            'send_owner_alert',
+            'send_personalized_email_1',
+            'schedule_followup_email_2',
+            'schedule_followup_email_3',
+            ...(classification.requiresOwnerAttention ? ['create_dashboard_task'] : []),
+          ],
+          updated_at: new Date().toISOString(),
+        }).eq('id', agentRun.id)
+      }
+
+      // Legacy activity log (backwards compat with dashboard)
+      await supabase.from('agent_activity').insert({
+        user_id:    userId,
+        agent_type: 'lead_followup',
+        action:     'follow_up_sequence_started',
+        details:    {
+          contact_id:   contact.id,
+          lead_name:    name,
+          lead_email:   email,
+          urgency:      classification.urgency,
+          playbook:     classification.recommendedPlaybook,
+          ai_summary:   classification.aiSummary,
+        },
+      })
+
+    } else {
+      // Agent not enabled — still notify owner
+      if (user.email) {
+        const fallbackAlert = intelligentLeadAlert({
+          businessName,
+          leadName:               name,
+          leadEmail:              email,
+          leadPhone:              phone,
+          leadMessage:            message || undefined,
+          source,
+          dashboardUrl,
+          urgency:                'medium',
+          alertPrefix:            '📬 New lead',
+          aiSummary:              `${name} submitted an inquiry via ${source}. The Lead Recovery Autopilot is not active — follow up manually.`,
+          intent:                 'General inquiry',
+          playbook:               'standard_followup',
+          requiresOwnerAttention: false,
+        })
+        await sendEmail({ to: user.email, subject: fallbackAlert.subject, html: fallbackAlert.html })
       }
     }
 
