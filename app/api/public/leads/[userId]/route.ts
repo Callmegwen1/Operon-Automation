@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail, minutesFromNow, daysFromNow } from '@/lib/email'
 import { leadFollowup1, leadFollowup2, leadFollowup3, newLeadNotification } from '@/lib/emails/templates'
+import { rateLimit } from '@/lib/rate-limit'
 
 function getAdminClient() {
   return createClient(
@@ -18,6 +19,13 @@ export async function POST(
     const { userId } = params
     if (!userId) return NextResponse.json({ error: 'Missing user ID' }, { status: 400 })
 
+    // Rate limit: 5 submissions per IP per 10 minutes
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+    const rl = rateLimit(`lead:${ip}:${userId}`, { limit: 5, windowMs: 10 * 60 * 1000 })
+    if (!rl.allowed) {
+      return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
+    }
+
     const body = await req.json()
     const name: string = body.name?.trim()
     const email: string = body.email?.trim() ?? ''
@@ -26,6 +34,9 @@ export async function POST(
     const source: string = body.source?.trim() || 'Website Form'
 
     if (!name) return NextResponse.json({ error: 'name is required' }, { status: 400 })
+
+    // Honeypot check — silently succeed so bots think they succeeded
+    if (body._hp) return NextResponse.json({ success: true, contactId: null })
 
     const supabase = getAdminClient()
 

@@ -27,7 +27,7 @@ interface AgentRow {
 
 interface ActivityEntry {
   id: string
-  type: string
+  agent_type: string
   recipient_email: string | null
   subject: string | null
   created_at: string
@@ -336,7 +336,7 @@ export default function AgentsPage() {
         supabase.from('agents').select('*'),
         supabase
           .from('agent_activity')
-          .select('id, type, recipient_email, subject, created_at')
+          .select('id, agent_type, recipient_email, subject, created_at')
           .order('created_at', { ascending: false })
           .limit(50),
       ])
@@ -351,8 +351,8 @@ export default function AgentsPage() {
       if (activityData) {
         const grouped: Record<string, ActivityEntry[]> = {}
         activityData.forEach((entry: ActivityEntry) => {
-          if (!grouped[entry.type]) grouped[entry.type] = []
-          if (grouped[entry.type].length < 5) grouped[entry.type].push(entry)
+          if (!grouped[entry.agent_type]) grouped[entry.agent_type] = []
+          if (grouped[entry.agent_type].length < 5) grouped[entry.agent_type].push(entry)
         })
         setActivityByType(grouped)
       }

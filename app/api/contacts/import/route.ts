@@ -34,18 +34,21 @@ async function triggerFollowupSequence(
     .eq('user_id', userId)
     .single()
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://operonauto.com'
+  const unsubscribeUrl = `${appUrl}/api/unsubscribe?id=${contactId}`
   const emailArgs = {
-    leadName:     name,
-    businessName: business?.name ?? 'Our Team',
-    fromName:     cfg.fromName ?? business?.name ?? 'The Team',
-    phone:        cfg.phone ?? '',
-    service:      business?.main_service,
+    leadName:       name,
+    businessName:   business?.name ?? 'Our Team',
+    fromName:       cfg.fromName ?? business?.name ?? 'The Team',
+    phone:          cfg.phone ?? '',
+    service:        business?.main_service,
+    unsubscribeUrl,
   }
   const replyTo = cfg.replyToEmail ?? undefined
 
   const e1 = leadFollowup1(emailArgs)
   const e2 = leadFollowup2(emailArgs)
-  const e3 = leadFollowup3({ leadName: name, businessName: emailArgs.businessName, fromName: emailArgs.fromName })
+  const e3 = leadFollowup3({ leadName: name, businessName: emailArgs.businessName, fromName: emailArgs.fromName, unsubscribeUrl })
 
   await Promise.all([
     sendEmail({ to: email, replyTo, subject: e1.subject, html: e1.html, scheduledAt: minutesFromNow(15) }),

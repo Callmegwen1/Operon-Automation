@@ -12,6 +12,7 @@ interface Props {
 
 export default function EmbedForm({ userId, title, business, color }: Props) {
   const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' })
+  const [honeypot, setHoneypot] = useState('')
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState('')
@@ -21,6 +22,8 @@ export default function EmbedForm({ userId, title, business, color }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.name.trim() || !form.email.trim()) return
+    // Honeypot: if filled, silently succeed — bot submitted
+    if (honeypot) { setDone(true); return }
     setLoading(true)
     setError('')
 
@@ -33,6 +36,7 @@ export default function EmbedForm({ userId, title, business, color }: Props) {
         phone:   form.phone.trim(),
         message: form.message.trim(),
         source:  'Website Form',
+        _hp:     honeypot,
       }),
     })
 
@@ -83,6 +87,20 @@ export default function EmbedForm({ userId, title, business, color }: Props) {
       {!business && title && <div className="mb-5" />}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        {/* Honeypot — hidden from humans, caught by bots */}
+        <div style={{ position: 'absolute', left: '-9999px', top: 'auto', width: '1px', height: '1px', overflow: 'hidden' }} aria-hidden="true">
+          <label htmlFor="website_url">Website</label>
+          <input
+            id="website_url"
+            name="website_url"
+            type="text"
+            tabIndex={-1}
+            autoComplete="off"
+            value={honeypot}
+            onChange={(e) => setHoneypot(e.target.value)}
+          />
+        </div>
+
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1">Name <span className="text-red-400">*</span></label>
