@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowRight, Zap, CheckCircle2, Circle, Bot, User, BarChart2, Star, Mail, TrendingDown, TrendingUp, DollarSign } from 'lucide-react'
+import { ArrowRight, Zap, CheckCircle2, Circle, Bot, User, BarChart2, Star, Mail, TrendingDown, TrendingUp, DollarSign, RefreshCw } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { generateLeaks } from '@/lib/leaks'
 import { calculateSubScores } from '@/lib/scanner/subscores'
@@ -108,6 +108,10 @@ export default async function DashboardPage() {
   const hasAgent       = !!(agents && agents.length > 0)
   const onboardingDone = hasProfile && hasScan && hasAgent
 
+  // Re-scan reminder: show if last scan is more than 30 days old
+  const scanAge = scan ? Math.floor((Date.now() - new Date(scan.created_at).getTime()) / (1000 * 60 * 60 * 24)) : 0
+  const showRescanBanner = scan && scanAge >= 30
+
   // scoreColor — higher score = more leaks = worse
   const scoreColor = scan
     ? scan.score >= 75 ? 'text-op-red' : scan.score >= 55 ? 'text-op-amber' : 'text-op-green'
@@ -176,6 +180,22 @@ export default async function DashboardPage() {
               <p className="text-xs text-white/50">reviews sent (30d)</p>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Re-scan reminder */}
+      {showRescanBanner && (
+        <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-6 flex-wrap">
+          <RefreshCw size={16} className="text-op-amber shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-op-amber">Your scan is {scanAge} days old</p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              Your score may have changed. A fresh scan takes 60 seconds and gives you an updated picture of your revenue health.
+            </p>
+          </div>
+          <Link href="/scanner" className="btn-primary text-xs px-4 py-2 shrink-0">
+            Re-scan Now
+          </Link>
         </div>
       )}
 

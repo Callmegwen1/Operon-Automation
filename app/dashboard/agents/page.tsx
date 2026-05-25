@@ -16,6 +16,7 @@ interface AgentConfig {
   phone?: string
   reviewLink?: string
   reportEmail?: string
+  personalNote?: string
 }
 
 interface AgentRow {
@@ -136,17 +137,18 @@ function AgentCard({ meta, row, activity, userId, onUpdate }: {
 
   const editFields = AGENT_META.find((m) => m.type === meta.type) ? (() => {
     if (meta.type === 'lead_followup') return [
-      { key: 'fromName',     label: 'Your Name',             placeholder: 'John Smith'           },
-      { key: 'replyToEmail', label: 'Reply-to Email',        placeholder: 'you@yourbusiness.com' },
-      { key: 'phone',        label: 'Business Phone',        placeholder: '(555) 000-0000'       },
+      { key: 'fromName',     label: 'Your Name',             placeholder: 'John Smith',                                  multiline: false },
+      { key: 'replyToEmail', label: 'Reply-to Email',        placeholder: 'you@yourbusiness.com',                        multiline: false },
+      { key: 'phone',        label: 'Business Phone',        placeholder: '(555) 000-0000',                              multiline: false },
+      { key: 'personalNote', label: 'Personal Note',         placeholder: 'e.g. We do same-day quotes — just call us!',  multiline: true  },
     ]
     if (meta.type === 'review_request') return [
-      { key: 'reviewLink',   label: 'Review Link',           placeholder: 'https://g.page/r/...' },
-      { key: 'fromName',     label: 'Your Name',             placeholder: 'John Smith'           },
-      { key: 'replyToEmail', label: 'Reply-to Email',        placeholder: 'you@yourbusiness.com' },
+      { key: 'reviewLink',   label: 'Review Link',           placeholder: 'https://g.page/r/...',                        multiline: false },
+      { key: 'fromName',     label: 'Your Name',             placeholder: 'John Smith',                                  multiline: false },
+      { key: 'replyToEmail', label: 'Reply-to Email',        placeholder: 'you@yourbusiness.com',                        multiline: false },
     ]
     return [
-      { key: 'reportEmail',  label: 'Send Report To',        placeholder: 'you@yourbusiness.com' },
+      { key: 'reportEmail',  label: 'Send Report To',        placeholder: 'you@yourbusiness.com',                        multiline: false },
     ]
   })() : []
 
@@ -222,12 +224,22 @@ function AgentCard({ meta, row, activity, userId, onUpdate }: {
                 {editFields.map((field) => (
                   <div key={field.key}>
                     <label className="block text-xs font-semibold text-op-navy mb-1">{field.label}</label>
-                    <input
-                      className={inputClass}
-                      placeholder={field.placeholder}
-                      value={(editConfig as Record<string, string>)[field.key] ?? ''}
-                      onChange={(e) => setEditConfig((c) => ({ ...c, [field.key]: e.target.value }))}
-                    />
+                    {field.multiline ? (
+                      <textarea
+                        className={`${inputClass} resize-none`}
+                        rows={2}
+                        placeholder={field.placeholder}
+                        value={(editConfig as Record<string, string>)[field.key] ?? ''}
+                        onChange={(e) => setEditConfig((c) => ({ ...c, [field.key]: e.target.value }))}
+                      />
+                    ) : (
+                      <input
+                        className={inputClass}
+                        placeholder={field.placeholder}
+                        value={(editConfig as Record<string, string>)[field.key] ?? ''}
+                        onChange={(e) => setEditConfig((c) => ({ ...c, [field.key]: e.target.value }))}
+                      />
+                    )}
                   </div>
                 ))}
                 <div className="flex items-center gap-3">

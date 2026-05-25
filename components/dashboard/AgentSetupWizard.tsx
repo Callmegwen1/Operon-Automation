@@ -16,6 +16,7 @@ interface AgentConfig {
   phone?: string
   reviewLink?: string
   reportEmail?: string
+  personalNote?: string
 }
 
 interface WizardProps {
@@ -445,6 +446,17 @@ function LeadFollowupWizard({ userId, initialConfig, onComplete }: {
               <input className={inputClass} placeholder="(555) 000-0000" value={config.phone ?? ''} onChange={(e) => setConfig((c) => ({ ...c, phone: e.target.value }))} />
               <p className="text-xs text-op-muted mt-1">Included in the email so leads can call you directly.</p>
             </div>
+            <div>
+              <label className="block text-xs font-bold text-op-navy mb-1.5">Personal note <span className="text-op-muted font-normal">(optional)</span></label>
+              <textarea
+                className={`${inputClass} resize-none`}
+                rows={2}
+                placeholder="e.g. We specialize in last-minute jobs and same-day quotes — just call us!"
+                value={config.personalNote ?? ''}
+                onChange={(e) => setConfig((c) => ({ ...c, personalNote: e.target.value }))}
+              />
+              <p className="text-xs text-op-muted mt-1">Added at the bottom of the first email — a great place for a human touch.</p>
+            </div>
           </div>
           <div className="flex gap-3 mt-6">
             <button onClick={() => setStep(1)} className="btn-secondary flex items-center gap-1.5"><ArrowLeft size={14} /> Back</button>
@@ -453,17 +465,17 @@ function LeadFollowupWizard({ userId, initialConfig, onComplete }: {
               disabled={!config.fromName?.trim() || !config.replyToEmail?.trim()}
               className="btn-primary flex-1 justify-center disabled:opacity-50"
             >
-              Continue <ArrowRight size={15} />
+              Preview email <ArrowRight size={15} />
             </button>
           </div>
         </div>
       )}
 
-      {/* Step 3 — confirm + activate */}
+      {/* Step 3 — email preview + activate */}
       {step === 3 && (
-        <div className="flex-1 flex flex-col items-center text-center">
+        <div className="flex-1 flex flex-col">
           {activationDone ? (
-            <>
+            <div className="flex flex-col items-center text-center">
               <div className="w-16 h-16 rounded-2xl bg-op-green flex items-center justify-center mb-5">
                 <CheckCircle2 size={28} className="text-white" />
               </div>
@@ -480,31 +492,49 @@ function LeadFollowupWizard({ userId, initialConfig, onComplete }: {
               <button onClick={() => onComplete(config)} className="btn-primary w-full justify-center text-sm">
                 Done
               </button>
-            </>
+            </div>
           ) : (
             <>
-              <div className="w-16 h-16 rounded-2xl bg-op-navy flex items-center justify-center mb-5">
-                <Mail size={28} className="text-white" />
-              </div>
-              <h2 className="text-xl font-bold font-manrope text-op-navy mb-2">Ready to activate</h2>
-              <p className="text-sm text-op-muted mb-6 max-w-sm">
-                Every new lead with an email will automatically receive a 3-email sequence. We'll send you a test email the moment you activate so you can confirm it's working.
-              </p>
-              <div className="w-full text-left bg-op-bg border border-op-border rounded-xl px-4 py-4 mb-6 flex flex-col gap-2">
-                {[
-                  { t: '15 minutes', d: 'Warm introduction email sent to the lead' },
-                  { t: 'Day 2',      d: 'Follow-up — checking in, offering help' },
-                  { t: 'Day 5',      d: 'Final nudge — soft close' },
-                ].map(({ t, d }) => (
-                  <div key={t} className="flex items-center gap-3">
-                    <span className="text-xs font-bold text-op-navy w-20 shrink-0">{t}</span>
-                    <span className="text-xs text-op-muted">{d}</span>
+              <h2 className="text-xl font-bold font-manrope text-op-navy mb-1">Preview your first email</h2>
+              <p className="text-sm text-op-muted mb-4">This is what your leads will receive 15 minutes after filling out your form.</p>
+
+              {/* Email preview card */}
+              <div className="border border-op-border rounded-xl overflow-hidden mb-5 text-left shadow-sm">
+                {/* Email meta */}
+                <div className="bg-op-bg border-b border-op-border px-4 py-2.5 flex flex-col gap-0.5">
+                  <p className="text-xs text-op-muted"><span className="font-semibold text-op-navy">Subject:</span> Following up on your inquiry — {config.fromName || 'Your Business'}</p>
+                  <p className="text-xs text-op-muted"><span className="font-semibold text-op-navy">From:</span> {config.fromName || 'Your Business'} &lt;{config.replyToEmail || 'you@yourbusiness.com'}&gt;</p>
+                </div>
+                {/* Email body preview */}
+                <div className="bg-white">
+                  <div className="bg-op-navy px-5 py-4">
+                    <p className="text-white font-bold text-base">{config.fromName || 'Your Business'}</p>
                   </div>
-                ))}
+                  <div className="px-5 py-5 flex flex-col gap-3 text-sm text-op-body">
+                    <p>Hi <span className="font-semibold">Sarah</span>,</p>
+                    <p className="leading-relaxed text-op-body/80">
+                      Just wanted to make sure your message to <strong>{config.fromName || 'Your Business'}</strong> didn't get missed.
+                    </p>
+                    <p className="leading-relaxed text-op-body/80">
+                      {config.fromName || 'The team'} will be in touch with you shortly. In the meantime, feel free to reach us directly:
+                    </p>
+                    {config.phone && (
+                      <p className="font-bold text-op-navy">📞 {config.phone}</p>
+                    )}
+                    {config.personalNote && (
+                      <p className="leading-relaxed text-op-body/80 pt-3 border-t border-op-border">{config.personalNote}</p>
+                    )}
+                    <p className="pt-1">Talk soon,<br /><strong>{config.fromName || 'Your Name'}</strong></p>
+                  </div>
+                </div>
               </div>
-              <button onClick={handleFinish} disabled={saving} className="btn-primary w-full justify-center text-sm">
-                {saving ? <Loader2 size={15} className="animate-spin" /> : <><CheckCircle2 size={15} /> Activate Agent</>}
-              </button>
+
+              <div className="flex gap-3">
+                <button onClick={() => setStep(2)} className="btn-secondary flex items-center gap-1.5 shrink-0"><ArrowLeft size={14} /> Edit</button>
+                <button onClick={handleFinish} disabled={saving} className="btn-primary flex-1 justify-center text-sm">
+                  {saving ? <Loader2 size={15} className="animate-spin" /> : <><CheckCircle2 size={15} /> Activate Agent</>}
+                </button>
+              </div>
             </>
           )}
         </div>

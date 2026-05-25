@@ -28,12 +28,14 @@ export function leadFollowup1({
   fromName,
   phone,
   service,
+  personalNote,
 }: {
   leadName: string
   businessName: string
   fromName: string
   phone: string
   service?: string
+  personalNote?: string
 }): { subject: string; html: string } {
   return {
     subject: `Following up on your inquiry — ${businessName}`,
@@ -49,7 +51,8 @@ export function leadFollowup1({
         <p style="margin:0 0 16px;color:#334155;font-size:15px;line-height:1.6;">
           ${fromName} will be in touch with you shortly${service ? ` about ${service}` : ''}. In the meantime, feel free to reach us directly:
         </p>
-        ${phone ? `<p style="margin:0 0 24px;font-size:15px;font-weight:700;color:#102A43;">📞 ${phone}</p>` : ''}
+        ${phone ? `<p style="margin:0 0 16px;font-size:15px;font-weight:700;color:#102A43;">📞 ${phone}</p>` : ''}
+        ${personalNote ? `<p style="margin:0 0 16px;color:#334155;font-size:15px;line-height:1.6;padding-top:16px;border-top:1px solid #E5E7EB;">${personalNote}</p>` : ''}
         <p style="margin:0;color:#334155;font-size:15px;">Talk soon,<br><strong>${fromName}</strong><br><span style="color:#64748B;">${businessName}</span></p>
       </td></tr>`),
   }
@@ -259,6 +262,61 @@ export function weeklyReport({
         <p style="margin:0;color:#94A3B8;font-size:12px;">
           Revenue Leak Scores are informational only. Operon does not guarantee specific financial results.
         </p>
+      </td></tr>`),
+  }
+}
+
+// ── New Lead Notification (to owner) ─────────────────────────
+export function newLeadNotification({
+  businessName,
+  leadName,
+  leadEmail,
+  leadPhone,
+  leadMessage,
+  source,
+  dashboardUrl,
+}: {
+  businessName: string
+  leadName: string
+  leadEmail: string
+  leadPhone: string
+  leadMessage?: string
+  source: string
+  dashboardUrl: string
+}): { subject: string; html: string } {
+  return {
+    subject: `New lead: ${leadName} just reached out`,
+    html: wrap(`
+      <tr><td style="background:#102A43;border-radius:12px 12px 0 0;padding:28px 36px;">
+        <p style="margin:0 0 4px;color:#22C55E;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">🔔 New Lead — ${businessName}</p>
+        <p style="margin:0;color:#ffffff;font-size:20px;font-weight:700;">${leadName} just reached out</p>
+      </td></tr>
+      <tr><td style="background:#ffffff;border-radius:0 0 12px 12px;padding:36px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8FAFC;border-radius:8px;margin-bottom:${leadMessage ? '20px' : '24px'};">
+          <tr><td style="padding:20px;">
+            <p style="margin:0 0 10px;color:#64748B;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Contact Info</p>
+            <p style="margin:0 0 6px;color:#102A43;font-size:16px;font-weight:700;">${leadName}</p>
+            ${leadEmail ? `<p style="margin:0 0 4px;color:#334155;font-size:14px;">📧 <a href="mailto:${leadEmail}" style="color:#1A2E4A;">${leadEmail}</a></p>` : ''}
+            ${leadPhone ? `<p style="margin:0 0 4px;color:#334155;font-size:14px;">📞 ${leadPhone}</p>` : ''}
+            <p style="margin:10px 0 0;color:#94A3B8;font-size:12px;">via ${source}</p>
+          </td></tr>
+        </table>
+        ${leadMessage ? `
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#F0FDF4;border-left:3px solid #22C55E;border-radius:0 8px 8px 0;margin-bottom:24px;">
+          <tr><td style="padding:16px 20px;">
+            <p style="margin:0 0 6px;color:#64748B;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Their Message</p>
+            <p style="margin:0;color:#334155;font-size:14px;line-height:1.6;">${leadMessage}</p>
+          </td></tr>
+        </table>
+        ` : ''}
+        <p style="margin:0 0 24px;color:#64748B;font-size:13px;line-height:1.6;">
+          A follow-up sequence has started automatically. The lead will receive emails at 15 min, Day 2, and Day 5.
+        </p>
+        <div style="text-align:center;">
+          <a href="${dashboardUrl}" style="display:inline-block;background:#1A2E4A;color:#ffffff;font-size:14px;font-weight:700;padding:14px 32px;border-radius:8px;text-decoration:none;">
+            View in Dashboard →
+          </a>
+        </div>
       </td></tr>`),
   }
 }

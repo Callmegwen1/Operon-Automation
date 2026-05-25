@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Loader2, Save, Star, Mail, Trash2, Bot, BarChart2 } from 'lucide-react'
+import { ArrowLeft, Loader2, Save, Star, Mail, Trash2, Bot, BarChart2, CheckCircle2, MessageSquare } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface Contact {
@@ -71,6 +71,8 @@ export default function ContactDetailPage() {
   const [saved, setSaved] = useState(false)
   const [sendingReview, setSendingReview] = useState(false)
   const [reviewMsg, setReviewMsg] = useState('')
+  const [converting, setConverting] = useState(false)
+  const [convertMsg, setConvertMsg] = useState('')
   const [status, setStatus]     = useState('')
   const [notes, setNotes]       = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -123,6 +125,22 @@ export default function ContactDetailPage() {
     setTimeout(() => setReviewMsg(''), 4000)
   }
 
+  const handleConvert = async () => {
+    setConverting(true)
+    setConvertMsg('')
+    const res = await fetch(`/api/contacts/${id}/convert`, { method: 'POST' })
+    const data = await res.json()
+    if (res.ok) {
+      setContact((c) => c ? { ...c, status: 'converted', type: 'customer' } : c)
+      setStatus('converted')
+      setConvertMsg(data.reviewSent ? 'Converted! Review request sent automatically.' : 'Contact marked as converted.')
+    } else {
+      setConvertMsg(data.error ?? 'Something went wrong')
+    }
+    setConverting(false)
+    setTimeout(() => setConvertMsg(''), 5000)
+  }
+
   if (loading) {
     return (
       <main className="flex-1 p-6 md:p-8 flex items-center justify-center">
@@ -157,7 +175,7 @@ export default function ContactDetailPage() {
               </span>
             </div>
           </div>
-          <div className="flex gap-2 shrink-0">
+          <div className="flex gap-2 shrink-0 flex-wrap">
             {contact.email && (
               <a href={`mailto:${contact.email}`} className="btn-secondary text-xs px-3 py-2 flex items-center gap-1.5">
                 <Mail size={12} /> Email
@@ -170,7 +188,17 @@ export default function ContactDetailPage() {
                 className="btn-secondary text-xs px-3 py-2 flex items-center gap-1.5"
               >
                 {sendingReview ? <Loader2 size={12} className="animate-spin" /> : <Star size={12} />}
-                Review Request
+                Review
+              </button>
+            )}
+            {contact.type === 'lead' && contact.status !== 'converted' && (
+              <button
+                onClick={handleConvert}
+                disabled={converting}
+                className="btn-primary text-xs px-3 py-2 flex items-center gap-1.5"
+              >
+                {converting ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
+                Mark Converted
               </button>
             )}
           </div>
@@ -179,6 +207,23 @@ export default function ContactDetailPage() {
         {reviewMsg && (
           <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-4 text-sm text-op-green font-semibold">
             {reviewMsg}
+          </div>
+        )}
+
+        {convertMsg && (
+          <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-4 text-sm text-op-green font-semibold flex items-center gap-2">
+            <CheckCircle2 size={14} /> {convertMsg}
+          </div>
+        )}
+
+        {/* Their message from form */}
+        {contact.notes && contact.source === 'Website Form' && (
+          <div className="card border-l-4 border-l-op-navy mb-6">
+            <div className="flex items-center gap-2 mb-2">
+              <MessageSquare size={14} className="text-op-navy" />
+              <h2 className="text-sm font-bold text-op-navy">Their Message</h2>
+            </div>
+            <p className="text-sm text-op-body leading-relaxed">{contact.notes}</p>
           </div>
         )}
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendEmail, minutesFromNow, daysFromNow } from '@/lib/email'
-import { leadFollowup1, leadFollowup2, leadFollowup3 } from '@/lib/emails/templates'
+import { leadFollowup1, leadFollowup2, leadFollowup3, newLeadNotification } from '@/lib/emails/templates'
 
 function getAdminClient() {
   return createClient(
@@ -67,19 +67,21 @@ export async function POST(
         .single()
 
       if (agent?.enabled) {
-        const cfg = agent.config as { fromName?: string; replyToEmail?: string; phone?: string }
+        const cfg = agent.config as { fromName?: string; replyToEmail?: string; phone?: string; personalNote?: string }
         const { data: business } = await supabase
           .from('businesses')
           .select('name, main_service')
           .eq('user_id', userId)
           .single()
 
+        const businessName = business?.name ?? 'Our Team'
         const emailArgs = {
           leadName:     name,
-          businessName: business?.name ?? 'Our Team',
-          fromName:     cfg.fromName ?? business?.name ?? 'The Team',
+          businessName,
+          fromName:     cfg.fromName ?? businessName ?? 'The Team',
           phone:        cfg.phone ?? '',
           service:      business?.main_service,
+          personalNote: cfg.personalNote,
         }
         const replyTo = cfg.replyToEmail ?? undefined
 
@@ -87,7 +89,23 @@ export async function POST(
         const e2 = leadFollowup2(emailArgs)
         const e3 = leadFollowup3({ leadName: name, businessName: emailArgs.businessName, fromName: emailArgs.fromName })
 
+        // Owner notification — instant, no schedule
+        const notif = newLeadNotification({
+          businessName,
+          leadName:    name,
+          leadEmail:   email,
+          leadPhone:   phone,
+          leadMessage: message || undefined,
+          source,
+          dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://operonauto.com'}/dashboard/contacts`,
+        })
+
         await Promise.all([
+          // Notify the owner immediately
+          cfg.replyToEmail
+            ? sendEmail({ to: cfg.replyToEmail, subject: notif.subject, html: notif.html })
+            : sendEmail({ to: user.email!, subject: notif.subject, html: notif.html }),
+          // Lead follow-up sequence
           sendEmail({ to: email, replyTo, subject: e1.subject, html: e1.html, scheduledAt: minutesFromNow(15) }),
           sendEmail({ to: email, replyTo, subject: e2.subject, html: e2.html, scheduledAt: daysFromNow(2) }),
           sendEmail({ to: email, replyTo, subject: e3.subject, html: e3.html, scheduledAt: daysFromNow(5) }),
@@ -100,6 +118,20 @@ export async function POST(
           action:     'follow_up_sequence_started',
           details:    { contact_id: contact.id, lead_name: name, lead_email: email },
         })
+      } else {
+        // Agent not enabled — still notify owner if they have an email
+        if (user.email) {
+          const notif = newLeadNotification({
+            businessName: '',
+            leadName:    name,
+            leadEmail:   email,
+            leadPhone:   phone,
+            leadMessage: message || undefined,
+            source,
+            dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://operonauto.com'}/dashboard/contacts`,
+          })
+          await sendEmail({ to: user.email, subject: notif.subject, html: notif.html })
+        }
       }
     }
 

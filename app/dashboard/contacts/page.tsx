@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { Plus, Loader2, Mail, Star, User, X, ChevronRight, Search, AlertTriangle, Upload, List, Kanban, CheckCircle2 } from 'lucide-react'
+import { Plus, Loader2, Mail, Star, User, X, ChevronRight, Search, AlertTriangle, Upload, List, Kanban, CheckCircle2, ArrowRightCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import ContactPipeline from '@/components/dashboard/ContactPipeline'
 
@@ -134,13 +134,15 @@ function AddContactForm({ onAdd, onCancel }: {
   )
 }
 
-function ContactRow({ contact, onReviewRequest, sending }: {
+function ContactRow({ contact, onReviewRequest, onConvert, sending, converting }: {
   contact: Contact
   onReviewRequest: (contact: Contact) => void
+  onConvert: (contact: Contact) => void
   sending: boolean
+  converting: boolean
 }) {
   return (
-    <div className={`card flex flex-col sm:flex-row sm:items-center gap-4 ${sending ? 'opacity-60 pointer-events-none' : ''}`}>
+    <div className={`card flex flex-col sm:flex-row sm:items-center gap-4 ${(sending || converting) ? 'opacity-60 pointer-events-none' : ''}`}>
       <div className="w-9 h-9 rounded-full bg-op-bg flex items-center justify-center shrink-0">
         <User size={16} className="text-op-muted" />
       </div>
@@ -162,13 +164,23 @@ function ContactRow({ contact, onReviewRequest, sending }: {
           {contact.source && <p className="text-xs text-op-muted">via {contact.source}</p>}
         </div>
       </div>
-      <div className="flex gap-2 shrink-0">
+      <div className="flex gap-2 shrink-0 flex-wrap">
         {contact.email && (
           <a href={`mailto:${contact.email}`} className="btn-secondary text-xs px-3 py-1.5 flex items-center gap-1.5">
             <Mail size={12} /> Email
           </a>
         )}
-        {contact.email && (
+        {contact.type === 'lead' && contact.status !== 'converted' && (
+          <button
+            onClick={() => onConvert(contact)}
+            disabled={converting}
+            className="btn-primary text-xs px-3 py-1.5 flex items-center gap-1.5"
+          >
+            {converting ? <Loader2 size={12} className="animate-spin" /> : <ArrowRightCircle size={12} />}
+            Converted
+          </button>
+        )}
+        {contact.email && contact.status === 'converted' && (
           <button onClick={() => onReviewRequest(contact)} className="btn-secondary text-xs px-3 py-1.5 flex items-center gap-1.5">
             <Star size={12} /> Review
           </button>
@@ -194,6 +206,7 @@ export default function ContactsPage() {
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
   const [sending, setSending] = useState<string | null>(null)
+  const [converting, setConverting] = useState<string | null>(null)
   const [sentMsg, setSentMsg] = useState('')
   const [filter, setFilter] = useState<FilterStatus>('all')
   const [search, setSearch] = useState('')
@@ -227,6 +240,26 @@ export default function ContactsPage() {
     setSending(null)
     setSentMsg(res.ok ? `Review request sent to ${contact.name}!` : (data.error ?? 'Failed to send'))
     setTimeout(() => setSentMsg(''), 5000)
+  }
+
+  const handleConvert = async (contact: Contact) => {
+    setConverting(contact.id)
+    setSentMsg('')
+    const res = await fetch(`/api/contacts/${contact.id}/convert`, { method: 'POST' })
+    const data = await res.json()
+    setConverting(null)
+    if (res.ok) {
+      setContacts((prev) => prev.map((c) =>
+        c.id === contact.id ? { ...c, status: 'converted', type: 'customer' } : c
+      ))
+      setSentMsg(data.reviewSent
+        ? `${contact.name} converted! Review request sent automatically.`
+        : `${contact.name} marked as converted.`
+      )
+    } else {
+      setSentMsg(data.error ?? 'Failed to convert')
+    }
+    setTimeout(() => setSentMsg(''), 6000)
   }
 
   const handleCSVImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -468,7 +501,9 @@ export default function ContactsPage() {
                     key={c.id}
                     contact={c}
                     onReviewRequest={handleReviewRequest}
+                    onConvert={handleConvert}
                     sending={sending === c.id}
+                    converting={converting === c.id}
                   />
                 ))}
               </div>
