@@ -14,6 +14,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   if (!user) redirect('/login')
 
+  const { data: business } = await supabase
+    .from('businesses')
+    .select('name')
+    .eq('user_id', user.id)
+    .single()
+
+  if (!business?.name) redirect('/onboarding')
+
   return (
     <div className="flex min-h-screen bg-op-bg">
       <Sidebar />

@@ -51,18 +51,27 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const sevenDaysAgo  = new Date(Date.now() - 7  * 24 * 60 * 60 * 1000).toISOString()
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+
   const [
     { data: scans },
     { data: business },
     { data: dbLeaks },
     { data: agents },
     { data: recentActivity },
+    { count: leadsThisWeek },
+    { count: followupsActive },
+    { count: reviewsSent },
   ] = await Promise.all([
     supabase.from('scans').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(2),
     supabase.from('businesses').select('*').eq('user_id', user.id).single(),
     supabase.from('leaks').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
     supabase.from('agents').select('type, enabled').eq('user_id', user.id).eq('enabled', true),
     supabase.from('agent_activity').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(7),
+    supabase.from('contacts').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('type', 'lead').gt('created_at', sevenDaysAgo),
+    supabase.from('contacts').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'contacted'),
+    supabase.from('agent_activity').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('agent_type', 'review_request').gt('created_at', thirtyDaysAgo),
   ])
 
   const scan     = scans?.[0] ?? null
@@ -145,6 +154,30 @@ export default async function DashboardPage() {
           <Zap size={14} /> Re-scan Business
         </Link>
       </div>
+
+      {/* Live pulse — only shown once agents have done real work */}
+      {((leadsThisWeek ?? 0) > 0 || (followupsActive ?? 0) > 0 || (reviewsSent ?? 0) > 0) && (
+        <div className="bg-op-navy rounded-xl px-6 py-4 mb-6 flex items-center gap-6 flex-wrap">
+          <div className="flex items-center gap-2 mr-2 shrink-0">
+            <span className="w-2 h-2 rounded-full bg-op-green animate-pulse" />
+            <span className="text-xs font-bold text-white/60 uppercase tracking-wide">Operon is running</span>
+          </div>
+          <div className="flex items-center gap-8 flex-wrap flex-1">
+            <div>
+              <p className="text-2xl font-bold font-manrope text-white">{leadsThisWeek ?? 0}</p>
+              <p className="text-xs text-white/50">leads this week</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold font-manrope text-white">{followupsActive ?? 0}</p>
+              <p className="text-xs text-white/50">follow-ups active</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold font-manrope text-white">{reviewsSent ?? 0}</p>
+              <p className="text-xs text-white/50">reviews sent (30d)</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Onboarding checklist */}
       {!onboardingDone && (

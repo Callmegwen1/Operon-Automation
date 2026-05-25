@@ -432,18 +432,33 @@ export default function ContactsPage() {
             )}
 
             {filtered.length === 0 && !showAdd ? (
-              <div className="card text-center py-12">
-                <User size={32} className="text-op-muted mx-auto mb-3" />
-                <p className="font-semibold text-op-navy mb-1">
-                  {filter === 'all' ? 'No contacts yet' : `No ${filter} contacts`}
-                </p>
-                <p className="text-sm text-op-muted mb-4">
-                  {filter === 'all' ? 'Add your first lead or customer to get started.' : `No contacts with status "${filter}" yet.`}
-                </p>
-                {filter === 'all' && (
-                  <button onClick={() => setShowAdd(true)} className="btn-primary text-sm mx-auto">
-                    <Plus size={14} /> Add First Contact
-                  </button>
+              <div className="card py-10">
+                {filter === 'all' ? (
+                  <div className="text-center">
+                    <div className="w-14 h-14 bg-op-bg rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <User size={24} className="text-op-muted" />
+                    </div>
+                    <p className="font-bold text-op-navy mb-1">No contacts yet</p>
+                    <p className="text-sm text-op-muted mb-6 max-w-xs mx-auto">
+                      Add your leads and customers here — Operon agents will follow up with them automatically.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                      <button
+                        onClick={() => setShowImportOptions(true)}
+                        className="btn-secondary text-sm flex items-center gap-1.5"
+                      >
+                        <Upload size={14} /> Import CSV
+                      </button>
+                      <button onClick={() => setShowAdd(true)} className="btn-primary text-sm flex items-center gap-1.5">
+                        <Plus size={14} /> Add Manually
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <p className="font-semibold text-op-navy mb-1">No {filter} contacts</p>
+                    <p className="text-sm text-op-muted">No contacts with status &ldquo;{filter}&rdquo; yet.</p>
+                  </div>
                 )}
               </div>
             ) : (

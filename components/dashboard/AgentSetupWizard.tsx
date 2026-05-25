@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import {
   X, ArrowRight, ArrowLeft, CheckCircle2, Copy, Check, Upload,
   Globe, FileSpreadsheet, Zap, Users, Star, Mail, BarChart2,
   Loader2, ExternalLink,
 } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 type AgentType = 'lead_followup' | 'review_request' | 'weekly_report'
 
@@ -137,6 +138,22 @@ function LeadFollowupWizard({ userId, initialConfig, onComplete }: {
 
   const totalSteps = 4
   const platformInfo = EMBED_PLATFORMS.find((p) => p.id === platform) ?? EMBED_PLATFORMS[0]
+
+  // Pre-fill from known business data so users don't retype their own info
+  useEffect(() => {
+    const supabase = createClient()
+    Promise.all([
+      supabase.auth.getUser(),
+      supabase.from('businesses').select('name, phone').eq('user_id', userId).single(),
+    ]).then(([{ data: { user } }, { data: biz }]) => {
+      setConfig((c) => ({
+        ...c,
+        fromName:     c.fromName     || biz?.name  || '',
+        replyToEmail: c.replyToEmail || user?.email || '',
+        phone:        c.phone        || biz?.phone  || '',
+      }))
+    })
+  }, [userId])
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -552,7 +569,8 @@ function isValidReviewUrl(url: string): boolean {
   } catch { return false }
 }
 
-function ReviewRequestWizard({ initialConfig, onComplete }: {
+function ReviewRequestWizard({ userId, initialConfig, onComplete }: {
+  userId: string
   initialConfig: AgentConfig
   onComplete: (config: AgentConfig) => void
 }) {
@@ -563,6 +581,20 @@ function ReviewRequestWizard({ initialConfig, onComplete }: {
   const [activationDone, setActivationDone] = useState(false)
   const totalSteps = 4
   const platformInfo = REVIEW_PLATFORMS.find((p) => p.id === platform)
+
+  useEffect(() => {
+    const supabase = createClient()
+    Promise.all([
+      supabase.auth.getUser(),
+      supabase.from('businesses').select('name').eq('user_id', userId).single(),
+    ]).then(([{ data: { user } }, { data: biz }]) => {
+      setConfig((c) => ({
+        ...c,
+        fromName:     c.fromName     || biz?.name  || '',
+        replyToEmail: c.replyToEmail || user?.email || '',
+      }))
+    })
+  }, [userId])
 
   const handleFinish = async () => {
     setSaving(true)
@@ -880,7 +912,7 @@ export default function AgentSetupWizard({ type, userId, initialConfig, onComple
         {/* Wizard content */}
         <div className="p-6 flex-1">
           {type === 'lead_followup'  && <LeadFollowupWizard userId={userId} initialConfig={initialConfig} onComplete={onComplete} />}
-          {type === 'review_request' && <ReviewRequestWizard initialConfig={initialConfig} onComplete={onComplete} />}
+          {type === 'review_request' && <ReviewRequestWizard userId={userId} initialConfig={initialConfig} onComplete={onComplete} />}
           {type === 'weekly_report'  && <WeeklyReportWizard initialConfig={initialConfig} onComplete={onComplete} />}
         </div>
       </div>
