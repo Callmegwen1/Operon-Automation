@@ -50,5 +50,7 @@ export async function GET(request: Request) {
     // non-blocking — don't fail the redirect if email fails
   }
 
-  return NextResponse.redirect(`${origin}/dashboard`)
+  const next = searchParams.get('next')
+  const destination = next && next.startsWith('/') ? next : '/dashboard'
+  return NextResponse.redirect(`${origin}${destination}`)
 }

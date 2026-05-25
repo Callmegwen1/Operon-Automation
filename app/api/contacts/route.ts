@@ -64,12 +64,15 @@ export async function POST(req: NextRequest) {
           .eq('user_id', user.id)
           .single()
 
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://operonauto.com'
+        const unsubscribeUrl = `${appUrl}/api/unsubscribe?id=${contact.id}`
         const emailArgs = {
-          leadName:     name,
-          businessName: business?.name ?? 'Our Team',
-          fromName:     cfg.fromName ?? business?.name ?? 'The Team',
-          phone:        cfg.phone ?? '',
-          service:      business?.main_service,
+          leadName:       name,
+          businessName:   business?.name ?? 'Our Team',
+          fromName:       cfg.fromName ?? business?.name ?? 'The Team',
+          phone:          cfg.phone ?? '',
+          service:        business?.main_service,
+          unsubscribeUrl,
         }
 
         const replyTo = cfg.replyToEmail ?? undefined
@@ -83,7 +86,7 @@ export async function POST(req: NextRequest) {
         await sendEmail({ to: email, replyTo, subject: e2.subject, html: e2.html, scheduledAt: daysFromNow(2) })
 
         // Email 3 — Day 5
-        const e3 = leadFollowup3({ leadName: name, businessName: emailArgs.businessName, fromName: emailArgs.fromName })
+        const e3 = leadFollowup3({ leadName: name, businessName: emailArgs.businessName, fromName: emailArgs.fromName, unsubscribeUrl })
         await sendEmail({ to: email, replyTo, subject: e3.subject, html: e3.html, scheduledAt: daysFromNow(5) })
 
         // Mark contact as contacted

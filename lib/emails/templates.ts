@@ -1,5 +1,8 @@
 // ── Shared wrapper ──────────────────────────────────────────
-function wrap(content: string): string {
+function wrap(content: string, unsubscribeUrl?: string): string {
+  const optOut = unsubscribeUrl
+    ? `<a href="${unsubscribeUrl}" style="color:#94A3B8;text-decoration:underline;">Unsubscribe</a>`
+    : 'Reply STOP to opt out'
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -11,7 +14,7 @@ function wrap(content: string): string {
         <tr><td style="padding:24px 0;text-align:center;">
           <p style="margin:0;color:#94A3B8;font-size:11px;">
             Powered by <a href="https://operonauto.com" style="color:#1A2E4A;text-decoration:none;">Operon Automation</a> ·
-            Reply STOP to opt out of follow-ups.
+            ${optOut}
           </p>
         </td></tr>
       </table>
@@ -29,6 +32,7 @@ export function leadFollowup1({
   phone,
   service,
   personalNote,
+  unsubscribeUrl,
 }: {
   leadName: string
   businessName: string
@@ -36,6 +40,7 @@ export function leadFollowup1({
   phone: string
   service?: string
   personalNote?: string
+  unsubscribeUrl?: string
 }): { subject: string; html: string } {
   return {
     subject: `Following up on your inquiry — ${businessName}`,
@@ -54,7 +59,7 @@ export function leadFollowup1({
         ${phone ? `<p style="margin:0 0 16px;font-size:15px;font-weight:700;color:#102A43;">📞 ${phone}</p>` : ''}
         ${personalNote ? `<p style="margin:0 0 16px;color:#334155;font-size:15px;line-height:1.6;padding-top:16px;border-top:1px solid #E5E7EB;">${personalNote}</p>` : ''}
         <p style="margin:0;color:#334155;font-size:15px;">Talk soon,<br><strong>${fromName}</strong><br><span style="color:#64748B;">${businessName}</span></p>
-      </td></tr>`),
+      </td></tr>`, unsubscribeUrl),
   }
 }
 
@@ -64,12 +69,14 @@ export function leadFollowup2({
   fromName,
   phone,
   service,
+  unsubscribeUrl,
 }: {
   leadName: string
   businessName: string
   fromName: string
   phone: string
   service?: string
+  unsubscribeUrl?: string
 }): { subject: string; html: string } {
   return {
     subject: `Still thinking about it? — ${businessName}`,
@@ -87,7 +94,7 @@ export function leadFollowup2({
         </p>
         ${phone ? `<p style="margin:0 0 24px;font-size:15px;font-weight:700;color:#102A43;">📞 ${phone}</p>` : ''}
         <p style="margin:0;color:#334155;font-size:15px;">— <strong>${fromName}</strong><br><span style="color:#64748B;">${businessName}</span></p>
-      </td></tr>`),
+      </td></tr>`, unsubscribeUrl),
   }
 }
 
@@ -95,10 +102,12 @@ export function leadFollowup3({
   leadName,
   businessName,
   fromName,
+  unsubscribeUrl,
 }: {
   leadName: string
   businessName: string
   fromName: string
+  unsubscribeUrl?: string
 }): { subject: string; html: string } {
   return {
     subject: `One last note from ${businessName}`,
@@ -115,7 +124,7 @@ export function leadFollowup3({
           If you're still looking for help, we're here whenever you're ready. No pressure at all.
         </p>
         <p style="margin:0;color:#334155;font-size:15px;">— <strong>${fromName}</strong><br><span style="color:#64748B;">${businessName}</span></p>
-      </td></tr>`),
+      </td></tr>`, unsubscribeUrl),
   }
 }
 

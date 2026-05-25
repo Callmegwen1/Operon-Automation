@@ -75,19 +75,22 @@ export async function POST(
           .single()
 
         const businessName = business?.name ?? 'Our Team'
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://operonauto.com'
+        const unsubscribeUrl = `${appUrl}/api/unsubscribe?id=${contact.id}`
         const emailArgs = {
-          leadName:     name,
+          leadName:       name,
           businessName,
-          fromName:     cfg.fromName ?? businessName ?? 'The Team',
-          phone:        cfg.phone ?? '',
-          service:      business?.main_service,
-          personalNote: cfg.personalNote,
+          fromName:       cfg.fromName ?? businessName ?? 'The Team',
+          phone:          cfg.phone ?? '',
+          service:        business?.main_service,
+          personalNote:   cfg.personalNote,
+          unsubscribeUrl,
         }
         const replyTo = cfg.replyToEmail ?? undefined
 
         const e1 = leadFollowup1(emailArgs)
         const e2 = leadFollowup2(emailArgs)
-        const e3 = leadFollowup3({ leadName: name, businessName: emailArgs.businessName, fromName: emailArgs.fromName })
+        const e3 = leadFollowup3({ leadName: name, businessName: emailArgs.businessName, fromName: emailArgs.fromName, unsubscribeUrl })
 
         // Owner notification — instant, no schedule
         const notif = newLeadNotification({
