@@ -34,6 +34,13 @@ interface ActivityEntry {
   created_at: string
 }
 
+interface ReviewMetrics {
+  requestsSent: number
+  remindersScheduled: number
+  waitingForReview: number
+  privateFeedbackSent: number
+}
+
 interface AgentTask {
   id: string
   agent_type: string
@@ -154,12 +161,13 @@ function TasksPanel({ tasks, onDismiss }: { tasks: AgentTask[]; onDismiss: (id: 
 }
 
 // ── Agent Card ────────────────────────────────────────────────
-function AgentCard({ meta, row, activity, userId, onUpdate }: {
+function AgentCard({ meta, row, activity, userId, onUpdate, reviewMetrics }: {
   meta: typeof SYSTEM_META[number]
   row: AgentRow
   activity: ActivityEntry[]
   userId: string
   onUpdate: (type: AgentType, updates: Partial<AgentRow>) => void
+  reviewMetrics?: ReviewMetrics | null
 }) {
   const Icon = meta.icon
   const [showWizard, setShowWizard] = useState(false)
@@ -393,6 +401,31 @@ function AgentCard({ meta, row, activity, userId, onUpdate }: {
               )
             })()}
 
+            {/* Review Growth System metrics */}
+            {meta.type === 'review_request' && reviewMetrics && (
+              <div className="mt-4 border-t border-op-border pt-4">
+                <p className="text-xs font-semibold text-op-muted uppercase tracking-wide mb-3">Performance</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-op-bg rounded-xl p-3">
+                    <p className="text-2xl font-bold text-op-navy">{reviewMetrics.requestsSent}</p>
+                    <p className="text-xs text-op-muted mt-0.5">Requests sent</p>
+                  </div>
+                  <div className="bg-op-bg rounded-xl p-3">
+                    <p className="text-2xl font-bold text-op-amber">{reviewMetrics.waitingForReview}</p>
+                    <p className="text-xs text-op-muted mt-0.5">Waiting for review</p>
+                  </div>
+                  <div className="bg-op-bg rounded-xl p-3">
+                    <p className="text-2xl font-bold text-op-navy">{reviewMetrics.remindersScheduled}</p>
+                    <p className="text-xs text-op-muted mt-0.5">Reminders scheduled</p>
+                  </div>
+                  <div className="bg-op-bg rounded-xl p-3">
+                    <p className="text-2xl font-bold text-op-muted">{reviewMetrics.privateFeedbackSent}</p>
+                    <p className="text-xs text-op-muted mt-0.5">Private feedback sent</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Delivery log */}
             {activity.length > 0 && (
               <div className="mt-4 border-t border-op-border pt-4">
@@ -462,9 +495,10 @@ export default function AgentsPage() {
     weekly_report:  { type: 'weekly_report',  enabled: false, config: {} },
   })
   const [activityByType, setActivityByType] = useState<Record<string, ActivityEntry[]>>({})
-  const [tasks, setTasks]   = useState<AgentTask[]>([])
-  const [userId, setUserId] = useState('')
-  const [loading, setLoading] = useState(true)
+  const [tasks, setTasks]         = useState<AgentTask[]>([])
+  const [reviewMetrics, setReviewMetrics] = useState<ReviewMetrics | null>(null)
+  const [userId, setUserId]       = useState('')
+  const [loading, setLoading]     = useState(true)
 
   useEffect(() => {
     const load = async () => {
@@ -472,7 +506,15 @@ export default function AgentsPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) setUserId(user.id)
 
-      const [{ data: agentData }, { data: activityData }, tasksRes] = await Promise.all([
+      const [
+        { data: agentData },
+        { data: activityData },
+        tasksRes,
+        { count: requestsSent },
+        { count: remindersScheduled },
+        { count: waitingForReview },
+        { count: privateFeedbackSent },
+      ] = await Promise.all([
         supabase.from('agents').select('*'),
         supabase
           .from('agent_activity')
@@ -480,7 +522,23 @@ export default function AgentsPage() {
           .order('created_at', { ascending: false })
           .limit(50),
         fetch('/api/agents/tasks'),
+        supabase.from('agent_messages').select('*', { count: 'exact', head: true })
+          .eq('agent_type', 'review_request').eq('template_id', 'review_day0'),
+        supabase.from('agent_messages').select('*', { count: 'exact', head: true })
+          .eq('agent_type', 'review_request').eq('status', 'scheduled')
+          .in('template_id', ['review_day3', 'review_day7']),
+        supabase.from('contacts').select('*', { count: 'exact', head: true })
+          .eq('status', 'review_requested'),
+        supabase.from('agent_messages').select('*', { count: 'exact', head: true })
+          .eq('agent_type', 'review_request').eq('template_id', 'private_feedback'),
       ])
+
+      setReviewMetrics({
+        requestsSent:       requestsSent ?? 0,
+        remindersScheduled: remindersScheduled ?? 0,
+        waitingForReview:   waitingForReview ?? 0,
+        privateFeedbackSent: privateFeedbackSent ?? 0,
+      })
 
       if (agentData) {
         const map = { ...agents }
@@ -548,6 +606,7 @@ export default function AgentsPage() {
               activity={activityByType[meta.type] ?? []}
               userId={userId}
               onUpdate={handleUpdate}
+              reviewMetrics={meta.type === 'review_request' ? reviewMetrics : null}
             />
           ))}
 

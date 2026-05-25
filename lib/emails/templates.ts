@@ -430,6 +430,108 @@ export function intelligentLeadAlert({
   }
 }
 
+// ── Review Request Day 3 (reminder) ──────────────────────────
+export function reviewRequestDay3({
+  customerName,
+  businessName,
+  fromName,
+  reviewLink,
+  body,
+  unsubscribeUrl,
+}: {
+  customerName: string
+  businessName: string
+  fromName: string
+  reviewLink: string
+  body: string
+  unsubscribeUrl?: string
+}): { subject: string; html: string } {
+  return {
+    subject: `Quick reminder — ${businessName}`,
+    html: wrap(`
+      <tr><td style="background:#102A43;border-radius:12px 12px 0 0;padding:28px 36px;">
+        <p style="margin:0;color:#ffffff;font-size:20px;font-weight:700;">${businessName}</p>
+      </td></tr>
+      <tr><td style="background:#ffffff;border-radius:0 0 12px 12px;padding:36px;">
+        <p style="margin:0 0 16px;color:#334155;font-size:15px;">Hi ${customerName},</p>
+        <p style="margin:0 0 16px;color:#334155;font-size:15px;line-height:1.6;">${body}</p>
+        <div style="text-align:center;margin:28px 0;">
+          <a href="${reviewLink}" style="display:inline-block;background:#1A2E4A;color:#ffffff;font-size:15px;font-weight:700;padding:14px 32px;border-radius:8px;text-decoration:none;">Leave a Review →</a>
+        </div>
+        <p style="margin:0;color:#334155;font-size:14px;">Thank you,<br><strong>${fromName}</strong><br><span style="color:#64748B;">${businessName}</span></p>
+      </td></tr>`, unsubscribeUrl),
+  }
+}
+
+// ── Review Request Day 7 (final) ──────────────────────────────
+export function reviewRequestDay7({
+  customerName,
+  businessName,
+  fromName,
+  reviewLink,
+  body,
+  unsubscribeUrl,
+}: {
+  customerName: string
+  businessName: string
+  fromName: string
+  reviewLink: string
+  body: string
+  unsubscribeUrl?: string
+}): { subject: string; html: string } {
+  return {
+    subject: `One last ask — ${businessName}`,
+    html: wrap(`
+      <tr><td style="background:#102A43;border-radius:12px 12px 0 0;padding:28px 36px;">
+        <p style="margin:0;color:#ffffff;font-size:20px;font-weight:700;">${businessName}</p>
+      </td></tr>
+      <tr><td style="background:#ffffff;border-radius:0 0 12px 12px;padding:36px;">
+        <p style="margin:0 0 16px;color:#334155;font-size:15px;">Hi ${customerName},</p>
+        <p style="margin:0 0 16px;color:#334155;font-size:15px;line-height:1.6;">${body}</p>
+        <div style="text-align:center;margin:28px 0;">
+          <a href="${reviewLink}" style="display:inline-block;background:#1A2E4A;color:#ffffff;font-size:15px;font-weight:700;padding:14px 32px;border-radius:8px;text-decoration:none;">Leave a Review →</a>
+        </div>
+        <p style="margin:0;color:#334155;font-size:14px;">Thank you for your time,<br><strong>${fromName}</strong><br><span style="color:#64748B;">${businessName}</span></p>
+      </td></tr>`, unsubscribeUrl),
+  }
+}
+
+// ── Private Feedback Request (uncertain/unhappy customers) ────
+export function privateFeedbackRequest({
+  customerName,
+  businessName,
+  fromName,
+  replyToEmail,
+  body,
+  unsubscribeUrl,
+}: {
+  customerName: string
+  businessName: string
+  fromName: string
+  replyToEmail: string
+  body: string
+  unsubscribeUrl?: string
+}): { subject: string; html: string } {
+  return {
+    subject: `We'd love your honest feedback — ${businessName}`,
+    html: wrap(`
+      <tr><td style="background:#102A43;border-radius:12px 12px 0 0;padding:28px 36px;">
+        <p style="margin:0;color:#ffffff;font-size:20px;font-weight:700;">${businessName}</p>
+      </td></tr>
+      <tr><td style="background:#ffffff;border-radius:0 0 12px 12px;padding:36px;">
+        <p style="margin:0 0 16px;color:#334155;font-size:15px;">Hi ${customerName},</p>
+        <p style="margin:0 0 16px;color:#334155;font-size:15px;line-height:1.6;">${body}</p>
+        <p style="margin:0 0 16px;color:#334155;font-size:15px;line-height:1.6;">
+          Simply reply to this email — it goes directly to ${fromName} and we read every message.
+        </p>
+        <div style="background:#F8FAFC;border-radius:8px;padding:16px 20px;margin:0 0 24px;">
+          <p style="margin:0;color:#64748B;font-size:13px;">📧 Reply directly to this email or write to <a href="mailto:${replyToEmail}" style="color:#1A2E4A;">${replyToEmail}</a></p>
+        </div>
+        <p style="margin:0;color:#334155;font-size:14px;">Thank you,<br><strong>${fromName}</strong><br><span style="color:#64748B;">${businessName}</span></p>
+      </td></tr>`, unsubscribeUrl),
+  }
+}
+
 // ── Onboarding Day 1 ─────────────────────────────────────────
 export function onboardingDay1({
   businessName,

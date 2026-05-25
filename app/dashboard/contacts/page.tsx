@@ -2,7 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { Plus, Loader2, Mail, Star, User, X, ChevronRight, Search, AlertTriangle, Upload, List, Kanban, CheckCircle2, ArrowRightCircle } from 'lucide-react'
+import {
+  Plus, Loader2, Mail, Star, User, X, ChevronRight,
+  Search, AlertTriangle, Upload, List, Kanban, CheckCircle2,
+  Smile, Meh, Frown,
+} from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import ContactPipeline from '@/components/dashboard/ContactPipeline'
 
@@ -17,14 +21,42 @@ interface Contact {
   created_at: string
 }
 
-type FilterStatus = 'all' | 'new' | 'contacted' | 'converted' | 'lost'
+type Satisfaction = 'happy' | 'not_sure' | 'unhappy'
+type FilterStatus = 'all' | 'new' | 'contacted' | 'completed' | 'review_requested' | 'lost'
 type ViewMode = 'list' | 'pipeline'
 
 const statusColors: Record<string, string> = {
-  new:       'bg-op-navy/10 text-op-navy',
-  contacted: 'bg-amber-50 text-op-amber',
-  converted: 'bg-green-50 text-op-green',
-  lost:      'bg-red-50 text-op-red',
+  new:                    'bg-op-navy/10 text-op-navy',
+  contacted:              'bg-amber-50 text-op-amber',
+  replied:                'bg-amber-50 text-op-amber',
+  booked:                 'bg-purple-50 text-purple-600',
+  completed:              'bg-green-50 text-op-green',
+  won:                    'bg-green-50 text-op-green',
+  converted:              'bg-green-50 text-op-green',
+  lost:                   'bg-red-50 text-op-red',
+  no_response:            'bg-gray-100 text-gray-500',
+  inactive:               'bg-gray-100 text-gray-500',
+  needs_owner_attention:  'bg-red-50 text-op-red',
+  review_requested:       'bg-amber-50 text-op-amber',
+  review_completed:       'bg-green-50 text-op-green',
+  do_not_contact:         'bg-red-100 text-op-red',
+}
+
+const statusLabel: Record<string, string> = {
+  new:                    'New',
+  contacted:              'Contacted',
+  replied:                'Replied',
+  booked:                 'Booked',
+  completed:              'Completed',
+  won:                    'Won',
+  converted:              'Converted',
+  lost:                   'Lost',
+  no_response:            'No Response',
+  inactive:               'Inactive',
+  needs_owner_attention:  'Needs Attention',
+  review_requested:       'Review Requested',
+  review_completed:       'Review Received',
+  do_not_contact:         'Do Not Contact',
 }
 
 const inputClass =
@@ -53,6 +85,87 @@ function parseCSV(text: string): Record<string, string>[] {
   })
 }
 
+// ── Satisfaction Modal ──────────────────────────────────────────
+function SatisfactionModal({ contact, onConfirm, onCancel, loading }: {
+  contact: Contact
+  onConfirm: (satisfaction: Satisfaction) => void
+  onCancel: () => void
+  loading: boolean
+}) {
+  const [selected, setSelected] = useState<Satisfaction | null>(null)
+
+  const options: { value: Satisfaction; icon: React.ReactNode; label: string; description: string; border: string; bg: string }[] = [
+    {
+      value: 'happy',
+      icon: <Smile size={20} className="text-op-green" />,
+      label: 'Happy with the service',
+      description: "We'll send a personalized review request — 3-email sequence.",
+      border: selected === 'happy' ? 'border-op-green' : 'border-op-border',
+      bg: selected === 'happy' ? 'bg-green-50' : 'bg-white',
+    },
+    {
+      value: 'not_sure',
+      icon: <Meh size={20} className="text-op-amber" />,
+      label: 'Not sure how they feel',
+      description: "We'll send private feedback first — no public review request.",
+      border: selected === 'not_sure' ? 'border-op-amber' : 'border-op-border',
+      bg: selected === 'not_sure' ? 'bg-amber-50' : 'bg-white',
+    },
+    {
+      value: 'unhappy',
+      icon: <Frown size={20} className="text-op-red" />,
+      label: 'Customer may be unhappy',
+      description: "We'll block the review and create a follow-up task for you.",
+      border: selected === 'unhappy' ? 'border-op-red' : 'border-op-border',
+      bg: selected === 'unhappy' ? 'bg-red-50' : 'bg-white',
+    },
+  ]
+
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+        <div className="flex items-start justify-between p-6 pb-4 border-b border-op-border">
+          <div>
+            <h2 className="font-bold text-op-navy font-manrope">How did the job go?</h2>
+            <p className="text-sm text-op-muted mt-0.5">with {contact.name}</p>
+          </div>
+          <button onClick={onCancel} className="text-op-muted hover:text-op-navy transition-colors">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="p-6 flex flex-col gap-3">
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setSelected(opt.value)}
+              className={`flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all ${opt.border} ${opt.bg}`}
+            >
+              <span className="shrink-0 mt-0.5">{opt.icon}</span>
+              <div>
+                <p className="text-sm font-semibold text-op-navy">{opt.label}</p>
+                <p className="text-xs text-op-muted mt-0.5">{opt.description}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-3 px-6 pb-6">
+          <button onClick={onCancel} className="btn-secondary text-sm flex-1 justify-center">
+            Cancel
+          </button>
+          <button
+            onClick={() => selected && onConfirm(selected)}
+            disabled={!selected || loading}
+            className="btn-primary text-sm flex-1 justify-center"
+          >
+            {loading ? <Loader2 size={14} className="animate-spin" /> : 'Confirm →'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Add Contact Form ────────────────────────────────────────────
 function AddContactForm({ onAdd, onCancel }: {
   onAdd: (contact: Contact) => void
   onCancel: () => void
@@ -134,15 +247,20 @@ function AddContactForm({ onAdd, onCancel }: {
   )
 }
 
-function ContactRow({ contact, onReviewRequest, onConvert, sending, converting }: {
+// ── Contact Row ─────────────────────────────────────────────────
+function ContactRow({ contact, onMarkDone, onReviewRequest, sending, completing }: {
   contact: Contact
+  onMarkDone: (contact: Contact) => void
   onReviewRequest: (contact: Contact) => void
-  onConvert: (contact: Contact) => void
   sending: boolean
-  converting: boolean
+  completing: boolean
 }) {
+  const doneStatuses = ['completed', 'won', 'converted', 'lost', 'do_not_contact', 'review_requested', 'review_completed']
+  const isDone = doneStatuses.includes(contact.status)
+  const busy = sending || completing
+
   return (
-    <div className={`card flex flex-col sm:flex-row sm:items-center gap-4 ${(sending || converting) ? 'opacity-60 pointer-events-none' : ''}`}>
+    <div className={`card flex flex-col sm:flex-row sm:items-center gap-4 ${busy ? 'opacity-60 pointer-events-none' : ''}`}>
       <div className="w-9 h-9 rounded-full bg-op-bg flex items-center justify-center shrink-0">
         <User size={16} className="text-op-muted" />
       </div>
@@ -155,7 +273,7 @@ function ContactRow({ contact, onReviewRequest, onConvert, sending, converting }
             {contact.type === 'lead' ? 'Lead' : 'Customer'}
           </span>
           <span className={`text-xs font-semibold px-2 py-0.5 rounded-full capitalize ${statusColors[contact.status] ?? 'bg-gray-50 text-op-muted'}`}>
-            {contact.status}
+            {statusLabel[contact.status] ?? contact.status}
           </span>
         </div>
         <div className="flex gap-3 mt-0.5 flex-wrap">
@@ -170,19 +288,22 @@ function ContactRow({ contact, onReviewRequest, onConvert, sending, converting }
             <Mail size={12} /> Email
           </a>
         )}
-        {contact.type === 'lead' && contact.status !== 'converted' && (
+        {/* Mark Done — available until job is finished */}
+        {!isDone && (
           <button
-            onClick={() => onConvert(contact)}
-            disabled={converting}
+            onClick={() => onMarkDone(contact)}
+            disabled={completing}
             className="btn-primary text-xs px-3 py-1.5 flex items-center gap-1.5"
           >
-            {converting ? <Loader2 size={12} className="animate-spin" /> : <ArrowRightCircle size={12} />}
-            Converted
+            {completing ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
+            Mark Done
           </button>
         )}
-        {contact.email && contact.status === 'converted' && (
+        {/* Manual review request for completed contacts with email */}
+        {contact.email && isDone && contact.status !== 'review_requested' && contact.status !== 'review_completed' && (
           <button onClick={() => onReviewRequest(contact)} className="btn-secondary text-xs px-3 py-1.5 flex items-center gap-1.5">
-            <Star size={12} /> Review
+            {sending ? <Loader2 size={12} className="animate-spin" /> : <Star size={12} />}
+            Review
           </button>
         )}
         <Link href={`/dashboard/contacts/${contact.id}`} className="btn-secondary text-xs px-3 py-1.5 flex items-center gap-1.5">
@@ -194,25 +315,27 @@ function ContactRow({ contact, onReviewRequest, onConvert, sending, converting }
 }
 
 const FILTERS: { value: FilterStatus; label: string }[] = [
-  { value: 'all',       label: 'All'       },
-  { value: 'new',       label: 'New'       },
-  { value: 'contacted', label: 'Contacted' },
-  { value: 'converted', label: 'Converted' },
-  { value: 'lost',      label: 'Lost'      },
+  { value: 'all',              label: 'All'              },
+  { value: 'new',              label: 'New'              },
+  { value: 'contacted',        label: 'Contacted'        },
+  { value: 'completed',        label: 'Completed'        },
+  { value: 'review_requested', label: 'Review Requested' },
+  { value: 'lost',             label: 'Lost'             },
 ]
 
 export default function ContactsPage() {
-  const [contacts, setContacts] = useState<Contact[]>([])
-  const [loading, setLoading] = useState(true)
-  const [showAdd, setShowAdd] = useState(false)
-  const [sending, setSending] = useState<string | null>(null)
-  const [converting, setConverting] = useState<string | null>(null)
-  const [sentMsg, setSentMsg] = useState('')
-  const [filter, setFilter] = useState<FilterStatus>('all')
-  const [search, setSearch] = useState('')
-  const [view, setView] = useState<ViewMode>('list')
-  const [importing, setImporting] = useState(false)
-  const [importResult, setImportResult] = useState<{ count: number } | null>(null)
+  const [contacts, setContacts]           = useState<Contact[]>([])
+  const [loading, setLoading]             = useState(true)
+  const [showAdd, setShowAdd]             = useState(false)
+  const [sending, setSending]             = useState<string | null>(null)
+  const [completingContact, setCompletingContact] = useState<Contact | null>(null)
+  const [satisfactionLoading, setSatisfactionLoading] = useState(false)
+  const [sentMsg, setSentMsg]             = useState('')
+  const [filter, setFilter]               = useState<FilterStatus>('all')
+  const [search, setSearch]               = useState('')
+  const [view, setView]                   = useState<ViewMode>('list')
+  const [importing, setImporting]         = useState(false)
+  const [importResult, setImportResult]   = useState<{ count: number } | null>(null)
   const [importFollowup, setImportFollowup] = useState(false)
   const [showImportOptions, setShowImportOptions] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -232,34 +355,91 @@ export default function ContactsPage() {
     setShowAdd(false)
   }
 
+  // Step 1: user clicks "Mark Done" → show satisfaction modal
+  const handleMarkDone = (contact: Contact) => {
+    setCompletingContact(contact)
+  }
+
+  // Step 2: user picks satisfaction → call complete + review-request
+  const handleSatisfactionConfirm = async (satisfaction: Satisfaction) => {
+    if (!completingContact) return
+    setSatisfactionLoading(true)
+    setSentMsg('')
+
+    const contact = completingContact
+
+    // Mark contact as completed
+    const completeRes = await fetch(`/api/contacts/${contact.id}/complete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ finalStatus: 'completed' }),
+    })
+    const completeData = await completeRes.json()
+
+    if (!completeRes.ok) {
+      setSatisfactionLoading(false)
+      setCompletingContact(null)
+      setSentMsg(completeData.error ?? 'Failed to update contact')
+      setTimeout(() => setSentMsg(''), 5000)
+      return
+    }
+
+    // Update local state
+    setContacts((prev) => prev.map((c) =>
+      c.id === contact.id ? { ...c, status: 'completed', type: 'customer' } : c
+    ))
+
+    // If review system is enabled, trigger review flow
+    if (completeData.reviewSystemEnabled) {
+      const reviewRes = await fetch(`/api/contacts/${contact.id}/review-request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ satisfaction }),
+      })
+      const reviewData = await reviewRes.json()
+
+      if (reviewRes.ok) {
+        if (reviewData.action === 'review_sequence_started') {
+          setContacts((prev) => prev.map((c) =>
+            c.id === contact.id ? { ...c, status: 'review_requested' } : c
+          ))
+          setSentMsg(`${contact.name} marked complete — review sequence started!`)
+        } else if (reviewData.action === 'private_feedback') {
+          setSentMsg(`${contact.name} marked complete — private feedback request sent.`)
+        } else if (reviewData.action === 'blocked') {
+          setSentMsg(`${contact.name} marked complete — review blocked, follow-up task created.`)
+        }
+      } else {
+        setSentMsg(`${contact.name} marked complete.${reviewData.error ? ` (${reviewData.error})` : ''}`)
+      }
+    } else {
+      setSentMsg(`${contact.name} marked as complete.`)
+    }
+
+    setSatisfactionLoading(false)
+    setCompletingContact(null)
+    setTimeout(() => setSentMsg(''), 7000)
+  }
+
   const handleReviewRequest = async (contact: Contact) => {
     setSending(contact.id)
     setSentMsg('')
-    const res = await fetch(`/api/contacts/${contact.id}/review-request`, { method: 'POST' })
+    const res = await fetch(`/api/contacts/${contact.id}/review-request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ satisfaction: 'happy' }),
+    })
     const data = await res.json()
     setSending(null)
-    setSentMsg(res.ok ? `Review request sent to ${contact.name}!` : (data.error ?? 'Failed to send'))
-    setTimeout(() => setSentMsg(''), 5000)
-  }
-
-  const handleConvert = async (contact: Contact) => {
-    setConverting(contact.id)
-    setSentMsg('')
-    const res = await fetch(`/api/contacts/${contact.id}/convert`, { method: 'POST' })
-    const data = await res.json()
-    setConverting(null)
     if (res.ok) {
       setContacts((prev) => prev.map((c) =>
-        c.id === contact.id ? { ...c, status: 'converted', type: 'customer' } : c
+        c.id === contact.id ? { ...c, status: 'review_requested' } : c
       ))
-      setSentMsg(data.reviewSent
-        ? `${contact.name} converted! Review request sent automatically.`
-        : `${contact.name} marked as converted.`
-      )
+      setSentMsg(`Review request sent to ${contact.name}!`)
     } else {
-      setSentMsg(data.error ?? 'Failed to convert')
+      setSentMsg(data.error ?? 'Failed to send review request')
     }
-    setTimeout(() => setSentMsg(''), 6000)
+    setTimeout(() => setSentMsg(''), 5000)
   }
 
   const handleCSVImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -293,7 +473,11 @@ export default function ContactsPage() {
   )
 
   const filtered = contacts
-    .filter((c) => filter === 'all' || c.status === filter)
+    .filter((c) => {
+      if (filter === 'all') return true
+      if (filter === 'completed') return ['completed', 'won', 'converted'].includes(c.status)
+      return c.status === filter
+    })
     .filter((c) => {
       if (!search) return true
       const q = search.toLowerCase()
@@ -310,6 +494,16 @@ export default function ContactsPage() {
 
   return (
     <main className="flex-1 p-6 md:p-8 overflow-auto">
+      {/* Satisfaction modal */}
+      {completingContact && (
+        <SatisfactionModal
+          contact={completingContact}
+          onConfirm={handleSatisfactionConfirm}
+          onCancel={() => setCompletingContact(null)}
+          loading={satisfactionLoading}
+        />
+      )}
+
       <div className={view === 'pipeline' ? 'max-w-5xl' : 'max-w-2xl'}>
         {/* Header */}
         <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
@@ -367,7 +561,7 @@ export default function ContactsPage() {
                     <div>
                       <p className="text-xs font-semibold text-op-navy">Send follow-up sequence</p>
                       <p className="text-xs text-op-muted mt-0.5">
-                        If Lead Follow-Up Agent is enabled, imported leads will automatically receive the 3-email sequence.
+                        If Lead Recovery Autopilot is enabled, imported leads will automatically receive the follow-up sequence.
                       </p>
                     </div>
                   </label>
@@ -414,7 +608,7 @@ export default function ContactsPage() {
           </div>
         )}
 
-        {/* Sent review message */}
+        {/* Action feedback */}
         {sentMsg && (
           <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-4 text-sm text-op-green font-semibold">
             {sentMsg}
@@ -446,7 +640,11 @@ export default function ContactsPage() {
             {contacts.length > 0 && (
               <div className="flex gap-1 mb-4 flex-wrap">
                 {FILTERS.map(({ value, label }) => {
-                  const count = value === 'all' ? contacts.length : contacts.filter(c => c.status === value).length
+                  const count = value === 'all'
+                    ? contacts.length
+                    : value === 'completed'
+                    ? contacts.filter(c => ['completed', 'won', 'converted'].includes(c.status)).length
+                    : contacts.filter(c => c.status === value).length
                   return (
                     <button
                       key={value}
@@ -489,8 +687,8 @@ export default function ContactsPage() {
                   </div>
                 ) : (
                   <div className="text-center">
-                    <p className="font-semibold text-op-navy mb-1">No {filter} contacts</p>
-                    <p className="text-sm text-op-muted">No contacts with status &ldquo;{filter}&rdquo; yet.</p>
+                    <p className="font-semibold text-op-navy mb-1">No matching contacts</p>
+                    <p className="text-sm text-op-muted">No contacts with this status yet.</p>
                   </div>
                 )}
               </div>
@@ -500,10 +698,10 @@ export default function ContactsPage() {
                   <ContactRow
                     key={c.id}
                     contact={c}
+                    onMarkDone={handleMarkDone}
                     onReviewRequest={handleReviewRequest}
-                    onConvert={handleConvert}
                     sending={sending === c.id}
-                    converting={converting === c.id}
+                    completing={completingContact?.id === c.id && satisfactionLoading}
                   />
                 ))}
               </div>
