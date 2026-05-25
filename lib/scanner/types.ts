@@ -16,4 +16,24 @@ export interface WebsiteAnalysis {
   hasChatWidget: boolean
   hasSocialProof: boolean
   hasBookingWidget: boolean
+  hasMobileViewport: boolean
+  socialLinksCount: number
+  performanceScore?: number
+  hasMetaDescription: boolean
+  hasLocalSchema: boolean
+  hasBusinessHours: boolean
+  hasAddress: boolean
+  hasGuarantee: boolean
+  hasFAQ: boolean
+  hasVideo: boolean
+  hasEmergencyService: boolean
+  detectedPhone?: string
+  detectedBookingPlatform?: string
+  detectedChatPlatform?: string
+  detectedCTA?: string
+}
+
+export interface ScoreBreakdownItem {
+  reason: string
+  points: number
 }

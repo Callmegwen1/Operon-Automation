@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Loader2, CheckCircle2 } from 'lucide-react'
+import { Loader2, CheckCircle2, Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 const industries = [
@@ -33,6 +33,12 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [userEmail, setUserEmail] = useState('')
+
+  // Password change state
+  const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' })
+  const [showPw, setShowPw] = useState(false)
+  const [pwSaving, setPwSaving] = useState(false)
+  const [pwMsg, setPwMsg] = useState<{ text: string; ok: boolean } | null>(null)
   const [form, setForm] = useState<ProfileForm>({
     name: '',
     website_url: '',
@@ -79,6 +85,30 @@ export default function ProfilePage() {
   const set = (key: keyof ProfileForm, value: string) =>
     setForm((f) => ({ ...f, [key]: value }))
 
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (pwForm.next !== pwForm.confirm) {
+      setPwMsg({ text: 'New passwords do not match.', ok: false })
+      return
+    }
+    if (pwForm.next.length < 8) {
+      setPwMsg({ text: 'Password must be at least 8 characters.', ok: false })
+      return
+    }
+    setPwSaving(true)
+    setPwMsg(null)
+    const supabase = createClient()
+    const { error } = await supabase.auth.updateUser({ password: pwForm.next })
+    setPwSaving(false)
+    if (error) {
+      setPwMsg({ text: error.message, ok: false })
+    } else {
+      setPwMsg({ text: 'Password updated successfully.', ok: true })
+      setPwForm({ current: '', next: '', confirm: '' })
+      setTimeout(() => setPwMsg(null), 4000)
+    }
+  }
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
@@ -122,7 +152,7 @@ export default function ProfilePage() {
           Keep your profile up to date for accurate Revenue Leak analysis.
         </p>
 
-        <form onSubmit={handleSave} className="flex flex-col gap-5">
+        <form onSubmit={handleSave} className="flex flex-col gap-5" noValidate>
           {/* Account info (read-only) */}
           <div className="card bg-op-bg border border-op-border">
             <p className="text-xs font-semibold text-op-muted uppercase tracking-wide mb-1">
@@ -229,6 +259,51 @@ export default function ProfilePage() {
               {saved && (
                 <span className="flex items-center gap-1.5 text-sm text-op-green font-semibold">
                   <CheckCircle2 size={15} /> Saved
+                </span>
+              )}
+            </div>
+          </div>
+        </form>
+
+        {/* Password change */}
+        <form onSubmit={handlePasswordChange} className="mt-6" noValidate>
+          <h2 className="text-base font-bold font-manrope text-op-navy mb-4">Change Password</h2>
+          <div className="card flex flex-col gap-4">
+            {(['next', 'confirm'] as const).map((key) => (
+              <div key={key}>
+                <label className="block text-sm font-semibold text-op-navy mb-1.5">
+                  {key === 'next' ? 'New Password' : 'Confirm New Password'}
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPw ? 'text' : 'password'}
+                    className={`${inputClass} pr-10`}
+                    value={pwForm[key]}
+                    onChange={(e) => setPwForm((f) => ({ ...f, [key]: e.target.value }))}
+                    placeholder={key === 'next' ? 'At least 8 characters' : 'Repeat new password'}
+                    autoComplete={key === 'next' ? 'new-password' : 'new-password'}
+                  />
+                  {key === 'next' && (
+                    <button
+                      type="button"
+                      onClick={() => setShowPw((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-op-muted hover:text-op-body transition-colors"
+                      aria-label={showPw ? 'Hide password' : 'Show password'}
+                    >
+                      {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+            <div className="flex items-center gap-3 pt-1">
+              <button type="submit" disabled={pwSaving} className="btn-primary">
+                {pwSaving ? <Loader2 size={16} className="animate-spin" /> : 'Update Password'}
+              </button>
+              {pwMsg && (
+                <span className={`flex items-center gap-1.5 text-sm font-semibold ${pwMsg.ok ? 'text-op-green' : 'text-op-red'}`}>
+                  {pwMsg.ok && <CheckCircle2 size={15} />}
+                  {pwMsg.text}
                 </span>
               )}
             </div>

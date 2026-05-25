@@ -60,13 +60,14 @@ function buildResultsEmail(data: Record<string, string>, score: number): string 
               <p style="margin:4px 0 0;color:#6B7280;font-size:12px;">Most happy customers won't review unless asked. Automate it.</p>
             </td></tr>
           </table>` : ''}
+          ${data.manualFollowUp !== 'automated' ? `
           <table width="100%" style="margin-bottom:10px;background:#ffffff;border-radius:8px;border:1px solid #e5e7eb;" cellpadding="12" cellspacing="0">
             <tr><td>
               <p style="margin:0;color:#f59e0b;font-size:11px;font-weight:700;text-transform:uppercase;">MEDIUM IMPACT</p>
               <p style="margin:2px 0 0;color:#1A2E4A;font-size:13px;font-weight:600;">Estimate Follow-Up</p>
               <p style="margin:4px 0 0;color:#6B7280;font-size:12px;">Automated nudges at 2, 5, and 7 days recover 20–40% of lost quotes.</p>
             </td></tr>
-          </table>
+          </table>` : ''}
         </td></tr>
 
         <tr><td style="background:#ffffff;padding:32px 40px;text-align:center;border-top:1px solid #e5e7eb;">

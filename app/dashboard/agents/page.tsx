@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import {
   Mail, Star, BarChart2, Loader2, CheckCircle2,
-  FileText, DollarSign, RefreshCw, Send, ChevronDown, ChevronUp, Zap,
+  FileText, DollarSign, RefreshCw, Send, ChevronDown, ChevronUp, Zap, Copy, ExternalLink,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import AgentSetupWizard from '@/components/dashboard/AgentSetupWizard'
@@ -85,12 +85,20 @@ function AgentCard({ meta, row, activity, userId, onUpdate }: {
   const Icon = meta.icon
   const [showWizard, setShowWizard] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
+  const [showEmbed, setShowEmbed] = useState(false)
   const [editConfig, setEditConfig] = useState<AgentConfig>(row.config ?? {})
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [disabling, setDisabling] = useState(false)
   const [testMsg, setTestMsg] = useState('')
   const [testing, setTesting] = useState(false)
+  const [copiedKey, setCopiedKey] = useState<string | null>(null)
+
+  const copyText = (text: string, key: string) => {
+    navigator.clipboard.writeText(text)
+    setCopiedKey(key)
+    setTimeout(() => setCopiedKey(null), 2000)
+  }
 
   const handleWizardComplete = (config: AgentConfig) => {
     onUpdate(meta.type, { enabled: true, config })
@@ -204,6 +212,15 @@ function AgentCard({ meta, row, activity, userId, onUpdate }: {
                 {testing ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
                 Send Test
               </button>
+              {meta.type === 'lead_followup' && (
+                <button
+                  onClick={() => setShowEmbed((v) => !v)}
+                  className="btn-secondary text-xs px-3 py-2 flex items-center gap-1.5"
+                >
+                  {showEmbed ? <ChevronUp size={13} /> : <ExternalLink size={13} />}
+                  Embed Form
+                </button>
+              )}
               {testMsg && (
                 <span className={`text-xs font-semibold ${testMsg.includes('sent') ? 'text-op-green' : 'text-op-red'}`}>
                   {testMsg}
@@ -254,6 +271,62 @@ function AgentCard({ meta, row, activity, userId, onUpdate }: {
                 </div>
               </div>
             )}
+
+            {/* Embed code panel — lead_followup only */}
+            {meta.type === 'lead_followup' && showEmbed && (() => {
+              const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? (typeof window !== 'undefined' ? window.location.origin : '')
+              const businessParam = row.config?.fromName ? `&business=${encodeURIComponent(row.config.fromName)}` : ''
+              const formUrl = `${appUrl}/form/${userId}${businessParam}`
+              const iframeSnippet = `<iframe src="${formUrl}" width="100%" height="520" style="border:none;border-radius:12px;" title="Contact Form"></iframe>`
+              return (
+                <div className="mt-4 border-t border-op-border pt-4">
+                  <p className="text-xs font-semibold text-op-muted uppercase tracking-wide mb-3">Embed Your Lead Form</p>
+                  <p className="text-xs text-op-muted mb-3">Paste the iframe snippet into any page of your website to start capturing leads automatically.</p>
+
+                  {/* Direct URL */}
+                  <div className="mb-3">
+                    <p className="text-xs font-semibold text-op-navy mb-1">Form URL</p>
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 bg-op-bg border border-op-border rounded-lg px-3 py-2 text-xs text-op-body font-mono truncate">
+                        {formUrl}
+                      </code>
+                      <button
+                        onClick={() => copyText(formUrl, 'url')}
+                        className="shrink-0 btn-secondary text-xs px-2 py-2 flex items-center gap-1"
+                      >
+                        {copiedKey === 'url' ? <CheckCircle2 size={13} className="text-op-green" /> : <Copy size={13} />}
+                        {copiedKey === 'url' ? 'Copied' : 'Copy'}
+                      </button>
+                      <a
+                        href={formUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0 btn-secondary text-xs px-2 py-2 flex items-center gap-1"
+                      >
+                        <ExternalLink size={13} /> Preview
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* iframe snippet */}
+                  <div>
+                    <p className="text-xs font-semibold text-op-navy mb-1">Embed Snippet (iframe)</p>
+                    <div className="flex items-start gap-2">
+                      <code className="flex-1 bg-op-bg border border-op-border rounded-lg px-3 py-2 text-xs text-op-body font-mono break-all leading-relaxed">
+                        {iframeSnippet}
+                      </code>
+                      <button
+                        onClick={() => copyText(iframeSnippet, 'iframe')}
+                        className="shrink-0 btn-secondary text-xs px-2 py-2 flex items-center gap-1 mt-0.5"
+                      >
+                        {copiedKey === 'iframe' ? <CheckCircle2 size={13} className="text-op-green" /> : <Copy size={13} />}
+                        {copiedKey === 'iframe' ? 'Copied' : 'Copy'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
 
             {/* Delivery log */}
             {activity.length > 0 && (

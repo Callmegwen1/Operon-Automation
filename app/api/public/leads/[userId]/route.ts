@@ -44,6 +44,17 @@ export async function POST(
     const { data: { user } } = await supabase.auth.admin.getUserById(userId)
     if (!user) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
+    // Dedup: if this email already exists for this business, silently succeed
+    if (email) {
+      const { data: existing } = await supabase
+        .from('contacts')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('email', email)
+        .maybeSingle()
+      if (existing) return NextResponse.json({ success: true, contactId: existing.id })
+    }
+
     // Insert the contact
     const { data: contact, error } = await supabase
       .from('contacts')

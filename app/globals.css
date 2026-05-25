@@ -82,3 +82,15 @@
            text-xs font-semibold font-inter px-2.5 py-1 rounded-full;
   }
 }
+
+@media print {
+  body {
+    background: white !important;
+  }
+
+  .card {
+    box-shadow: none !important;
+    break-inside: avoid;
+    border-color: #e5e7eb !important;
+  }
+}

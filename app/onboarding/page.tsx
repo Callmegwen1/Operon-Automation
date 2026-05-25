@@ -34,8 +34,8 @@ function getIssues(analysis: Record<string, boolean>, hasWebsite: boolean): Issu
   })
   if (!analysis.hasPhoneNumber) found.push({
     icon: Phone,
-    title: 'No phone number visible',
-    desc: 'Customers who want to call you on the spot can\'t find your number.',
+    title: 'No phone number found on your website',
+    desc: 'Customers who want to call you can\'t find your number — they go to a competitor instead.',
     fix: 'Operon includes your number in every automated follow-up.',
   })
   if (!analysis.loadsFast) found.push({
