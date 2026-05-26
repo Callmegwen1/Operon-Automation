@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Loader2, CheckCircle2, Eye, EyeOff } from 'lucide-react'
+import { Loader2, CheckCircle2, Eye, EyeOff, CreditCard, ArrowRight, ExternalLink } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import Link from 'next/link'
 
 const industries = [
   'Home Services',
@@ -33,6 +34,8 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [userEmail, setUserEmail] = useState('')
+  const [subscription, setSubscription] = useState<{ plan: string; status: string; current_period_end: string | null } | null>(null)
+  const [portalLoading, setPortalLoading] = useState(false)
 
   // Password change state
   const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' })
@@ -57,11 +60,11 @@ export default function ProfilePage() {
 
       setUserEmail(user.email ?? '')
 
-      const { data } = await supabase
-        .from('businesses')
-        .select('*')
-        .eq('user_id', user.id)
-        .single()
+      const [{ data }, { data: sub }] = await Promise.all([
+        supabase.from('businesses').select('*').eq('user_id', user.id).single(),
+        supabase.from('subscriptions').select('plan, status, current_period_end').eq('user_id', user.id).single(),
+      ])
+      if (sub) setSubscription(sub)
 
       if (data) {
         setForm({
@@ -131,6 +134,21 @@ export default function ProfilePage() {
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
+  }
+
+  const handlePortal = async () => {
+    setPortalLoading(true)
+    const res = await fetch('/api/stripe/portal', { method: 'POST' })
+    const data = await res.json()
+    setPortalLoading(false)
+    if (data.url) window.location.href = data.url
+  }
+
+  const PLAN_LABEL: Record<string, string> = {
+    free:    'Free',
+    starter: 'Starter Recovery',
+    growth:  'Growth Autopilot',
+    pro:     'Pro Revenue System',
   }
 
   const inputClass =
@@ -309,6 +327,46 @@ export default function ProfilePage() {
             </div>
           </div>
         </form>
+
+        {/* Plan & Billing */}
+        <div className="mt-6 card">
+          <div className="flex items-center gap-2 mb-4">
+            <CreditCard size={15} className="text-op-navy" />
+            <h2 className="text-sm font-bold text-op-navy">Plan &amp; Billing</h2>
+          </div>
+
+          {subscription && subscription.plan !== 'free' ? (
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-op-navy">{PLAN_LABEL[subscription.plan] ?? subscription.plan}</p>
+                  <p className="text-xs text-op-muted mt-0.5 capitalize">
+                    Status: {subscription.status}
+                    {subscription.current_period_end && ` · renews ${new Date(subscription.current_period_end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
+                  </p>
+                </div>
+                <span className="text-[11px] font-bold text-op-green bg-green-50 border border-green-200 px-2.5 py-1 rounded-full">
+                  Active
+                </span>
+              </div>
+              <button
+                onClick={handlePortal}
+                disabled={portalLoading}
+                className="btn-secondary text-xs px-4 py-2.5 flex items-center gap-1.5 w-fit"
+              >
+                {portalLoading ? <Loader2 size={13} className="animate-spin" /> : <ExternalLink size={13} />}
+                Manage Billing
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              <p className="text-sm text-op-muted">You are on the <strong>Free plan</strong>. Activate a revenue system to start recovering leads, reviews, and customers automatically.</p>
+              <Link href="/pricing" className="btn-primary text-xs px-4 py-2.5 w-fit flex items-center gap-1.5">
+                View Plans <ArrowRight size={13} />
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
     </main>
   )

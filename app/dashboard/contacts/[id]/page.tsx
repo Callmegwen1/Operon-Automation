@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft, Loader2, Save, Star, Mail, Trash2, Bot, BarChart2,
-  CheckCircle2, MessageSquare, Smile, Meh, Frown, X,
+  CheckCircle2, MessageSquare, Smile, Meh, Frown, X, FileText,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -183,6 +183,52 @@ function SatisfactionModal({ contactName, finalStatus, onConfirm, onCancel, load
   )
 }
 
+function EstimateModal({ contactName, onConfirm, onCancel, loading }: {
+  contactName: string
+  onConfirm: (amount: string) => void
+  onCancel: () => void
+  loading: boolean
+}) {
+  const [amount, setAmount] = useState('')
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
+        <div className="flex items-start justify-between p-6 pb-4 border-b border-op-border">
+          <div>
+            <h2 className="font-bold text-op-navy font-manrope">Send Estimate to {contactName}</h2>
+            <p className="text-sm text-op-muted mt-0.5">A 3-email follow-up sequence starts automatically.</p>
+          </div>
+          <button onClick={onCancel} className="text-op-muted hover:text-op-navy transition-colors">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="p-6 flex flex-col gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-op-navy mb-1.5">Estimate Amount (optional)</label>
+            <input
+              className={inputClass}
+              placeholder="e.g. $1,200 or $800–$1,100"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
+            <p className="text-xs text-op-muted mt-1.5">Leave blank to send the email without a displayed total.</p>
+          </div>
+        </div>
+        <div className="flex gap-3 px-6 pb-6">
+          <button onClick={onCancel} className="btn-secondary text-sm flex-1 justify-center">Cancel</button>
+          <button
+            onClick={() => onConfirm(amount)}
+            disabled={loading}
+            className="btn-primary text-sm flex-1 justify-center"
+          >
+            {loading ? <Loader2 size={14} className="animate-spin" /> : 'Send Estimate →'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ContactDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
@@ -196,27 +242,32 @@ export default function ContactDetailPage() {
   const [showSatisfactionModal, setShowSatisfactionModal] = useState(false)
   const [satisfactionFinalStatus, setSatisfactionFinalStatus] = useState<'completed' | 'won'>('completed')
   const [satisfactionLoading, setSatisfactionLoading] = useState(false)
+  const [showEstimateModal, setShowEstimateModal] = useState(false)
+  const [estimateLoading, setEstimateLoading] = useState(false)
   const [actionMsg, setActionMsg]   = useState('')
   const [status, setStatus]         = useState('')
   const [notes, setNotes]           = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [estimateAgentEnabled, setEstimateAgentEnabled] = useState(false)
 
   useEffect(() => {
     const load = async () => {
       const supabase = createClient()
-      const [{ data: c }, { data: acts }] = await Promise.all([
+      const [{ data: c }, { data: acts }, { data: estimateAgent }] = await Promise.all([
         supabase.from('contacts').select('*').eq('id', id).single(),
         supabase
           .from('agent_activity')
           .select('*')
           .filter('details->>contact_id', 'eq', id)
           .order('created_at', { ascending: false }),
+        supabase.from('agents').select('enabled').eq('type', 'estimate_followup').single(),
       ])
       if (!c) { router.push('/dashboard/contacts'); return }
       setContact(c as Contact)
       setStatus(c.status)
       setNotes(c.notes ?? '')
       setActivity((acts ?? []) as Activity[])
+      setEstimateAgentEnabled(estimateAgent?.enabled === true)
       setLoading(false)
     }
     load()
@@ -319,6 +370,26 @@ export default function ContactDetailPage() {
     setTimeout(() => setActionMsg(''), 7000)
   }
 
+  const handleSendEstimate = async (amount: string) => {
+    setEstimateLoading(true)
+    const res = await fetch(`/api/contacts/${id}/send-estimate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount }),
+    })
+    const data = await res.json()
+    setEstimateLoading(false)
+    setShowEstimateModal(false)
+    if (res.ok) {
+      setContact((c) => c ? { ...c, status: 'contacted' } : c)
+      setStatus('contacted')
+      setActionMsg('Estimate sent — 3-email follow-up sequence started.')
+    } else {
+      setActionMsg(data.error ?? 'Failed to send estimate')
+    }
+    setTimeout(() => setActionMsg(''), 7000)
+  }
+
   if (loading) {
     return (
       <main className="flex-1 p-6 md:p-8 flex items-center justify-center">
@@ -342,6 +413,14 @@ export default function ContactDetailPage() {
           onConfirm={handleSatisfactionConfirm}
           onCancel={() => setShowSatisfactionModal(false)}
           loading={satisfactionLoading}
+        />
+      )}
+      {showEstimateModal && contact && (
+        <EstimateModal
+          contactName={contact.name}
+          onConfirm={handleSendEstimate}
+          onCancel={() => setShowEstimateModal(false)}
+          loading={estimateLoading}
         />
       )}
 
@@ -375,6 +454,15 @@ export default function ContactDetailPage() {
               <a href={`mailto:${contact.email}`} className="btn-secondary text-xs px-3 py-2 flex items-center gap-1.5">
                 <Mail size={12} /> Email
               </a>
+            )}
+            {/* Send Estimate — available for leads when estimate agent is enabled */}
+            {contact.email && estimateAgentEnabled && contact.type === 'lead' && (
+              <button
+                onClick={() => setShowEstimateModal(true)}
+                className="btn-secondary text-xs px-3 py-2 flex items-center gap-1.5"
+              >
+                <FileText size={12} /> Send Estimate
+              </button>
             )}
             {/* Mark Done / Won Deal — available until job is finished */}
             {!isDone && (

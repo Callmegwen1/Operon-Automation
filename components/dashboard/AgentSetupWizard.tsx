@@ -4,11 +4,11 @@ import { useState, useRef, useEffect } from 'react'
 import {
   X, ArrowRight, ArrowLeft, CheckCircle2, Copy, Check, Upload,
   Globe, FileSpreadsheet, Zap, Users, Star, Mail, BarChart2,
-  Loader2, ExternalLink,
+  Loader2, ExternalLink, FileText,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
-type AgentType = 'lead_followup' | 'review_request' | 'weekly_report'
+type AgentType = 'lead_followup' | 'review_request' | 'weekly_report' | 'estimate_followup' | 'reactivation'
 
 interface AgentConfig {
   fromName?: string
@@ -806,7 +806,8 @@ function ReviewRequestWizard({ userId, initialConfig, onComplete }: {
 
 // ─── Weekly Report Wizard ──────────────────────────────────────────────────
 
-function WeeklyReportWizard({ initialConfig, onComplete }: {
+function WeeklyReportWizard({ userId, initialConfig, onComplete }: {
+  userId: string
   initialConfig: AgentConfig
   onComplete: (config: AgentConfig) => void
 }) {
@@ -814,6 +815,15 @@ function WeeklyReportWizard({ initialConfig, onComplete }: {
   const [step, setStep] = useState(0)
   const [saving, setSaving] = useState(false)
   const [activationDone, setActivationDone] = useState(false)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.email) {
+        setConfig((c) => ({ ...c, reportEmail: c.reportEmail || user.email! }))
+      }
+    })
+  }, [userId])
 
   const handleFinish = async () => {
     setSaving(true)
@@ -916,6 +926,284 @@ function WeeklyReportWizard({ initialConfig, onComplete }: {
   )
 }
 
+// ─── Estimate Recovery Wizard ──────────────────────────────────────────────
+
+function EstimateRecoveryWizard({ userId, initialConfig, onComplete }: {
+  userId: string
+  initialConfig: AgentConfig
+  onComplete: (config: AgentConfig) => void
+}) {
+  const [step, setStep] = useState(0)
+  const [config, setConfig] = useState<AgentConfig>(initialConfig)
+  const [saving, setSaving] = useState(false)
+  const [activationDone, setActivationDone] = useState(false)
+
+  useEffect(() => {
+    const supabase = createClient()
+    Promise.all([
+      supabase.auth.getUser(),
+      supabase.from('businesses').select('name').eq('user_id', userId).single(),
+    ]).then(([{ data: { user } }, { data: biz }]) => {
+      setConfig((c) => ({
+        ...c,
+        fromName:     c.fromName     || biz?.name  || '',
+        replyToEmail: c.replyToEmail || user?.email || '',
+      }))
+    })
+  }, [userId])
+
+  const handleFinish = async () => {
+    setSaving(true)
+    await fetch('/api/agents/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'estimate_followup', config }),
+    })
+    await fetch('/api/agents/toggle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'estimate_followup', enabled: true }),
+    })
+    setSaving(false)
+    setActivationDone(true)
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex items-center gap-2 mb-8">
+        <StepDot active={step === 0} done={step > 0} />
+        <StepDot active={step === 1} done={step > 1} />
+        <span className="text-xs text-op-muted ml-2">Step {step + 1} of 2</span>
+      </div>
+
+      {step === 0 && (
+        <div className="flex-1">
+          <h2 className="text-xl font-bold font-manrope text-op-navy mb-1">Set up Estimate Recovery</h2>
+          <p className="text-sm text-op-muted mb-6">
+            When you send an estimate to a lead, a 3-email follow-up sequence starts automatically — Day 0, Day 1, and Day 3. Industry-specific copy is included.
+          </p>
+          <div className="flex flex-col gap-4">
+            <div>
+              <label className="block text-xs font-bold text-op-navy mb-1.5">Your name <span className="text-op-red">*</span></label>
+              <input
+                className={inputClass}
+                placeholder="John Smith"
+                value={config.fromName ?? ''}
+                onChange={(e) => setConfig((c) => ({ ...c, fromName: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-op-navy mb-1.5">Reply-to email <span className="text-op-red">*</span></label>
+              <input
+                type="email"
+                className={inputClass}
+                placeholder="you@yourbusiness.com"
+                value={config.replyToEmail ?? ''}
+                onChange={(e) => setConfig((c) => ({ ...c, replyToEmail: e.target.value }))}
+              />
+              <p className="text-xs text-op-muted mt-1.5">Customers who reply to the estimate email will reach this address directly.</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setStep(1)}
+            disabled={!config.fromName?.trim() || !config.replyToEmail?.trim()}
+            className="btn-primary w-full mt-6 justify-center disabled:opacity-50"
+          >
+            Continue <ArrowRight size={15} />
+          </button>
+        </div>
+      )}
+
+      {step === 1 && (
+        <div className="flex-1 flex flex-col items-center text-center">
+          {activationDone ? (
+            <>
+              <div className="w-16 h-16 rounded-2xl bg-op-navy flex items-center justify-center mb-5">
+                <CheckCircle2 size={28} className="text-white" />
+              </div>
+              <h2 className="text-xl font-bold font-manrope text-op-navy mb-2">Estimate Recovery is Live!</h2>
+              <p className="text-sm text-op-muted mb-5 max-w-sm">
+                Go to any lead in Contacts and click <strong>Send Estimate</strong>. The follow-up sequence starts automatically.
+              </p>
+              <button onClick={() => onComplete(config)} className="btn-primary w-full justify-center text-sm">
+                Done
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="w-16 h-16 rounded-2xl bg-op-navy flex items-center justify-center mb-5">
+                <FileText size={28} className="text-white" />
+              </div>
+              <h2 className="text-xl font-bold font-manrope text-op-navy mb-2">Ready to recover more estimates</h2>
+              <p className="text-sm text-op-muted mb-6 max-w-sm">
+                Once activated, open any lead and click <strong>Send Estimate</strong>. The 3-email sequence handles the follow-up for you.
+              </p>
+              <div className="w-full text-left bg-op-bg border border-op-border rounded-xl px-4 py-4 mb-6 flex flex-col gap-2">
+                {[
+                  'Day 0 — estimate email sent immediately',
+                  'Day 1 — gentle check-in (auto-scheduled)',
+                  'Day 3 — final follow-up (auto-scheduled)',
+                  'Industry-specific copy — no generic emails',
+                ].map((item) => (
+                  <div key={item} className="flex items-center gap-2 text-xs text-op-body">
+                    <CheckCircle2 size={13} className="text-op-green shrink-0" />
+                    {item}
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-3 w-full">
+                <button onClick={() => setStep(0)} className="btn-secondary flex items-center gap-1.5 shrink-0"><ArrowLeft size={14} /> Back</button>
+                <button onClick={handleFinish} disabled={saving} className="btn-primary flex-1 justify-center text-sm">
+                  {saving ? <Loader2 size={15} className="animate-spin" /> : <><CheckCircle2 size={15} /> Activate Agent</>}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Reactivation Wizard ───────────────────────────────────────────────────
+
+function ReactivationWizard({ userId, initialConfig, onComplete }: {
+  userId: string
+  initialConfig: AgentConfig
+  onComplete: (config: AgentConfig) => void
+}) {
+  const [step, setStep] = useState(0)
+  const [config, setConfig] = useState<AgentConfig>(initialConfig)
+  const [saving, setSaving] = useState(false)
+  const [activationDone, setActivationDone] = useState(false)
+
+  useEffect(() => {
+    const supabase = createClient()
+    Promise.all([
+      supabase.auth.getUser(),
+      supabase.from('businesses').select('name').eq('user_id', userId).single(),
+    ]).then(([{ data: { user } }, { data: biz }]) => {
+      setConfig((c) => ({
+        ...c,
+        fromName:     c.fromName     || biz?.name  || '',
+        replyToEmail: c.replyToEmail || user?.email || '',
+      }))
+    })
+  }, [userId])
+
+  const handleFinish = async () => {
+    setSaving(true)
+    await fetch('/api/agents/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'reactivation', config }),
+    })
+    await fetch('/api/agents/toggle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'reactivation', enabled: true }),
+    })
+    setSaving(false)
+    setActivationDone(true)
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex items-center gap-2 mb-8">
+        <StepDot active={step === 0} done={step > 0} />
+        <StepDot active={step === 1} done={step > 1} />
+        <span className="text-xs text-op-muted ml-2">Step {step + 1} of 2</span>
+      </div>
+
+      {step === 0 && (
+        <div className="flex-1">
+          <h2 className="text-xl font-bold font-manrope text-op-navy mb-1">Set up Customer Reactivation</h2>
+          <p className="text-sm text-op-muted mb-6">
+            Every Sunday, we'll automatically reach out to customers who haven't booked in 60+ days with a personalized win-back message.
+          </p>
+          <div className="flex flex-col gap-4">
+            <div>
+              <label className="block text-xs font-bold text-op-navy mb-1.5">Your name <span className="text-op-red">*</span></label>
+              <input
+                className={inputClass}
+                placeholder="John Smith"
+                value={config.fromName ?? ''}
+                onChange={(e) => setConfig((c) => ({ ...c, fromName: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-op-navy mb-1.5">Reply-to email <span className="text-op-red">*</span></label>
+              <input
+                type="email"
+                className={inputClass}
+                placeholder="you@yourbusiness.com"
+                value={config.replyToEmail ?? ''}
+                onChange={(e) => setConfig((c) => ({ ...c, replyToEmail: e.target.value }))}
+              />
+              <p className="text-xs text-op-muted mt-1.5">Customers who reply to the reactivation email will reach this address directly.</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setStep(1)}
+            disabled={!config.fromName?.trim() || !config.replyToEmail?.trim()}
+            className="btn-primary w-full mt-6 justify-center disabled:opacity-50"
+          >
+            Continue <ArrowRight size={15} />
+          </button>
+        </div>
+      )}
+
+      {step === 1 && (
+        <div className="flex-1 flex flex-col items-center text-center">
+          {activationDone ? (
+            <>
+              <div className="w-16 h-16 rounded-2xl bg-purple-600 flex items-center justify-center mb-5">
+                <CheckCircle2 size={28} className="text-white" />
+              </div>
+              <h2 className="text-xl font-bold font-manrope text-op-navy mb-2">Reactivation is Live!</h2>
+              <p className="text-sm text-op-muted mb-5 max-w-sm">
+                Every Sunday we'll scan for dormant customers and reach out automatically. You don't have to do a thing.
+              </p>
+              <button onClick={() => onComplete(config)} className="btn-primary w-full justify-center text-sm">
+                Done
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="w-16 h-16 rounded-2xl bg-purple-600 flex items-center justify-center mb-5">
+                <Users size={28} className="text-white" />
+              </div>
+              <h2 className="text-xl font-bold font-manrope text-op-navy mb-2">Ready to win back customers</h2>
+              <p className="text-sm text-op-muted mb-6 max-w-sm">
+                Once activated, every Sunday we'll automatically contact customers who've gone quiet for 60+ days.
+              </p>
+              <div className="w-full text-left bg-op-bg border border-op-border rounded-xl px-4 py-4 mb-6 flex flex-col gap-2">
+                {[
+                  'Runs automatically every Sunday at 10:00 AM',
+                  'Only contacts customers inactive 60+ days',
+                  'Industry-specific copy — not a generic blast',
+                  'One-click unsubscribe included in every email',
+                ].map((item) => (
+                  <div key={item} className="flex items-center gap-2 text-xs text-op-body">
+                    <CheckCircle2 size={13} className="text-op-green shrink-0" />
+                    {item}
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-3 w-full">
+                <button onClick={() => setStep(0)} className="btn-secondary flex items-center gap-1.5 shrink-0"><ArrowLeft size={14} /> Back</button>
+                <button onClick={handleFinish} disabled={saving} className="btn-primary flex-1 justify-center text-sm">
+                  {saving ? <Loader2 size={15} className="animate-spin" /> : <><CheckCircle2 size={15} /> Activate Agent</>}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Main export ───────────────────────────────────────────────────────────
 
 export default function AgentSetupWizard({ type, userId, initialConfig, onComplete, onClose }: WizardProps) {
@@ -925,13 +1213,17 @@ export default function AgentSetupWizard({ type, userId, initialConfig, onComple
         {/* Modal header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-op-border shrink-0">
           <div className="flex items-center gap-3">
-            {type === 'lead_followup'  && <Mail size={18} className="text-op-navy" />}
-            {type === 'review_request' && <Star size={18} className="text-op-amber" />}
-            {type === 'weekly_report'  && <BarChart2 size={18} className="text-op-green" />}
+            {type === 'lead_followup'      && <Mail size={18} className="text-op-navy" />}
+            {type === 'review_request'     && <Star size={18} className="text-op-amber" />}
+            {type === 'weekly_report'      && <BarChart2 size={18} className="text-op-green" />}
+            {type === 'estimate_followup'  && <FileText size={18} className="text-op-navy" />}
+            {type === 'reactivation'       && <Users size={18} className="text-purple-600" />}
             <p className="text-sm font-bold text-op-navy">
-              {type === 'lead_followup'  && 'Set up Lead Follow-Up Agent'}
-              {type === 'review_request' && 'Set up Review Request Agent'}
-              {type === 'weekly_report'  && 'Set up Weekly Owner Report'}
+              {type === 'lead_followup'     && 'Set up Lead Follow-Up Agent'}
+              {type === 'review_request'    && 'Set up Review Request Agent'}
+              {type === 'weekly_report'     && 'Set up Weekly Owner Report'}
+              {type === 'estimate_followup' && 'Set up Estimate Recovery'}
+              {type === 'reactivation'      && 'Set up Customer Reactivation'}
             </p>
           </div>
           <button onClick={onClose} className="text-op-muted hover:text-op-navy transition-colors">
@@ -941,9 +1233,11 @@ export default function AgentSetupWizard({ type, userId, initialConfig, onComple
 
         {/* Wizard content */}
         <div className="p-6 flex-1">
-          {type === 'lead_followup'  && <LeadFollowupWizard userId={userId} initialConfig={initialConfig} onComplete={onComplete} />}
-          {type === 'review_request' && <ReviewRequestWizard userId={userId} initialConfig={initialConfig} onComplete={onComplete} />}
-          {type === 'weekly_report'  && <WeeklyReportWizard initialConfig={initialConfig} onComplete={onComplete} />}
+          {type === 'lead_followup'     && <LeadFollowupWizard userId={userId} initialConfig={initialConfig} onComplete={onComplete} />}
+          {type === 'review_request'    && <ReviewRequestWizard userId={userId} initialConfig={initialConfig} onComplete={onComplete} />}
+          {type === 'weekly_report'     && <WeeklyReportWizard userId={userId} initialConfig={initialConfig} onComplete={onComplete} />}
+          {type === 'estimate_followup' && <EstimateRecoveryWizard userId={userId} initialConfig={initialConfig} onComplete={onComplete} />}
+          {type === 'reactivation'      && <ReactivationWizard userId={userId} initialConfig={initialConfig} onComplete={onComplete} />}
         </div>
       </div>
     </div>

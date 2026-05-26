@@ -1,91 +1,138 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { CheckCircle2, ArrowRight, Zap, Star } from 'lucide-react'
+import { CheckCircle2, ArrowRight, Zap, MessageSquare, ChevronDown } from 'lucide-react'
 import SectionHeader from '@/components/ui/SectionHeader'
+import CheckoutButton from '@/components/ui/CheckoutButton'
 
 export const metadata: Metadata = {
   title: 'Pricing | Operon Automation',
   description:
-    'Simple, transparent pricing for Revenue Autopilot and Operon Services. Start free with the Revenue Leak Scanner.',
+    'Start with a free scan. Activate the revenue recovery system that fixes your biggest leak. Plans from $149/month.',
 }
 
-const plans = [
+const PLANS = [
   {
-    name: 'Free',
-    badge: null,
+    id: 'free',
+    name: 'Free Scanner',
     price: '$0',
-    period: 'forever',
-    description: 'Get your Revenue Leak Score and see exactly where your business may be losing customers.',
+    period: null,
+    badge: null,
+    popular: false,
+    description: 'Run a full Revenue Leak Scan and see exactly where your business is losing customers and revenue.',
     cta: 'Scan My Business Free',
     ctaHref: '/scanner',
-    ctaStyle: 'btn-secondary w-full justify-center',
+    primary: false,
+    setupNote: null,
     features: [
       'Revenue Leak Scanner',
-      'Revenue Leak Score (out of 100)',
-      'Top 5 revenue leaks identified',
-      'Recommended fixes per leak',
-      'Email delivery of results',
+      'Revenue Leak Score (0–100)',
+      'Top 3 leaks identified',
+      'Estimated revenue opportunity',
+      'Email delivery of your report',
+      'Recommended recovery system',
+      'Limited rescans',
     ],
-    highlight: false,
   },
   {
-    name: 'Starter',
-    badge: 'Early Access',
-    price: 'Coming Soon',
-    period: null,
-    description: 'Activate the core Autopilot Agents and start recovering missed leads and growing reviews.',
-    cta: 'Join Early Access',
-    ctaHref: '/contact',
-    ctaStyle: 'btn-primary w-full justify-center',
+    id: 'starter',
+    name: 'Starter Recovery',
+    price: '$149',
+    period: '/month',
+    badge: null,
+    popular: false,
+    description: 'Activate one recovery system and start winning back leads or growing your reviews — automatically.',
+    cta: 'Get Started',
+    ctaHref: '/signup',
+    primary: false,
+    setupNote: { label: 'Optional done-for-you setup', price: '$299 one-time' },
     features: [
-      'Everything in Free',
-      'Revenue Leak Dashboard',
-      'Lead Follow-Up Agent',
-      'Review Request Agent',
-      'Weekly Owner Report',
-      'Basic revenue trend tracking',
+      'One active revenue system (your choice)',
+      'Lead Recovery Autopilot OR Review Growth System',
+      'Weekly Revenue Briefing',
+      'Basic dashboard',
+      'Email-only automation',
+      'Manual entry, CSV import, embedded form',
+      'Basic webhook support',
+      '500 contacts',
+      '500 emails / month',
+      '100 monthly agent actions',
     ],
-    highlight: true,
   },
   {
-    name: 'Growth',
-    badge: 'Early Access',
-    price: 'Coming Soon',
-    period: null,
-    description: 'Full Autopilot suite — every agent active, more reports, and deeper recovery tools.',
-    cta: 'Join Early Access',
-    ctaHref: '/contact',
-    ctaStyle: 'btn-primary w-full justify-center',
+    id: 'growth',
+    name: 'Growth Autopilot',
+    price: '$299',
+    period: '/month',
+    badge: 'Most Popular',
+    popular: true,
+    description: 'All four core recovery systems running at once — the fastest path to measurable revenue recovery.',
+    cta: 'Start Growing',
+    ctaHref: '/signup',
+    primary: true,
+    setupNote: { label: 'Optional assisted setup', price: '$499 one-time' },
     features: [
-      'Everything in Starter',
-      'Estimate Follow-Up Agent',
-      'Invoice Reminder Agent',
-      'Customer Reactivation Agent',
-      'Lead source tracking',
-      'Advanced revenue reports',
+      'Lead Recovery Autopilot',
+      'Review Growth System',
+      'Estimate Recovery Autopilot',
+      'Customer Reactivation Autopilot',
+      'AI-powered Weekly Revenue Briefing',
+      'Scanner history & trend tracking',
+      'Owner tasks + outcome tracking',
+      'Integration health monitoring',
+      '2,500 contacts',
+      '2,500 emails / month',
+      '500 monthly agent actions',
+    ],
+  },
+  {
+    id: 'pro',
+    name: 'Pro Revenue System',
+    price: '$599',
+    period: '/month',
+    badge: null,
+    popular: false,
+    description: 'Everything in Growth plus every available system, higher limits, and priority support.',
+    cta: 'Talk to Us',
+    ctaHref: '/contact',
+    primary: false,
+    setupNote: { label: 'Custom integrations may require', price: 'setup fee' },
+    features: [
+      'Everything in Growth Autopilot',
+      'All available revenue systems',
+      'Advanced Weekly Revenue Briefing',
+      'Expanded reporting',
       'Priority support',
+      '10,000 contacts',
+      '10,000 emails / month',
+      '2,000 monthly agent actions',
     ],
-    highlight: false,
+  },
+]
+
+const FAQ = [
+  {
+    q: 'What are "monthly agent actions"?',
+    a: 'An agent action is any automated step your system takes on your behalf — sending a follow-up email, scheduling a reminder, requesting a review, or firing a reactivation message. We use this term instead of technical jargon like API calls or AI calls. Most businesses on the Starter plan use well under 100 actions per month. Growth covers the majority of active small businesses.',
   },
   {
-    name: 'Custom Services',
-    badge: 'Agency',
-    price: 'Request Pricing',
-    period: null,
-    description: 'Done-for-you automation and marketing systems built around your specific business needs.',
-    cta: 'Request Setup Help',
-    ctaHref: '/contact',
-    ctaStyle: 'btn-secondary w-full justify-center',
-    features: [
-      'Custom workflow design',
-      'CRM setup & configuration',
-      'Done-for-you implementation',
-      'Advanced integrations',
-      'Multi-location support',
-      'Custom dashboards & reporting',
-      'Dedicated setup support',
-    ],
-    highlight: false,
+    q: 'Is the setup fee required?',
+    a: 'No — setup fees are completely optional. Every plan is designed to be self-service. The optional done-for-you setup means one of our team members configures everything for you: connects your form, imports your contacts, personalizes your email copy, and tests every sequence end-to-end. Most owners are up in 20 minutes on their own; setup takes the guesswork out entirely.',
+  },
+  {
+    q: 'What happens if I hit my usage limits?',
+    a: "We'll notify you before you hit a limit — you won't get cut off mid-sequence without warning. If you're consistently over your plan's limits, we'll recommend an upgrade. We'd rather have a conversation than quietly pause your automation.",
+  },
+  {
+    q: 'Does Operon require a CRM or any special software?',
+    a: "No. Operon is the system — it comes with a built-in contact manager, activity log, and dashboard. You don't need to connect anything to get started. If you already use a CRM or job management tool, we can integrate with it (see below), but it's never required.",
+  },
+  {
+    q: 'How does SMS work? Is it included in the monthly price?',
+    a: 'SMS messaging is available on Growth and Pro plans for urgent lead scenarios (emergency service, urgent home service). SMS is delivered via Twilio and billed based on usage — it is not bundled in the monthly plan price. Most businesses send fewer than 50 SMS messages per month, which costs a few dollars. We show usage transparently in your dashboard.',
+  },
+  {
+    q: 'Can Operon integrate with my existing tools?',
+    a: 'Growth and Pro plans include webhook support so you can connect Operon to Zapier, Typeform, and most lead-capture tools out of the box. Deep CRM integrations (ServiceTitan, Jobber, HubSpot, etc.) and custom workflows are available on the Custom plan or as a one-time setup project.',
   },
 ]
 
@@ -93,62 +140,198 @@ export default function PricingPage() {
   return (
     <>
       {/* Hero */}
-      <section className="bg-op-bg section-pad">
+      <section className="bg-op-bg pt-20 pb-12 md:pt-28 md:pb-16">
         <div className="container-wide text-center max-w-2xl mx-auto">
-          <SectionHeader
-            eyebrow="Pricing"
-            title="Simple. Transparent."
-            titleHighlight="No surprises."
-            description="Start free with the Revenue Leak Scanner. Upgrade when you're ready to activate the systems that fix your leaks."
-            center
-          />
-          <p className="mt-4 text-sm text-op-amber font-semibold">
-            Revenue Autopilot is in early access. Join the list to get first access and launch pricing.
+          <p className="eyebrow mb-4">Pricing</p>
+          <h1 className="text-4xl md:text-5xl font-extrabold font-manrope text-op-navy leading-tight mb-5">
+            Start with a free scan.{' '}
+            <span className="text-op-amber">Activate the system</span>{' '}
+            that fixes your biggest leak.
+          </h1>
+          <p className="text-base md:text-lg text-op-muted leading-relaxed">
+            Every plan starts from your Revenue Leak Score. No long-term contracts. Cancel anytime.
           </p>
         </div>
       </section>
 
-      {/* Pricing cards */}
+      {/* Pricing grid */}
       <section className="pb-24 bg-op-bg">
         <div className="container-wide">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {plans.map(({ name, badge, price, period, description, cta, ctaHref, ctaStyle, features, highlight }) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 items-start">
+            {PLANS.map((plan) => (
               <div
-                key={name}
-                className={`card flex flex-col ${highlight ? 'border-2 border-op-navy ring-1 ring-op-navy/10' : 'border border-op-border'}`}
+                key={plan.id}
+                className={`relative flex flex-col rounded-2xl border bg-white p-7 shadow-card
+                  ${plan.popular
+                    ? 'border-2 border-op-navy ring-4 ring-op-navy/8 xl:-mt-5 xl:pb-[52px]'
+                    : 'border-op-border'
+                  }`}
               >
-                {/* Header */}
-                <div className="mb-5">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-bold font-manrope text-op-navy">{name}</h3>
-                    {badge && (
-                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${highlight ? 'bg-op-navy text-white' : 'badge-blue'}`}>
-                        {badge}
-                      </span>
-                    )}
-                    {highlight && !badge && <Star size={14} className="text-op-blue" />}
+                {/* Popular badge */}
+                {plan.popular && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                    <span className="inline-flex items-center gap-1.5 bg-op-navy text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-md whitespace-nowrap">
+                      <Zap size={11} /> Most Popular
+                    </span>
                   </div>
-                  <div className="mb-3">
-                    <span className="text-2xl font-extrabold font-manrope text-op-navy">{price}</span>
-                    {period && <span className="text-sm text-op-muted ml-1">/{period}</span>}
-                  </div>
-                  <p className="text-xs text-op-muted leading-relaxed">{description}</p>
+                )}
+
+                {/* Plan name + badge */}
+                <div className="mb-1">
+                  {plan.badge && !plan.popular && (
+                    <span className="text-[10px] font-bold text-op-amber bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full uppercase tracking-wide">
+                      {plan.badge}
+                    </span>
+                  )}
                 </div>
 
-                {/* Features */}
-                <ul className="flex flex-col gap-2.5 mb-6 flex-1">
-                  {features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-xs text-op-body">
-                      <CheckCircle2 size={13} className="text-op-green mt-0.5 shrink-0" />
+                <h3 className="font-bold font-manrope text-op-navy text-lg leading-tight mb-1">
+                  {plan.name}
+                </h3>
+
+                {/* Price */}
+                <div className="flex items-baseline gap-1 mb-4">
+                  <span className="text-4xl font-extrabold font-manrope text-op-navy">{plan.price}</span>
+                  {plan.period && (
+                    <span className="text-sm text-op-muted font-medium">{plan.period}</span>
+                  )}
+                </div>
+
+                <p className="text-sm text-op-muted leading-relaxed mb-6">{plan.description}</p>
+
+                {/* CTA */}
+                {plan.id === 'free' ? (
+                  <Link
+                    href={plan.ctaHref}
+                    className="inline-flex items-center justify-center gap-2 w-full py-3 rounded-lg text-sm font-semibold bg-white text-op-navy border border-op-border hover:border-op-navy active:scale-95 transition-all mb-6"
+                  >
+                    {plan.cta} <ArrowRight size={14} />
+                  </Link>
+                ) : plan.id === 'pro' ? (
+                  <Link
+                    href="/contact"
+                    className="inline-flex items-center justify-center gap-2 w-full py-3 rounded-lg text-sm font-semibold bg-white text-op-navy border border-op-border hover:border-op-navy active:scale-95 transition-all mb-6"
+                  >
+                    Talk to Us <ArrowRight size={14} />
+                  </Link>
+                ) : (
+                  <div className="mb-6">
+                    <CheckoutButton
+                      plan={plan.id as 'starter' | 'growth'}
+                      label={plan.cta}
+                      primary={plan.primary}
+                    />
+                  </div>
+                )}
+
+                {/* Feature list */}
+                <ul className="flex flex-col gap-2.5 flex-1">
+                  {plan.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2.5 text-xs text-op-body leading-relaxed">
+                      <CheckCircle2 size={13} className={`shrink-0 mt-0.5 ${plan.popular ? 'text-op-navy' : 'text-op-green'}`} />
                       {f}
                     </li>
                   ))}
                 </ul>
 
-                {/* CTA */}
-                <Link href={ctaHref} className={`${ctaStyle} text-sm py-3`}>
-                  {cta} {cta !== 'Scan My Business Free' && <ArrowRight size={14} />}
+                {/* Setup note */}
+                {plan.setupNote && (
+                  <div className="mt-6 pt-4 border-t border-op-border/70">
+                    <p className="text-[11px] text-op-muted leading-relaxed">
+                      <span className="font-semibold text-op-body">{plan.setupNote.label}:</span>{' '}
+                      {plan.setupNote.price}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Custom plan — full width strip */}
+          <div className="mt-5 rounded-2xl border border-op-border bg-white p-7 md:p-9">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <h3 className="font-bold font-manrope text-op-navy text-lg">Custom</h3>
+                  <span className="text-[10px] font-bold text-op-muted bg-op-bg border border-op-border px-2.5 py-1 rounded-full uppercase tracking-wide">
+                    Starting at $999 / month
+                  </span>
+                </div>
+                <p className="text-sm text-op-muted leading-relaxed mb-4 max-w-2xl">
+                  For businesses with high SMS volume, complex workflows, multi-location setups, CRM or job software integrations, or dedicated support requirements.
+                </p>
+                <ul className="flex flex-wrap gap-x-6 gap-y-2">
+                  {[
+                    'SMS-heavy or multi-channel workflows',
+                    'Multi-location support',
+                    'CRM & job software integrations',
+                    'Custom workflow design',
+                    'High-volume contacts & email',
+                    'Dedicated account support',
+                  ].map((f) => (
+                    <li key={f} className="flex items-center gap-2 text-xs text-op-body">
+                      <CheckCircle2 size={12} className="text-op-green shrink-0" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="shrink-0">
+                <Link
+                  href="/contact"
+                  className="inline-flex items-center gap-2 bg-op-bg text-op-navy border border-op-border font-semibold px-6 py-3 rounded-lg text-sm hover:border-op-navy transition-all whitespace-nowrap"
+                >
+                  <MessageSquare size={14} /> Talk to Us
                 </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* What's included comparison note */}
+      <section className="bg-white border-t border-op-border py-16">
+        <div className="container-wide max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <SectionHeader
+              eyebrow="What's Included"
+              title="One plan. All the systems"
+              titleHighlight="turned on."
+              description="Growth Autopilot is the plan most owners end up on. Here's why it covers the full revenue recovery loop."
+              center
+            />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              {
+                title: 'Lead Recovery Autopilot',
+                desc: 'AI classifies every new lead by urgency and intent, then fires a personalized follow-up sequence — within minutes.',
+                color: 'border-op-navy',
+                dot: 'bg-op-navy',
+              },
+              {
+                title: 'Review Growth System',
+                desc: 'One click after a job marks a customer done. A 3-email review sequence goes out automatically — industry-specific copy included.',
+                color: 'border-op-amber',
+                dot: 'bg-op-amber',
+              },
+              {
+                title: 'Estimate Recovery Autopilot',
+                desc: 'Send an estimate from the contact page and a 3-day follow-up sequence starts immediately. No cold quotes.',
+                color: 'border-op-green',
+                dot: 'bg-op-green',
+              },
+              {
+                title: 'Customer Reactivation',
+                desc: "Every Sunday, dormant customers who haven't booked in 60+ days get a personalized win-back email — automatically.",
+                color: 'border-purple-400',
+                dot: 'bg-purple-400',
+              },
+            ].map(({ title, desc, color, dot }) => (
+              <div key={title} className={`rounded-xl border-l-4 ${color} bg-op-bg p-5`}>
+                <div className={`w-2 h-2 rounded-full ${dot} mb-3`} />
+                <p className="text-sm font-bold text-op-navy font-manrope mb-1.5">{title}</p>
+                <p className="text-xs text-op-muted leading-relaxed">{desc}</p>
               </div>
             ))}
           </div>
@@ -156,44 +339,58 @@ export default function PricingPage() {
       </section>
 
       {/* FAQ */}
-      <section className="section-pad bg-white border-t border-op-border">
+      <section className="section-pad bg-op-bg border-t border-op-border">
         <div className="container-wide max-w-2xl mx-auto">
-          <div className="text-center mb-10">
+          <div className="text-center mb-12">
             <SectionHeader
               eyebrow="FAQ"
-              title="Common questions about"
+              title="Questions about"
               titleHighlight="pricing."
               center
             />
           </div>
-          <div className="flex flex-col gap-5">
-            {[
-              { q: 'Is the Revenue Leak Scanner really free?', a: 'Yes — the scanner, your Revenue Leak Score, and the full results report are completely free. No credit card required.' },
-              { q: 'When will Revenue Autopilot be available?', a: 'Revenue Autopilot is in early access. Join the list at the link above to get notified first and receive launch pricing.' },
-              { q: 'What does "early access pricing" mean?', a: 'Early access members lock in a discounted rate before the product launches publicly. Pricing will increase at general availability.' },
-              { q: 'What is included in Custom Services?', a: 'Custom Services are scoped per business. We design, build, and implement the exact systems your business needs. Request a call to discuss your situation.' },
-              { q: 'Is there a setup fee?', a: 'For Revenue Autopilot plans, no. For Custom Services, setup is included in the project scope. We\'ll be transparent about everything before you commit.' },
-            ].map(({ q, a }) => (
-              <div key={q} className="border-b border-op-border pb-5">
-                <h4 className="font-semibold font-manrope text-op-navy mb-2 text-sm">{q}</h4>
-                <p className="text-sm text-op-muted leading-relaxed">{a}</p>
-              </div>
+          <div className="flex flex-col divide-y divide-op-border">
+            {FAQ.map(({ q, a }) => (
+              <details key={q} className="group py-5 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                <summary className="flex items-center justify-between gap-4">
+                  <h4 className="font-semibold font-manrope text-op-navy text-sm pr-4">{q}</h4>
+                  <ChevronDown
+                    size={16}
+                    className="text-op-muted shrink-0 transition-transform group-open:rotate-180"
+                  />
+                </summary>
+                <p className="mt-3 text-sm text-op-muted leading-relaxed pr-8">{a}</p>
+              </details>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA */}
+      {/* Bottom CTA */}
       <section className="section-pad bg-op-navy text-white">
         <div className="container-wide text-center max-w-xl mx-auto">
-          <Zap size={32} className="mx-auto mb-4 text-white/60" />
-          <h2 className="text-3xl font-extrabold font-manrope mb-4">Start free. See your leaks today.</h2>
-          <p className="text-white/70 mb-8">
-            The scanner takes under 2 minutes and costs nothing. You will see exactly what is leaking — and what to fix first.
+          <p className="eyebrow text-white/50 mb-4">Get Started</p>
+          <h2 className="text-3xl md:text-4xl font-extrabold font-manrope mb-4 leading-tight">
+            See your leaks first.{' '}
+            <span className="text-op-amber">Then decide.</span>
+          </h2>
+          <p className="text-white/70 text-base mb-8 leading-relaxed">
+            The scanner is free and takes under 2 minutes. You will see your Revenue Leak Score and exactly which systems would have the fastest impact.
           </p>
-          <Link href="/scanner" className="inline-flex items-center gap-2 bg-white text-op-navy font-bold px-8 py-4 rounded-lg hover:bg-slate-50 transition-colors">
-            Scan My Business Free <ArrowRight size={17} />
-          </Link>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              href="/scanner"
+              className="inline-flex items-center gap-2 bg-white text-op-navy font-bold px-8 py-4 rounded-lg hover:bg-slate-50 transition-colors text-sm"
+            >
+              Scan My Business Free <ArrowRight size={16} />
+            </Link>
+            <CheckoutButton
+              plan="growth"
+              label="Start Growth Autopilot"
+              className="inline-flex items-center justify-center gap-2 bg-transparent text-white font-semibold border border-white/30 px-8 py-4 rounded-lg hover:bg-white/10 transition-colors text-sm"
+            />
+          </div>
+          <p className="mt-6 text-white/40 text-xs">No contracts. No setup required. Cancel anytime.</p>
         </div>
       </section>
     </>

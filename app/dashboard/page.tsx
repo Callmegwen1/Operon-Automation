@@ -77,6 +77,9 @@ export default async function DashboardPage() {
   const scan     = scans?.[0] ?? null
   const prevScan = scans?.[1] ?? null
 
+  // First-run: send new users to onboarding if they haven't set up their business yet
+  if (!business?.name) redirect('/onboarding')
+
   const businessName = business?.name ?? user.user_metadata?.business_name ?? 'your business'
   const leaks = (dbLeaks && dbLeaks.length > 0) ? dbLeaks : (scan ? generateLeaks(scan) : [])
   const openLeaks  = leaks.filter((l: { status?: string }) => l.status !== 'fixed')

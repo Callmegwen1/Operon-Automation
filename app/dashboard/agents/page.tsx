@@ -9,7 +9,7 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import AgentSetupWizard from '@/components/dashboard/AgentSetupWizard'
 
-type AgentType = 'lead_followup' | 'review_request' | 'weekly_report'
+type AgentType = 'lead_followup' | 'review_request' | 'weekly_report' | 'estimate_followup' | 'reactivation'
 
 interface AgentConfig {
   fromName?: string
@@ -88,12 +88,32 @@ const SYSTEM_META = [
     timing:      'Every Monday at 8:00 AM',
     badge:       null,
   },
+  {
+    type:        'estimate_followup' as AgentType,
+    icon:        FileText,
+    color:       'text-op-navy',
+    activeBg:    'bg-op-navy',
+    name:        'Estimate Recovery Autopilot',
+    tagline:     'Turn cold quotes into booked jobs.',
+    description: 'Send an estimate to any lead and a 3-email follow-up sequence starts automatically — Day 0 with the estimate, Day 1 check-in, Day 3 final nudge. Industry-specific copy included.',
+    timing:      'Fires instantly when you click Send Estimate on a contact',
+    badge:       null,
+  },
+  {
+    type:        'reactivation' as AgentType,
+    icon:        RefreshCw,
+    color:       'text-purple-600',
+    activeBg:    'bg-purple-600',
+    name:        'Customer Reactivation Autopilot',
+    tagline:     "Win back customers who've gone quiet.",
+    description: "Every Sunday, automatically sends a personalized win-back email to customers who haven't booked in 60+ days. Industry-specific copy, one-click unsubscribe included.",
+    timing:      'Every Sunday — scans for customers inactive 60+ days',
+    badge:       null,
+  },
 ]
 
 const COMING_SOON = [
-  { icon: FileText,   name: 'Estimate Recovery Autopilot',  description: 'Automatically follows up on unanswered estimates at 24h and 3 days — turning cold quotes into booked jobs.' },
-  { icon: DollarSign, name: 'Payment Reminder System',      description: 'Sends friendly, graduated payment reminders for overdue invoices — reducing collections calls.' },
-  { icon: RefreshCw,  name: 'Customer Reactivation Autopilot', description: "Re-engages customers who haven't booked in 60+ days with a personalized, industry-specific win-back message." },
+  { icon: DollarSign, name: 'Payment Reminder System', description: 'Sends friendly, graduated payment reminders for overdue invoices — reducing collections calls.' },
 ]
 
 const PRIORITY_COLOR: Record<string, string> = {
@@ -239,6 +259,10 @@ function AgentCard({ meta, row, activity, userId, onUpdate, reviewMetrics }: {
     ]
     if (meta.type === 'review_request') return [
       { key: 'reviewLink',   label: 'Review Link',     placeholder: 'https://g.page/r/...',                       multiline: false },
+      { key: 'fromName',     label: 'Your Name',       placeholder: 'John Smith',                                 multiline: false },
+      { key: 'replyToEmail', label: 'Reply-to Email',  placeholder: 'you@yourbusiness.com',                       multiline: false },
+    ]
+    if (meta.type === 'estimate_followup' || meta.type === 'reactivation') return [
       { key: 'fromName',     label: 'Your Name',       placeholder: 'John Smith',                                 multiline: false },
       { key: 'replyToEmail', label: 'Reply-to Email',  placeholder: 'you@yourbusiness.com',                       multiline: false },
     ]
@@ -490,9 +514,11 @@ function ComingSoonCard({ icon: Icon, name, description }: {
 // ── Page ──────────────────────────────────────────────────────
 export default function AgentsPage() {
   const [agents, setAgents] = useState<Record<AgentType, AgentRow>>({
-    lead_followup:  { type: 'lead_followup',  enabled: false, config: {} },
-    review_request: { type: 'review_request', enabled: false, config: {} },
-    weekly_report:  { type: 'weekly_report',  enabled: false, config: {} },
+    lead_followup:     { type: 'lead_followup',     enabled: false, config: {} },
+    review_request:    { type: 'review_request',    enabled: false, config: {} },
+    weekly_report:     { type: 'weekly_report',     enabled: false, config: {} },
+    estimate_followup: { type: 'estimate_followup', enabled: false, config: {} },
+    reactivation:      { type: 'reactivation',      enabled: false, config: {} },
   })
   const [activityByType, setActivityByType] = useState<Record<string, ActivityEntry[]>>({})
   const [tasks, setTasks]         = useState<AgentTask[]>([])

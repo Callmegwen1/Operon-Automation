@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/client'
 function SignupForm() {
   const searchParams = useSearchParams()
   const fromScan = searchParams.get('fromScan')
+  const plan     = searchParams.get('plan')
 
   const [businessName, setBusinessName] = useState('')
   const [email, setEmail] = useState('')
@@ -25,12 +26,16 @@ function SignupForm() {
     setError('')
 
     const supabase = createClient()
+    // If user came from pricing with a plan intent, preserve it through the verify flow
+    const callbackUrl = plan
+      ? `${window.location.origin}/api/auth/callback?next=/api/stripe/checkout-redirect?plan=${plan}`
+      : `${window.location.origin}/api/auth/callback`
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { business_name: businessName },
-        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
+        emailRedirectTo: callbackUrl,
       },
     })
 

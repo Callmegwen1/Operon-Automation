@@ -5,6 +5,7 @@ import { leadFollowup1, leadFollowup2, leadFollowup3, intelligentLeadAlert } fro
 import { rateLimit } from '@/lib/rate-limit'
 import { classifyLead } from '@/lib/agents/classify'
 import { getPlaybook } from '@/lib/agents/playbooks'
+import { sendSMS } from '@/lib/sms'
 
 function getAdminClient() {
   return createClient(
@@ -247,6 +248,13 @@ export async function POST(
           ],
           updated_at: new Date().toISOString(),
         }).eq('id', agentRun.id)
+      }
+
+      // ── 8. SMS for urgent/emergency playbooks ───────────────
+      const isSmsPlaybook = ['emergency_service', 'urgent_home_service'].includes(classification.recommendedPlaybook)
+      if (isSmsPlaybook && phone) {
+        const smsBody = `Hi ${name}, we got your message at ${businessName} and someone will reach out to you very shortly. – ${cfg.fromName ?? businessName}`
+        await sendSMS({ to: phone, body: smsBody }).catch(() => {/* SMS is best-effort */})
       }
 
       // Legacy activity log (backwards compat with dashboard)

@@ -620,6 +620,42 @@ export function privateFeedbackRequest({
   }
 }
 
+// ── Customer Reactivation ─────────────────────────────────────
+export function reactivationEmail({
+  customerName,
+  businessName,
+  fromName,
+  replyToEmail,
+  opener,
+  body,
+  unsubscribeUrl,
+}: {
+  customerName: string
+  businessName: string
+  fromName: string
+  replyToEmail: string
+  opener: string
+  body: string
+  unsubscribeUrl?: string
+}): { subject: string; html: string } {
+  return {
+    subject: `We miss you — ${businessName}`,
+    html: wrap(`
+      <tr><td style="background:#102A43;border-radius:12px 12px 0 0;padding:28px 36px;">
+        <p style="margin:0;color:#ffffff;font-size:20px;font-weight:700;">${businessName}</p>
+      </td></tr>
+      <tr><td style="background:#ffffff;border-radius:0 0 12px 12px;padding:36px;">
+        <p style="margin:0 0 16px;color:#334155;font-size:15px;">Hi ${customerName},</p>
+        <p style="margin:0 0 16px;color:#334155;font-size:15px;line-height:1.6;">${opener}</p>
+        <p style="margin:0 0 16px;color:#334155;font-size:15px;line-height:1.6;">${body}</p>
+        <div style="background:#F8FAFC;border-radius:8px;padding:14px 18px;margin-bottom:24px;">
+          <p style="margin:0;color:#64748B;font-size:13px;">📧 Just reply to this email — it goes directly to ${fromName} at <a href="mailto:${replyToEmail}" style="color:#1A2E4A;">${replyToEmail}</a></p>
+        </div>
+        <p style="margin:0;color:#334155;font-size:14px;">— <strong>${fromName}</strong><br><span style="color:#64748B;">${businessName}</span></p>
+      </td></tr>`, unsubscribeUrl),
+  }
+}
+
 // ── Onboarding Day 1 ─────────────────────────────────────────
 export function onboardingDay1({
   businessName,
@@ -656,6 +692,102 @@ export function onboardingDay1({
           <a href="mailto:ceo@operonauto.com" style="color:#1A2E4A;">ceo@operonauto.com</a>
         </p>
       </td></tr>`),
+  }
+}
+
+// ── Estimate Follow-Up Day 0 (immediate) ─────────────────────
+export function estimateDay0({
+  contactName,
+  businessName,
+  fromName,
+  replyToEmail,
+  opener,
+  body,
+  amount,
+  unsubscribeUrl,
+}: {
+  contactName: string
+  businessName: string
+  fromName: string
+  replyToEmail: string
+  opener: string
+  body: string
+  amount?: string
+  unsubscribeUrl?: string
+}): { subject: string; html: string } {
+  return {
+    subject: `Your estimate from ${businessName}`,
+    html: wrap(`
+      <tr><td style="background:#102A43;border-radius:12px 12px 0 0;padding:28px 36px;">
+        <p style="margin:0 0 4px;color:#94A3B8;font-size:12px;text-transform:uppercase;letter-spacing:1px;">Estimate</p>
+        <p style="margin:0;color:#ffffff;font-size:20px;font-weight:700;">${businessName}</p>
+      </td></tr>
+      <tr><td style="background:#ffffff;border-radius:0 0 12px 12px;padding:36px;">
+        <p style="margin:0 0 16px;color:#334155;font-size:15px;">Hi ${contactName},</p>
+        <p style="margin:0 0 16px;color:#334155;font-size:15px;line-height:1.6;">${opener}</p>
+        <p style="margin:0 0 16px;color:#334155;font-size:15px;line-height:1.6;">${body}</p>
+        ${amount ? `<div style="background:#F8FAFC;border-left:3px solid #102A43;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:24px;">
+          <p style="margin:0;color:#64748B;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Estimate Total</p>
+          <p style="margin:6px 0 0;color:#102A43;font-size:24px;font-weight:800;">${amount}</p>
+        </div>` : ''}
+        <p style="margin:0;color:#334155;font-size:15px;">— <strong>${fromName}</strong><br><span style="color:#64748B;">${businessName}</span></p>
+      </td></tr>`, unsubscribeUrl),
+  }
+}
+
+// ── Estimate Follow-Up Day 1 (24h reminder) ───────────────────
+export function estimateDay1({
+  contactName,
+  businessName,
+  fromName,
+  body,
+  unsubscribeUrl,
+}: {
+  contactName: string
+  businessName: string
+  fromName: string
+  body: string
+  unsubscribeUrl?: string
+}): { subject: string; html: string } {
+  return {
+    subject: `Quick check-in on your estimate — ${businessName}`,
+    html: wrap(`
+      <tr><td style="background:#102A43;border-radius:12px 12px 0 0;padding:28px 36px;">
+        <p style="margin:0;color:#ffffff;font-size:20px;font-weight:700;">${businessName}</p>
+      </td></tr>
+      <tr><td style="background:#ffffff;border-radius:0 0 12px 12px;padding:36px;">
+        <p style="margin:0 0 16px;color:#334155;font-size:15px;">Hi ${contactName},</p>
+        <p style="margin:0 0 16px;color:#334155;font-size:15px;line-height:1.6;">${body}</p>
+        <p style="margin:0;color:#334155;font-size:15px;">— <strong>${fromName}</strong><br><span style="color:#64748B;">${businessName}</span></p>
+      </td></tr>`, unsubscribeUrl),
+  }
+}
+
+// ── Estimate Follow-Up Day 3 (final) ─────────────────────────
+export function estimateDay3({
+  contactName,
+  businessName,
+  fromName,
+  body,
+  unsubscribeUrl,
+}: {
+  contactName: string
+  businessName: string
+  fromName: string
+  body: string
+  unsubscribeUrl?: string
+}): { subject: string; html: string } {
+  return {
+    subject: `Last follow-up on the estimate — ${businessName}`,
+    html: wrap(`
+      <tr><td style="background:#102A43;border-radius:12px 12px 0 0;padding:28px 36px;">
+        <p style="margin:0;color:#ffffff;font-size:20px;font-weight:700;">${businessName}</p>
+      </td></tr>
+      <tr><td style="background:#ffffff;border-radius:0 0 12px 12px;padding:36px;">
+        <p style="margin:0 0 16px;color:#334155;font-size:15px;">Hi ${contactName},</p>
+        <p style="margin:0 0 16px;color:#334155;font-size:15px;line-height:1.6;">${body}</p>
+        <p style="margin:0;color:#334155;font-size:15px;">— <strong>${fromName}</strong><br><span style="color:#64748B;">${businessName}</span></p>
+      </td></tr>`, unsubscribeUrl),
   }
 }
 
