@@ -101,8 +101,9 @@ const inputClass =
   'w-full border border-op-border rounded-lg px-4 py-2.5 text-sm text-op-body placeholder-op-muted focus:outline-none focus:ring-2 focus:ring-op-navy/20 focus:border-op-navy transition-all bg-white'
 
 // ── Satisfaction Modal ────────────────────────────────────────
-function SatisfactionModal({ contactName, onConfirm, onCancel, loading }: {
+function SatisfactionModal({ contactName, finalStatus, onConfirm, onCancel, loading }: {
   contactName: string
+  finalStatus: 'completed' | 'won'
   onConfirm: (satisfaction: Satisfaction) => void
   onCancel: () => void
   loading: boolean
@@ -141,7 +142,9 @@ function SatisfactionModal({ contactName, onConfirm, onCancel, loading }: {
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
         <div className="flex items-start justify-between p-6 pb-4 border-b border-op-border">
           <div>
-            <h2 className="font-bold text-op-navy font-manrope">How did the job go?</h2>
+            <h2 className="font-bold text-op-navy font-manrope">
+              {finalStatus === 'won' ? 'Deal closed — how did it go?' : 'How did the job go?'}
+            </h2>
             <p className="text-sm text-op-muted mt-0.5">with {contactName}</p>
           </div>
           <button onClick={onCancel} className="text-op-muted hover:text-op-navy transition-colors">
@@ -191,6 +194,7 @@ export default function ContactDetailPage() {
   const [sendingReview, setSendingReview] = useState(false)
   const [reviewMsg, setReviewMsg]   = useState('')
   const [showSatisfactionModal, setShowSatisfactionModal] = useState(false)
+  const [satisfactionFinalStatus, setSatisfactionFinalStatus] = useState<'completed' | 'won'>('completed')
   const [satisfactionLoading, setSatisfactionLoading] = useState(false)
   const [actionMsg, setActionMsg]   = useState('')
   const [status, setStatus]         = useState('')
@@ -254,8 +258,11 @@ export default function ContactDetailPage() {
     setTimeout(() => setReviewMsg(''), 5000)
   }
 
-  // Mark Done flow
-  const handleMarkDone = () => setShowSatisfactionModal(true)
+  // Mark Done / Won Deal flow
+  const handleMarkDone = (finalStatus: 'completed' | 'won' = 'completed') => {
+    setSatisfactionFinalStatus(finalStatus)
+    setShowSatisfactionModal(true)
+  }
 
   const handleSatisfactionConfirm = async (satisfaction: Satisfaction) => {
     if (!contact) return
@@ -265,7 +272,7 @@ export default function ContactDetailPage() {
     const completeRes = await fetch(`/api/contacts/${id}/complete`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ finalStatus: 'completed' }),
+      body: JSON.stringify({ finalStatus: satisfactionFinalStatus }),
     })
     const completeData = await completeRes.json()
 
@@ -277,8 +284,8 @@ export default function ContactDetailPage() {
       return
     }
 
-    setContact((c) => c ? { ...c, status: 'completed', type: 'customer' } : c)
-    setStatus('completed')
+    setContact((c) => c ? { ...c, status: satisfactionFinalStatus, type: 'customer' } : c)
+    setStatus(satisfactionFinalStatus)
 
     if (completeData.reviewSystemEnabled) {
       const reviewRes = await fetch(`/api/contacts/${id}/review-request`, {
@@ -331,6 +338,7 @@ export default function ContactDetailPage() {
       {showSatisfactionModal && contact && (
         <SatisfactionModal
           contactName={contact.name}
+          finalStatus={satisfactionFinalStatus}
           onConfirm={handleSatisfactionConfirm}
           onCancel={() => setShowSatisfactionModal(false)}
           loading={satisfactionLoading}
@@ -368,14 +376,22 @@ export default function ContactDetailPage() {
                 <Mail size={12} /> Email
               </a>
             )}
-            {/* Mark Done — available until job is finished */}
+            {/* Mark Done / Won Deal — available until job is finished */}
             {!isDone && (
-              <button
-                onClick={handleMarkDone}
-                className="btn-primary text-xs px-3 py-2 flex items-center gap-1.5"
-              >
-                <CheckCircle2 size={12} /> Mark Done
-              </button>
+              <div className="flex flex-col items-end gap-0.5">
+                <button
+                  onClick={() => handleMarkDone('completed')}
+                  className="btn-primary text-xs px-3 py-2 flex items-center gap-1.5"
+                >
+                  <CheckCircle2 size={12} /> Mark Done
+                </button>
+                <button
+                  onClick={() => handleMarkDone('won')}
+                  className="text-[10px] text-op-muted hover:text-op-green transition-colors px-1"
+                >
+                  Won deal ↑
+                </button>
+              </div>
             )}
             {/* Manual review request for completed contacts that haven't been asked yet */}
             {contact.email && isDone && !isReviewStatus && (

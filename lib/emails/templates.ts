@@ -275,6 +275,94 @@ export function weeklyReport({
   }
 }
 
+// ── Weekly Revenue AI Briefing ───────────────────────────────
+export function weeklyRevenueAIBriefing({
+  businessName,
+  score,
+  scoreDelta,
+  openLeaks,
+  fixedLeaks,
+  agentActions,
+  aiNarrative,
+  priorityAction,
+  dashboardUrl,
+}: {
+  businessName: string
+  score: number
+  scoreDelta: number | null
+  openLeaks: number
+  fixedLeaks: number
+  agentActions: number
+  aiNarrative: string
+  priorityAction: string
+  dashboardUrl: string
+}): { subject: string; html: string } {
+  const scoreColor  = score >= 75 ? '#DC2626' : score >= 55 ? '#F59E0B' : '#22C55E'
+  const deltaText   = scoreDelta === null ? '' : scoreDelta > 0 ? `▲ ${scoreDelta} pts vs last week` : scoreDelta < 0 ? `▼ ${Math.abs(scoreDelta)} pts vs last week` : 'No change vs last week'
+  const deltaColor  = scoreDelta !== null && scoreDelta < 0 ? '#16A34A' : '#DC2626'
+
+  return {
+    subject: `Your Weekly Revenue Briefing — ${businessName}`,
+    html: wrap(`
+      <tr><td style="background:#102A43;border-radius:12px 12px 0 0;padding:28px 36px;">
+        <p style="margin:0 0 4px;color:#94A3B8;font-size:12px;text-transform:uppercase;letter-spacing:1px;">Weekly Revenue Briefing</p>
+        <p style="margin:0;color:#ffffff;font-size:20px;font-weight:700;">${businessName}</p>
+      </td></tr>
+      <tr><td style="background:#ffffff;padding:36px;">
+
+        <!-- AI Narrative box -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8FAFC;border-left:3px solid #102A43;border-radius:0 8px 8px 0;margin-bottom:20px;">
+          <tr><td style="padding:18px 20px;">
+            <p style="margin:0 0 8px;color:#64748B;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Your Advisor Summary</p>
+            <p style="margin:0;color:#1E293B;font-size:14px;line-height:1.7;">${aiNarrative}</p>
+          </td></tr>
+        </table>
+
+        <!-- Priority action box -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;margin-bottom:24px;">
+          <tr><td style="padding:16px 20px;">
+            <p style="margin:0 0 4px;color:#B45309;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">This Week&rsquo;s Priority</p>
+            <p style="margin:0;color:#92400E;font-size:14px;font-weight:600;line-height:1.5;">${priorityAction}</p>
+          </td></tr>
+        </table>
+
+        <!-- Metrics row -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+          <tr>
+            <td style="padding:14px;background:#F8FAFC;border-radius:8px;text-align:center;width:25%;">
+              <p style="margin:0;color:#64748B;font-size:10px;font-weight:700;text-transform:uppercase;">Leak Score</p>
+              <p style="margin:4px 0 0;color:${scoreColor};font-size:24px;font-weight:800;">${score}<span style="font-size:12px;color:#94A3B8;">/100</span></p>
+              ${deltaText ? `<p style="margin:2px 0 0;color:${deltaColor};font-size:10px;font-weight:700;">${deltaText}</p>` : ''}
+            </td>
+            <td style="width:6px;"></td>
+            <td style="padding:14px;background:#F8FAFC;border-radius:8px;text-align:center;width:25%;">
+              <p style="margin:0;color:#64748B;font-size:10px;font-weight:700;text-transform:uppercase;">Open Leaks</p>
+              <p style="margin:4px 0 0;color:#102A43;font-size:24px;font-weight:800;">${openLeaks}</p>
+              <p style="margin:2px 0 0;color:#94A3B8;font-size:10px;">${fixedLeaks} fixed</p>
+            </td>
+            <td style="width:6px;"></td>
+            <td style="padding:14px;background:#F8FAFC;border-radius:8px;text-align:center;width:25%;">
+              <p style="margin:0;color:#64748B;font-size:10px;font-weight:700;text-transform:uppercase;">Agent Actions</p>
+              <p style="margin:4px 0 0;color:#16A34A;font-size:24px;font-weight:800;">${agentActions}</p>
+              <p style="margin:2px 0 0;color:#94A3B8;font-size:10px;">this week</p>
+            </td>
+          </tr>
+        </table>
+
+        <div style="text-align:center;">
+          <a href="${dashboardUrl}" style="display:inline-block;background:#1A2E4A;color:#ffffff;font-size:14px;font-weight:700;padding:14px 32px;border-radius:8px;text-decoration:none;">
+            Open My Dashboard →
+          </a>
+        </div>
+      </td></tr>
+      <tr><td style="background:#F8FAFC;border-radius:0 0 12px 12px;padding:16px 36px;border-top:1px solid #E5E7EB;">
+        <p style="margin:0;color:#94A3B8;font-size:11px;">
+          Revenue Leak Scores are informational only. Operon does not guarantee specific financial results.
+        </p>
+      </td></tr>`),
+  }
+}
+
 // ── New Lead Notification (to owner) ─────────────────────────
 export function newLeadNotification({
   businessName,

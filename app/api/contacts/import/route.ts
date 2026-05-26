@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sendEmail, minutesFromNow, daysFromNow } from '@/lib/email'
-import { leadFollowup1, leadFollowup2, leadFollowup3 } from '@/lib/emails/templates'
+import { leadFollowup1, leadFollowup2, leadFollowup3, reviewRequest, reviewRequestDay3, reviewRequestDay7 } from '@/lib/emails/templates'
+import { getReviewCopy } from '@/lib/agents/review-copy'
 
 interface ImportRow {
   name: string
@@ -65,15 +66,68 @@ async function triggerFollowupSequence(
   })
 }
 
+async function triggerReviewSequence(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  contactId: string,
+  name: string,
+  email: string
+) {
+  const { data: agent } = await supabase
+    .from('agents')
+    .select('enabled, config')
+    .eq('user_id', userId)
+    .eq('type', 'review_request')
+    .single()
+
+  if (!agent?.enabled) return
+
+  const cfg = agent.config as { reviewLink?: string; fromName?: string; replyToEmail?: string }
+  if (!cfg.reviewLink) return
+
+  const [{ data: business }] = await Promise.all([
+    supabase.from('businesses').select('name, industry').eq('user_id', userId).single(),
+  ])
+
+  const businessName = business?.name ?? 'Our Business'
+  const industry     = business?.industry ?? ''
+  const fromName     = cfg.fromName ?? businessName
+  const replyToEmail = cfg.replyToEmail ?? undefined
+  const copy         = getReviewCopy(industry)
+  const appUrl       = process.env.NEXT_PUBLIC_APP_URL ?? 'https://operonauto.com'
+  const unsubUrl     = `${appUrl}/api/unsubscribe?id=${contactId}`
+
+  const day0 = reviewRequest({ customerName: name, businessName, fromName, reviewLink: cfg.reviewLink })
+  const day3 = reviewRequestDay3({ customerName: name, businessName, fromName, reviewLink: cfg.reviewLink, body: copy.day3Body, unsubscribeUrl: unsubUrl })
+  const day7 = reviewRequestDay7({ customerName: name, businessName, fromName, reviewLink: cfg.reviewLink, body: copy.day7Body, unsubscribeUrl: unsubUrl })
+
+  await Promise.all([
+    sendEmail({ to: email, replyTo: replyToEmail, subject: day0.subject, html: day0.html }),
+    sendEmail({ to: email, replyTo: replyToEmail, subject: day3.subject, html: day3.html, scheduledAt: daysFromNow(3) }),
+    sendEmail({ to: email, replyTo: replyToEmail, subject: day7.subject, html: day7.html, scheduledAt: daysFromNow(7) }),
+  ])
+
+  await Promise.all([
+    supabase.from('contacts').update({ status: 'review_requested' }).eq('id', contactId),
+    supabase.from('agent_activity').insert({
+      user_id:    userId,
+      agent_type: 'review_request',
+      action:     'review_request_sent',
+      details:    { contact_id: contactId, customer_name: name, sequence: '3-email', source: 'csv_import' },
+    }),
+  ])
+}
+
 export async function POST(req: NextRequest) {
   try {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { rows, triggerFollowup = false } = await req.json() as {
+    const { rows, triggerFollowup = false, triggerReview = false } = await req.json() as {
       rows: ImportRow[]
       triggerFollowup?: boolean
+      triggerReview?: boolean
     }
 
     if (!Array.isArray(rows) || rows.length === 0) {
@@ -103,16 +157,30 @@ export async function POST(req: NextRequest) {
 
     if (error) throw error
 
-    // Optionally fire the lead follow-up sequence for each imported lead with an email
-    if (triggerFollowup && data) {
-      const leadFollowups = data.filter(
-        (c: { type: string; email: string }) => c.type === 'lead' && c.email
-      )
-      await Promise.allSettled(
-        leadFollowups.map((c: { id: string; name: string; email: string }) =>
-          triggerFollowupSequence(supabase, user.id, c.id, c.name, c.email)
+    if (data) {
+      // Optionally fire the lead follow-up sequence for imported leads
+      if (triggerFollowup) {
+        const leadFollowups = data.filter(
+          (c: { type: string; email: string }) => c.type === 'lead' && c.email
         )
-      )
+        await Promise.allSettled(
+          leadFollowups.map((c: { id: string; name: string; email: string }) =>
+            triggerFollowupSequence(supabase, user.id, c.id, c.name, c.email)
+          )
+        )
+      }
+
+      // Optionally fire the review sequence for imported customers
+      if (triggerReview) {
+        const customers = data.filter(
+          (c: { type: string; email: string }) => c.type === 'customer' && c.email
+        )
+        await Promise.allSettled(
+          customers.map((c: { id: string; name: string; email: string }) =>
+            triggerReviewSequence(supabase, user.id, c.id, c.name, c.email)
+          )
+        )
+      }
     }
 
     return NextResponse.json({ imported: data?.length ?? 0 })

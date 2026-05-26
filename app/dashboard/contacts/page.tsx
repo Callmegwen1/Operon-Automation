@@ -86,8 +86,9 @@ function parseCSV(text: string): Record<string, string>[] {
 }
 
 // ── Satisfaction Modal ──────────────────────────────────────────
-function SatisfactionModal({ contact, onConfirm, onCancel, loading }: {
+function SatisfactionModal({ contact, finalStatus, onConfirm, onCancel, loading }: {
   contact: Contact
+  finalStatus: 'completed' | 'won'
   onConfirm: (satisfaction: Satisfaction) => void
   onCancel: () => void
   loading: boolean
@@ -126,7 +127,9 @@ function SatisfactionModal({ contact, onConfirm, onCancel, loading }: {
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
         <div className="flex items-start justify-between p-6 pb-4 border-b border-op-border">
           <div>
-            <h2 className="font-bold text-op-navy font-manrope">How did the job go?</h2>
+            <h2 className="font-bold text-op-navy font-manrope">
+              {finalStatus === 'won' ? 'Deal closed — how did it go?' : 'How did the job go?'}
+            </h2>
             <p className="text-sm text-op-muted mt-0.5">with {contact.name}</p>
           </div>
           <button onClick={onCancel} className="text-op-muted hover:text-op-navy transition-colors">
@@ -250,7 +253,7 @@ function AddContactForm({ onAdd, onCancel }: {
 // ── Contact Row ─────────────────────────────────────────────────
 function ContactRow({ contact, onMarkDone, onReviewRequest, sending, completing }: {
   contact: Contact
-  onMarkDone: (contact: Contact) => void
+  onMarkDone: (contact: Contact, finalStatus: 'completed' | 'won') => void
   onReviewRequest: (contact: Contact) => void
   sending: boolean
   completing: boolean
@@ -288,16 +291,25 @@ function ContactRow({ contact, onMarkDone, onReviewRequest, sending, completing 
             <Mail size={12} /> Email
           </a>
         )}
-        {/* Mark Done — available until job is finished */}
+        {/* Mark Done / Won — available until job is finished */}
         {!isDone && (
-          <button
-            onClick={() => onMarkDone(contact)}
-            disabled={completing}
-            className="btn-primary text-xs px-3 py-1.5 flex items-center gap-1.5"
-          >
-            {completing ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
-            Mark Done
-          </button>
+          <div className="flex flex-col items-end gap-0.5">
+            <button
+              onClick={() => onMarkDone(contact, 'completed')}
+              disabled={completing}
+              className="btn-primary text-xs px-3 py-1.5 flex items-center gap-1.5"
+            >
+              {completing ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
+              Mark Done
+            </button>
+            <button
+              onClick={() => onMarkDone(contact, 'won')}
+              disabled={completing}
+              className="text-[10px] text-op-muted hover:text-op-green transition-colors px-1"
+            >
+              Won deal ↑
+            </button>
+          </div>
         )}
         {/* Manual review request for completed contacts with email */}
         {contact.email && isDone && contact.status !== 'review_requested' && contact.status !== 'review_completed' && (
@@ -329,6 +341,7 @@ export default function ContactsPage() {
   const [showAdd, setShowAdd]             = useState(false)
   const [sending, setSending]             = useState<string | null>(null)
   const [completingContact, setCompletingContact] = useState<Contact | null>(null)
+  const [completingFinalStatus, setCompletingFinalStatus] = useState<'completed' | 'won'>('completed')
   const [satisfactionLoading, setSatisfactionLoading] = useState(false)
   const [sentMsg, setSentMsg]             = useState('')
   const [filter, setFilter]               = useState<FilterStatus>('all')
@@ -337,6 +350,7 @@ export default function ContactsPage() {
   const [importing, setImporting]         = useState(false)
   const [importResult, setImportResult]   = useState<{ count: number } | null>(null)
   const [importFollowup, setImportFollowup] = useState(false)
+  const [importReview, setImportReview]   = useState(false)
   const [showImportOptions, setShowImportOptions] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -355,8 +369,9 @@ export default function ContactsPage() {
     setShowAdd(false)
   }
 
-  // Step 1: user clicks "Mark Done" → show satisfaction modal
-  const handleMarkDone = (contact: Contact) => {
+  // Step 1: user clicks "Mark Done" or "Won Deal" → show satisfaction modal
+  const handleMarkDone = (contact: Contact, finalStatus: 'completed' | 'won' = 'completed') => {
+    setCompletingFinalStatus(finalStatus)
     setCompletingContact(contact)
   }
 
@@ -368,11 +383,11 @@ export default function ContactsPage() {
 
     const contact = completingContact
 
-    // Mark contact as completed
+    // Mark contact as completed or won
     const completeRes = await fetch(`/api/contacts/${contact.id}/complete`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ finalStatus: 'completed' }),
+      body: JSON.stringify({ finalStatus: completingFinalStatus }),
     })
     const completeData = await completeRes.json()
 
@@ -386,7 +401,7 @@ export default function ContactsPage() {
 
     // Update local state
     setContacts((prev) => prev.map((c) =>
-      c.id === contact.id ? { ...c, status: 'completed', type: 'customer' } : c
+      c.id === contact.id ? { ...c, status: completingFinalStatus, type: 'customer' } : c
     ))
 
     // If review system is enabled, trigger review flow
@@ -453,7 +468,7 @@ export default function ContactsPage() {
     const res = await fetch('/api/contacts/import', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rows, triggerFollowup: importFollowup }),
+      body: JSON.stringify({ rows, triggerFollowup: importFollowup, triggerReview: importReview }),
     })
     const data = await res.json()
     if (res.ok) {
@@ -498,6 +513,7 @@ export default function ContactsPage() {
       {completingContact && (
         <SatisfactionModal
           contact={completingContact}
+          finalStatus={completingFinalStatus}
           onConfirm={handleSatisfactionConfirm}
           onCancel={() => setCompletingContact(null)}
           loading={satisfactionLoading}
@@ -551,7 +567,7 @@ export default function ContactsPage() {
               {showImportOptions && (
                 <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-op-border rounded-xl shadow-lg p-4 z-20">
                   <p className="text-xs font-bold text-op-navy mb-3">Import Options</p>
-                  <label className="flex items-start gap-3 cursor-pointer mb-4">
+                  <label className="flex items-start gap-3 cursor-pointer mb-3">
                     <input
                       type="checkbox"
                       checked={importFollowup}
@@ -561,7 +577,21 @@ export default function ContactsPage() {
                     <div>
                       <p className="text-xs font-semibold text-op-navy">Send follow-up sequence</p>
                       <p className="text-xs text-op-muted mt-0.5">
-                        If Lead Recovery Autopilot is enabled, imported leads will automatically receive the follow-up sequence.
+                        If Lead Recovery Autopilot is enabled, imported leads will receive the follow-up sequence.
+                      </p>
+                    </div>
+                  </label>
+                  <label className="flex items-start gap-3 cursor-pointer mb-4">
+                    <input
+                      type="checkbox"
+                      checked={importReview}
+                      onChange={(e) => setImportReview(e.target.checked)}
+                      className="mt-0.5 accent-op-navy shrink-0"
+                    />
+                    <div>
+                      <p className="text-xs font-semibold text-op-navy">Send review requests to customers</p>
+                      <p className="text-xs text-op-muted mt-0.5">
+                        If Review Growth System is enabled, imported customers will receive the 3-email review sequence.
                       </p>
                     </div>
                   </label>
