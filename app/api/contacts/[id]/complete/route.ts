@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { cancelScheduledEmails } from '@/lib/cancel-emails'
 
 export async function POST(
   req: NextRequest,
@@ -26,6 +27,9 @@ export async function POST(
       .from('contacts')
       .update({ status: finalStatus, type: 'customer' })
       .eq('id', params.id)
+
+    // Cancel any pending lead/estimate follow-up emails — job is done
+    cancelScheduledEmails(params.id, supabase).catch(() => {})
 
     // Check if Review Growth System is enabled so frontend knows to show satisfaction modal
     const { data: agent } = await supabase

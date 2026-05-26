@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { load } from 'cheerio'
 import type { CheerioAPI } from 'cheerio'
 import type { WebsiteAnalysis } from '@/lib/scanner/types'
+import { rateLimit } from '@/lib/rate-limit'
 
 const UA = 'Mozilla/5.0 (compatible; OperonScanner/1.0; +https://operonauto.com)'
 const PHONE_RE = /\(?\d{3}\)?[-.\s]\d{3}[-.\s]\d{4}/
@@ -470,6 +471,12 @@ async function getPerformanceScore(url: string): Promise<number | undefined> {
 // ── POST handler ─────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const rl = rateLimit(`scanner:${ip}`, { limit: 6, windowMs: 60 * 1000 })
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Too many scan requests. Please wait a minute.' }, { status: 429 })
+  }
+
   const body = await req.json().catch(() => null)
   if (!body?.url || typeof body.url !== 'string') {
     return NextResponse.json({ error: 'URL required' }, { status: 400 })

@@ -209,7 +209,12 @@ function EstimateModal({ contactName, onConfirm, onCancel, loading }: {
               className={inputClass}
               placeholder="e.g. $1,200 or $800–$1,100"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => {
+                // Allow digits, $, commas, dashes, en-dash, spaces — prevent free-form text injection
+                const v = e.target.value.replace(/[^0-9$,.\-–\s]/g, '')
+                setAmount(v)
+              }}
+              maxLength={40}
             />
             <p className="text-xs text-op-muted mt-1.5">Leave blank to send the email without a displayed total.</p>
           </div>

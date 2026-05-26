@@ -100,35 +100,33 @@ export async function GET(req: NextRequest) {
   }
 
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-  let sent = 0
 
-  for (const agent of agents) {
-    try {
+  // Fan out over all users in parallel — prevents timeout with many users
+  const results = await Promise.allSettled(
+    agents.map(async (agent) => {
       const cfg = agent.config as { reportEmail?: string }
       const { data: { user } } = await supabase.auth.admin.getUserById(agent.user_id)
       const reportEmail = cfg.reportEmail ?? user?.email
-      if (!reportEmail) continue
+      if (!reportEmail) return false
 
       // Fetch all data in parallel
       const [
         { data: business },
         { data: scans },
         { data: leaksData },
-        { data: activity },
         { data: agentRunsData },
         { data: openTasksData },
       ] = await Promise.all([
         supabase.from('businesses').select('name, industry').eq('user_id', agent.user_id).single(),
         supabase.from('scans').select('*').eq('user_id', agent.user_id).order('created_at', { ascending: false }).limit(2),
         supabase.from('leaks').select('title, impact, status').eq('user_id', agent.user_id),
-        supabase.from('agent_activity').select('id').eq('user_id', agent.user_id).gte('created_at', sevenDaysAgo),
         supabase.from('agent_runs').select('id').eq('user_id', agent.user_id).eq('status', 'completed').gte('created_at', sevenDaysAgo),
         supabase.from('agent_tasks').select('id').eq('user_id', agent.user_id).eq('status', 'open'),
       ])
 
       const currentScan  = scans?.[0] ?? null
       const previousScan = scans?.[1] ?? null
-      if (!currentScan) continue
+      if (!currentScan) return false
 
       const rawLeaks = (leaksData && leaksData.length > 0)
         ? leaksData as { title: string; impact: string; status?: string }[]
@@ -141,7 +139,8 @@ export async function GET(req: NextRequest) {
         .slice(0, 3)
         .map(l => ({ title: l.title, impact: l.impact }))
 
-      const agentActions = (agentRunsData?.length ?? 0) + (activity?.length ?? 0)
+      // Count only completed agent runs — agent_activity is created per run so counting both double-counts
+      const agentActions = agentRunsData?.length ?? 0
       const openTasks    = openTasksData?.length ?? 0
       const scoreDelta   = previousScan ? currentScan.score - previousScan.score : null
 
@@ -173,7 +172,6 @@ export async function GET(req: NextRequest) {
 
         await sendEmail({ to: reportEmail, subject: report.subject, html: report.html })
       } catch {
-        // AI failed — send the plain data report
         const report = weeklyReport({
           businessName:  business?.name ?? 'Your Business',
           score:         currentScan.score,
@@ -185,11 +183,11 @@ export async function GET(req: NextRequest) {
         await sendEmail({ to: reportEmail, subject: report.subject, html: report.html })
       }
 
-      sent++
-    } catch (err) {
-      console.error(`Weekly report failed for user ${agent.user_id}:`, err)
-    }
-  }
+      return true
+    })
+  )
+
+  const sent = results.filter(r => r.status === 'fulfilled' && r.value === true).length
 
   return NextResponse.json({ sent })
 }
