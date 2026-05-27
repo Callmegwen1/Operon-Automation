@@ -129,6 +129,8 @@ async function processLeadAsync(ctx: LeadContext): Promise<void> {
       intent:                 classification.intent,
       playbook:               classification.recommendedPlaybook,
       requiresOwnerAttention: classification.requiresOwnerAttention,
+      contactId:              contact.id,
+      appUrl,
     })
 
     const e1ScheduledAt = minutesFromNow(playbook.email1DelayMinutes)

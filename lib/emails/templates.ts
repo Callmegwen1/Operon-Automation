@@ -418,6 +418,36 @@ export function newLeadNotification({
   }
 }
 
+// ── Quick-action button row for owner alert emails ────────────
+function buildQuickActionButtons(contactId: string, appUrl: string): string {
+  // Import is lazy to avoid circular dep issues at build time
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { buildActionUrl } = require('@/lib/quick-action-token') as typeof import('@/lib/quick-action-token')
+
+  const btn = (label: string, action: string, bg: string, color: string) => {
+    let url: string
+    try {
+      url = buildActionUrl(appUrl, contactId, action as import('@/lib/quick-action-token').QuickAction)
+    } catch {
+      return ''
+    }
+    return `<a href="${url}" style="display:inline-block;background:${bg};color:${color};font-size:12px;font-weight:700;padding:10px 18px;border-radius:6px;text-decoration:none;margin:4px;">${label}</a>`
+  }
+
+  return `
+  <div style="margin-top:4px;padding:16px;background:#F8FAFC;border-radius:8px;border:1px solid #E2E8F0;">
+    <p style="margin:0 0 10px;color:#64748B;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;text-align:center;">One-click actions</p>
+    <div style="text-align:center;">
+      ${btn('✅ Mark Booked',       'booked',         '#DCFCE7', '#15803D')}
+      ${btn('❌ Mark Lost',         'lost',           '#FEE2E2', '#DC2626')}
+      ${btn('🚫 Do Not Contact',    'do_not_contact', '#F1F5F9', '#475569')}
+      ${btn('🔁 Needs Follow-Up',   'needs_followup', '#EFF6FF', '#1D4ED8')}
+      ${btn('✉️ Cancel Sequence',   'cancel_sequence','#F1F5F9', '#475569')}
+    </div>
+    <p style="margin:10px 0 0;color:#94A3B8;font-size:10px;text-align:center;">Links expire in 14 days · Powered by Operon</p>
+  </div>`
+}
+
 // ── Intelligent Lead Alert (owner) — AI-powered ───────────────
 export function intelligentLeadAlert({
   businessName,
@@ -433,6 +463,8 @@ export function intelligentLeadAlert({
   intent,
   playbook,
   requiresOwnerAttention,
+  contactId,
+  appUrl,
 }: {
   businessName: string
   leadName: string
@@ -447,6 +479,8 @@ export function intelligentLeadAlert({
   intent: string
   playbook: string
   requiresOwnerAttention: boolean
+  contactId?: string
+  appUrl?: string
 }): { subject: string; html: string } {
   const isUrgent = urgency === 'urgent' || urgency === 'high'
   const headerBg = isUrgent ? '#7F1D1D' : '#102A43'
@@ -509,11 +543,13 @@ export function intelligentLeadAlert({
           </td></tr>
         </table>
 
-        <div style="text-align:center;">
+        <div style="text-align:center;margin-bottom:${contactId && appUrl ? '20px' : '0'};">
           <a href="${dashboardUrl}" style="display:inline-block;background:#1A2E4A;color:#ffffff;font-size:14px;font-weight:700;padding:14px 32px;border-radius:8px;text-decoration:none;">
             View Lead in Dashboard →
           </a>
         </div>
+
+        ${contactId && appUrl ? buildQuickActionButtons(contactId, appUrl) : ''}
       </td></tr>`),
   }
 }
