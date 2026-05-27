@@ -1,3 +1,5 @@
+import { buildActionUrl, type QuickAction } from '@/lib/quick-action-token'
+
 // ── Shared wrapper ──────────────────────────────────────────
 function wrap(content: string, unsubscribeUrl?: string): string {
   const optOut = unsubscribeUrl
@@ -420,14 +422,10 @@ export function newLeadNotification({
 
 // ── Quick-action button row for owner alert emails ────────────
 function buildQuickActionButtons(contactId: string, appUrl: string): string {
-  // Import is lazy to avoid circular dep issues at build time
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { buildActionUrl } = require('@/lib/quick-action-token') as typeof import('@/lib/quick-action-token')
-
   const btn = (label: string, action: string, bg: string, color: string) => {
     let url: string
     try {
-      url = buildActionUrl(appUrl, contactId, action as import('@/lib/quick-action-token').QuickAction)
+      url = buildActionUrl(appUrl, contactId, action as QuickAction)
     } catch {
       return ''
     }
