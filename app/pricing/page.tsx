@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { CheckCircle2, ArrowRight, Zap, MessageSquare, ChevronDown } from 'lucide-react'
 import SectionHeader from '@/components/ui/SectionHeader'
 import CheckoutButton from '@/components/ui/CheckoutButton'
+import PageTracker from '@/components/analytics/PageTracker'
 
 export const metadata: Metadata = {
   title: 'Pricing | Operon Automation',
@@ -139,6 +140,7 @@ const FAQ = [
 export default function PricingPage() {
   return (
     <>
+      <PageTracker event="pricing_viewed" />
       {/* Hero */}
       <section className="bg-op-bg pt-20 pb-12 md:pt-28 md:pb-16">
         <div className="container-wide text-center max-w-2xl mx-auto">

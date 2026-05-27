@@ -1,11 +1,12 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronRight, ChevronLeft, Loader2 } from 'lucide-react'
 import { calculateSubScores } from '@/lib/scanner/subscores'
 import { getMultiplier } from '@/lib/scanner/industry'
 import type { WebsiteAnalysis, ScoreBreakdownItem } from '@/lib/scanner/types'
+import { track, scoreRange } from '@/lib/analytics'
 
 interface FormData {
   businessName: string
@@ -415,7 +416,12 @@ export default function ScannerForm({ defaultIndustry }: Props) {
     biggestProblem: '', biggestProblemOther: '', email: '',
   })
 
-  const analysisRef = useRef<Promise<WebsiteAnalysis | null> | null>(null)
+  const analysisRef  = useRef<Promise<WebsiteAnalysis | null> | null>(null)
+  const startTimeRef = useRef<number>(0)
+
+  useEffect(() => {
+    track('scanner_viewed', { industry: defaultIndustry ?? undefined })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const set = (key: keyof FormData, value: string) => {
     setData((d) => ({ ...d, [key]: value }))
@@ -443,14 +449,28 @@ export default function ScannerForm({ defaultIndustry }: Props) {
 
   const next = () => {
     if (!validateStep()) return
-    if (step === 0 && data.websiteUrl) {
-      analysisRef.current = fetch('/api/scanner/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: data.websiteUrl }),
+    if (step === 0) {
+      // First step completed → scanner started
+      startTimeRef.current = Date.now()
+      const industry = data.industry === 'Other' ? data.industryOther : data.industry
+      track('scanner_started', {
+        industry:    industry || undefined,
+        website_url: data.websiteUrl || undefined,
       })
-        .then((r) => r.json() as Promise<WebsiteAnalysis>)
-        .catch(() => null)
+      if (data.websiteUrl) {
+        analysisRef.current = fetch('/api/scanner/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: data.websiteUrl }),
+        })
+          .then((r) => r.json() as Promise<WebsiteAnalysis>)
+          .catch(() => null)
+      }
+    } else {
+      track('scanner_step_completed', {
+        industry:  (data.industry === 'Other' ? data.industryOther : data.industry) || undefined,
+        properties: { step },
+      })
     }
     setStep((s) => s + 1)
   }
@@ -470,6 +490,8 @@ export default function ScannerForm({ defaultIndustry }: Props) {
       const cap = new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000))
       websiteAnalysis = await Promise.race([analysisRef.current, cap])
     }
+
+    track('scanner_submitted', { industry: finalIndustry || undefined })
 
     const { score, breakdown } = calculateScore(resolvedData, websiteAnalysis)
     const subScores = calculateSubScores({ ...resolvedData, industry: finalIndustry })
@@ -500,6 +522,21 @@ export default function ScannerForm({ defaultIndustry }: Props) {
       date: new Date().toISOString(),
     }
     localStorage.setItem(`scan_${id}`, JSON.stringify(scanPayload))
+
+    // Track scanner completed with safe aggregate data (no PII)
+    track('scanner_completed', {
+      industry:    finalIndustry || undefined,
+      website_url: resolvedData.websiteUrl || undefined,
+      score,
+      score_range: scoreRange(score),
+      top_leak_ids: breakdown?.slice(0, 5).map((b: ScoreBreakdownItem) => b.reason).filter(Boolean),
+      properties:  {
+        scan_duration_ms: startTimeRef.current ? Date.now() - startTimeRef.current : undefined,
+        has_website: !!resolvedData.websiteUrl,
+        avg_job_value_set: !!resolvedData.avgJobValue,
+        monthly_leads_set: !!resolvedData.monthlyLeads,
+      },
+    })
 
     try {
       await fetch('/api/scanner/submit', {

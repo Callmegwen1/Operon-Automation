@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import AgentSetupWizard from '@/components/dashboard/AgentSetupWizard'
+import { track } from '@/lib/analytics'
 
 type AgentType = 'lead_followup' | 'review_request' | 'weekly_report' | 'estimate_followup' | 'reactivation'
 
@@ -211,6 +212,7 @@ function AgentCard({ meta, row, activity, userId, onUpdate, reviewMetrics }: {
     onUpdate(meta.type, { enabled: true, config })
     setEditConfig(config)
     setShowWizard(false)
+    track('agent_activated', { agent_type: meta.type })
   }
 
   const handleDisable = async () => {
@@ -239,6 +241,7 @@ function AgentCard({ meta, row, activity, userId, onUpdate, reviewMetrics }: {
 
   const handleTest = async () => {
     setTesting(true)
+    track('agent_test_sent', { agent_type: meta.type })
     const res = await fetch('/api/agents/test', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

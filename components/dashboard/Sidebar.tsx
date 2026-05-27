@@ -15,6 +15,7 @@ import {
   Users,
   History,
   Radar,
+  BarChart2,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -22,12 +23,13 @@ const AGENTS_HREF = '/dashboard/agents'
 const LAST_SEEN_KEY = 'operon_agents_last_seen'
 
 const navItems = [
-  { href: '/dashboard',          icon: LayoutDashboard, label: 'Overview'        },
-  { href: '/dashboard/command',  icon: Radar,           label: 'Command Center'  },
-  { href: AGENTS_HREF,           icon: Bot,             label: 'Agents'          },
-  { href: '/dashboard/contacts', icon: Users,           label: 'Contacts'        },
-  { href: '/dashboard/scans',    icon: History,         label: 'Scans'           },
-  { href: '/dashboard/profile',  icon: User,            label: 'Profile'         },
+  { href: '/dashboard',                      icon: LayoutDashboard, label: 'Overview'        },
+  { href: '/dashboard/command',              icon: Radar,           label: 'Command Center'  },
+  { href: AGENTS_HREF,                       icon: Bot,             label: 'Agents'          },
+  { href: '/dashboard/contacts',             icon: Users,           label: 'Contacts'        },
+  { href: '/dashboard/scans',                icon: History,         label: 'Scans'           },
+  { href: '/dashboard/admin/analytics',      icon: BarChart2,       label: 'Analytics'       },
+  { href: '/dashboard/profile',              icon: User,            label: 'Profile'         },
 ]
 
 function SidebarContent({ onClose, agentBadge }: { onClose?: () => void; agentBadge: number }) {

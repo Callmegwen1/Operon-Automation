@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowRight, Loader2 } from 'lucide-react'
+import { track } from '@/lib/analytics'
 
 interface Props {
   plan: 'starter' | 'growth' | 'pro'
@@ -19,6 +20,9 @@ export default function CheckoutButton({ plan, label, primary = false, className
   const handleClick = async () => {
     setLoading(true)
     setError('')
+
+    track('plan_clicked',      { plan_clicked: plan, source: 'pricing_page' })
+    track('checkout_started',  { plan_clicked: plan })
 
     const res = await fetch('/api/stripe/checkout', {
       method: 'POST',

@@ -2,6 +2,9 @@ import type { Metadata } from 'next'
 import { Manrope, Inter } from 'next/font/google'
 import './globals.css'
 import LayoutWrapper from '@/components/LayoutWrapper'
+import PostHogProvider from '@/components/analytics/PostHogProvider'
+import MetaPixel from '@/components/analytics/MetaPixel'
+import { Analytics } from '@vercel/analytics/react'
 
 const manrope = Manrope({
   subsets: ['latin'],
@@ -47,15 +50,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${manrope.variable} ${inter.variable}`}>
       <body>
-        {/* Google Analytics placeholder */}
-        {/* TODO: Replace G-XXXXXXXX with real GA4 measurement ID */}
-        {/* <Script src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXX" strategy="afterInteractive" /> */}
-
-        {/* Meta Pixel placeholder */}
-        {/* TODO: Replace XXXXXXXX with real Pixel ID */}
-        {/* <Script id="meta-pixel" strategy="afterInteractive">...</Script> */}
-
-        <LayoutWrapper>{children}</LayoutWrapper>
+        <MetaPixel />
+        <PostHogProvider>
+          <LayoutWrapper>{children}</LayoutWrapper>
+        </PostHogProvider>
+        <Analytics />
       </body>
     </html>
   )

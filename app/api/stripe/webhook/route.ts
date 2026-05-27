@@ -78,6 +78,17 @@ export async function POST(req: NextRequest) {
           status: sub.status,
           currentPeriodEnd: (sub as { current_period_end?: number }).current_period_end ?? null,
         })
+
+        // Internal analytics — purchase event (no PII, user_id is safe UUID)
+        try {
+          await supabase.from('analytics_events').insert({
+            event_name:   'purchase_completed',
+            user_id:      userId,
+            plan_clicked: plan,
+            properties:   { billing_cycle: 'monthly' },
+          })
+        } catch { /* non-blocking */ }
+
         break
       }
 

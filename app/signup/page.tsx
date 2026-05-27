@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, Suspense, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight, Loader2, Eye, EyeOff, Mail, CheckCircle2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { track } from '@/lib/analytics'
 
 function SignupForm() {
   const searchParams = useSearchParams()
@@ -19,6 +20,13 @@ function SignupForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [submitted, setSubmitted] = useState(false)
+
+  useEffect(() => {
+    track('signup_started', {
+      plan_clicked: plan ?? undefined,
+      source: fromScan ? 'scanner' : plan ? 'pricing' : 'organic',
+    })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -45,6 +53,10 @@ function SignupForm() {
       return
     }
 
+    track('signup_completed', {
+      plan_clicked: plan ?? undefined,
+      source: fromScan ? 'scanner' : plan ? 'pricing' : 'organic',
+    })
     setSubmitted(true)
     setLoading(false)
   }

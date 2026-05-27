@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { track, scoreRange } from '@/lib/analytics'
 import Link from 'next/link'
 import {
   AlertTriangle,
@@ -641,6 +642,15 @@ export default function ResultsDisplay() {
       setScan(scanData)
       setLoaded(true)
 
+      if (scanData && scanData !== DEMO) {
+        track('results_viewed', {
+          industry:    scanData.industry || undefined,
+          website_url: scanData.websiteUrl || undefined,
+          score:       scanData.score,
+          score_range: scoreRange(scanData.score),
+        })
+      }
+
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
@@ -702,6 +712,11 @@ export default function ResultsDisplay() {
   const handleEmailReport = async () => {
     if (!scan || isSendingReport) return
     setIsSendingReport(true)
+    track('email_report_requested', {
+      industry:    scan.industry || undefined,
+      score:       scan.score,
+      score_range: scoreRange(scan.score),
+    })
     try {
       await fetch('/api/scanner/report', {
         method: 'POST',
