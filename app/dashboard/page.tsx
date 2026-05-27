@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { generateLeaks } from '@/lib/leaks'
 import { calculateSubScores } from '@/lib/scanner/subscores'
 import MarkFixedButton from '@/components/dashboard/MarkFixedButton'
+import WelcomeModal from '@/components/dashboard/WelcomeModal'
 
 type Impact = 'low' | 'medium' | 'high'
 
@@ -46,7 +47,12 @@ function timeAgo(iso: string): string {
   return `${Math.floor(h / 24)}d ago`
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams?: { subscribed?: string }
+}) {
+  const subscribedPlan = searchParams?.subscribed ?? null
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -127,6 +133,7 @@ export default async function DashboardPage() {
   if (!scan) {
     return (
       <main className="flex-1 p-6 md:p-10 flex flex-col items-center justify-center">
+        {subscribedPlan && <WelcomeModal plan={subscribedPlan} />}
         <div className="max-w-md text-center">
           <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
             <Zap size={28} className="text-op-navy" />
@@ -148,6 +155,7 @@ export default async function DashboardPage() {
 
   return (
     <main className="flex-1 p-6 md:p-8 overflow-auto">
+      {subscribedPlan && <WelcomeModal plan={subscribedPlan} />}
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
