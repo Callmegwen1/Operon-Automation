@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation'
 import Header from './layout/Header'
 import Footer from './layout/Footer'
 import AnalyticsInit from './analytics/AnalyticsInit'
+import OpeWidget from './chat/OpeWidget'
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -17,6 +18,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
       {showMarketing && <Header />}
       {children}
       {showMarketing && <Footer />}
+      {showMarketing && <OpeWidget />}
     </>
   )
 }
