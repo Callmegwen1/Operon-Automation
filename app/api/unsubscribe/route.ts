@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { cancelScheduledEmails } from '@/lib/cancel-emails'
 
 function getAdminClient() {
   return createClient(
@@ -18,14 +19,19 @@ export async function GET(req: NextRequest) {
 
   try {
     const supabase = getAdminClient()
+
+    // 'do_not_contact' is the valid status — 'unsubscribed' is not in the constraint
     const { error } = await supabase
       .from('contacts')
-      .update({ status: 'unsubscribed' })
+      .update({ status: 'do_not_contact' })
       .eq('id', id)
 
     if (error) {
       return NextResponse.redirect(`${origin}/unsubscribe?status=error`)
     }
+
+    // Cancel any scheduled emails for this contact
+    await cancelScheduledEmails(id, supabase)
   } catch {
     return NextResponse.redirect(`${origin}/unsubscribe?status=error`)
   }
