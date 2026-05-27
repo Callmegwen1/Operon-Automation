@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { sendEmail, minutesFromNow, daysFromNow } from '@/lib/email'
 import { leadFollowup1, leadFollowup2, leadFollowup3, reviewRequest, reviewRequestDay3, reviewRequestDay7 } from '@/lib/emails/templates'
 import { getReviewCopy } from '@/lib/agents/review-copy'
+import { checkContactLimit, checkAgentActionLimit, limitErrorResponse } from '@/lib/plan-limits'
 
 interface ImportRow {
   name: string
@@ -150,6 +151,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No valid rows found' }, { status: 400 })
     }
 
+    // Enforce contact limit — check remaining capacity vs rows being imported
+    const contactLimit = await checkContactLimit(supabase, user.id)
+    if (!contactLimit.allowed) {
+      return NextResponse.json(limitErrorResponse('contacts', contactLimit), { status: 402 })
+    }
+    if (valid.length > contactLimit.remaining) {
+      return NextResponse.json({
+        error: `Import too large for your plan. You can add ${contactLimit.remaining} more contact${contactLimit.remaining !== 1 ? 's' : ''} (${contactLimit.current}/${contactLimit.limit} used). Reduce your import or upgrade at /pricing.`,
+        limitReached: 'contacts',
+        current:  contactLimit.current,
+        limit:    contactLimit.limit,
+        remaining: contactLimit.remaining,
+        plan:     contactLimit.plan,
+        upgradeUrl: '/pricing',
+      }, { status: 402 })
+    }
+
     const { data, error } = await supabase
       .from('contacts')
       .insert(valid)
@@ -158,8 +176,10 @@ export async function POST(req: NextRequest) {
     if (error) throw error
 
     if (data) {
+      const actionLimit = await checkAgentActionLimit(supabase, user.id)
+
       // Optionally fire the lead follow-up sequence for imported leads
-      if (triggerFollowup) {
+      if (triggerFollowup && actionLimit.allowed) {
         const leadFollowups = data.filter(
           (c: { type: string; email: string }) => c.type === 'lead' && c.email
         )
@@ -171,7 +191,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Optionally fire the review sequence for imported customers
-      if (triggerReview) {
+      if (triggerReview && actionLimit.allowed) {
         const customers = data.filter(
           (c: { type: string; email: string }) => c.type === 'customer' && c.email
         )

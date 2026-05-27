@@ -7,6 +7,7 @@ import { rateLimit } from '@/lib/rate-limit'
 import { classifyLead } from '@/lib/agents/classify'
 import { getPlaybook } from '@/lib/agents/playbooks'
 import { sendSMS } from '@/lib/sms'
+import { checkAgentActionLimit } from '@/lib/plan-limits'
 
 function getAdminClient() {
   return createClient(
@@ -36,7 +37,35 @@ async function processLeadAsync(ctx: LeadContext): Promise<void> {
   const { supabase, userId, user, contact, name, email, phone, message, source,
           businessName, business, agent, appUrl, dashboardUrl } = ctx
 
-  if (agent?.enabled && email) {
+  // Check action limit — always notify owner, but skip sequence if at capacity
+  const actionLimitStatus = await checkAgentActionLimit(supabase, userId)
+
+  const sequenceAllowed = agent?.enabled && email && actionLimitStatus.allowed
+
+  if (agent?.enabled && email && !actionLimitStatus.allowed) {
+    // Over limit — notify owner that sequences are paused
+    if (user.email) {
+      const overLimit = intelligentLeadAlert({
+        businessName,
+        leadName:               name,
+        leadEmail:              email,
+        leadPhone:              phone,
+        leadMessage:            message || undefined,
+        source,
+        dashboardUrl,
+        urgency:                'medium',
+        alertPrefix:            '⚠️ New lead (sequences paused)',
+        aiSummary:              `${name} submitted an inquiry but automated follow-up sequences are paused — your plan's monthly agent action limit has been reached. Upgrade at ${appUrl}/pricing to resume automation.`,
+        intent:                 'General inquiry',
+        playbook:               'standard_followup',
+        requiresOwnerAttention: true,
+      })
+      await sendEmail({ to: user.email, subject: overLimit.subject, html: overLimit.html })
+    }
+    return
+  }
+
+  if (sequenceAllowed) {
     const cfg = agent.config as {
       fromName?: string
       replyToEmail?: string

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sendEmail, FROM_EMAIL, minutesFromNow, daysFromNow } from '@/lib/email'
 import { leadFollowup1, leadFollowup2, leadFollowup3 } from '@/lib/emails/templates'
+import { checkContactLimit, checkAgentActionLimit, limitErrorResponse } from '@/lib/plan-limits'
 
 export async function GET() {
   try {
@@ -33,6 +34,12 @@ export async function POST(req: NextRequest) {
 
     if (!name) return NextResponse.json({ error: 'Name is required' }, { status: 400 })
 
+    // Enforce contact limit
+    const contactLimit = await checkContactLimit(supabase, user.id)
+    if (!contactLimit.allowed) {
+      return NextResponse.json(limitErrorResponse('contacts', contactLimit), { status: 402 })
+    }
+
     // Save contact
     const { data: contact, error } = await supabase
       .from('contacts')
@@ -51,7 +58,8 @@ export async function POST(req: NextRequest) {
         .eq('type', 'lead_followup')
         .single()
 
-      if (agent?.enabled) {
+      const actionLimit = await checkAgentActionLimit(supabase, user.id)
+      if (agent?.enabled && actionLimit.allowed) {
         const cfg = agent.config as {
           fromName?: string
           replyToEmail?: string

@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { sendEmail, daysFromNow } from '@/lib/email'
 import { estimateDay0, estimateDay1, estimateDay3 } from '@/lib/emails/templates'
 import { getEstimateCopy } from '@/lib/agents/estimate-copy'
+import { checkAgentActionLimit, checkEmailLimit, limitErrorResponse } from '@/lib/plan-limits'
 
 export async function POST(
   req: NextRequest,
@@ -33,6 +34,18 @@ export async function POST(
 
     if (!agent?.enabled) {
       return NextResponse.json({ error: 'Estimate Recovery agent is not enabled' }, { status: 400 })
+    }
+
+    // Enforce limits before triggering sequence
+    const [actionLimit, emailLimit] = await Promise.all([
+      checkAgentActionLimit(supabase, user.id),
+      checkEmailLimit(supabase, user.id),
+    ])
+    if (!actionLimit.allowed) {
+      return NextResponse.json(limitErrorResponse('agent_actions', actionLimit), { status: 402 })
+    }
+    if (!emailLimit.allowed) {
+      return NextResponse.json(limitErrorResponse('emails', emailLimit), { status: 402 })
     }
 
     const cfg = (agent.config ?? {}) as {

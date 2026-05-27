@@ -8,6 +8,7 @@ import {
   privateFeedbackRequest,
 } from '@/lib/emails/templates'
 import { getReviewCopy } from '@/lib/agents/review-copy'
+import { checkAgentActionLimit, checkEmailLimit, limitErrorResponse } from '@/lib/plan-limits'
 
 type Satisfaction = 'happy' | 'not_sure' | 'unhappy'
 
@@ -33,6 +34,18 @@ export async function POST(
 
     if (!contact) return NextResponse.json({ error: 'Contact not found' }, { status: 404 })
     if (!contact.email) return NextResponse.json({ error: 'Contact has no email' }, { status: 400 })
+
+    // Enforce limits before triggering any sequence
+    const [actionLimit, emailLimit] = await Promise.all([
+      checkAgentActionLimit(supabase, user.id),
+      checkEmailLimit(supabase, user.id),
+    ])
+    if (!actionLimit.allowed) {
+      return NextResponse.json(limitErrorResponse('agent_actions', actionLimit), { status: 402 })
+    }
+    if (!emailLimit.allowed) {
+      return NextResponse.json(limitErrorResponse('emails', emailLimit), { status: 402 })
+    }
 
     // Fetch agent config + business
     const [{ data: agent }, { data: business }] = await Promise.all([
