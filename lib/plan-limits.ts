@@ -19,7 +19,6 @@ export interface LimitStatus {
 
 // Works with both the server Supabase client and the admin client —
 // both expose .from() with the same query interface.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnySupabase = { from: (table: string) => any }
 
 export async function getUserPlan(supabase: AnySupabase, userId: string): Promise<PlanId> {
