@@ -32,7 +32,7 @@ const navItems = [
   { href: '/dashboard/profile',              icon: User,            label: 'Profile'         },
 ]
 
-function SidebarContent({ onClose, agentBadge }: { onClose?: () => void; agentBadge: number }) {
+function SidebarContent({ onClose, agentBadge, contactsBadge }: { onClose?: () => void; agentBadge: number; contactsBadge: number }) {
   const pathname = usePathname()
   const router = useRouter()
 
@@ -56,7 +56,8 @@ function SidebarContent({ onClose, agentBadge }: { onClose?: () => void; agentBa
       <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
         {navItems.map(({ href, icon: Icon, label }) => {
           const active = pathname === href
-          const isAgents = href === AGENTS_HREF
+          const isAgents   = href === AGENTS_HREF
+          const isContacts = href === '/dashboard/contacts'
           return (
             <Link
               key={href}
@@ -72,6 +73,11 @@ function SidebarContent({ onClose, agentBadge }: { onClose?: () => void; agentBa
               <span className="flex-1">{label}</span>
               {isAgents && agentBadge > 0 && !active && (
                 <span className="w-2 h-2 rounded-full bg-op-green shrink-0" />
+              )}
+              {isContacts && contactsBadge > 0 && !active && (
+                <span className="min-w-[18px] h-[18px] bg-op-amber text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 shrink-0">
+                  {contactsBadge > 9 ? '9+' : contactsBadge}
+                </span>
               )}
             </Link>
           )
@@ -107,6 +113,7 @@ function SidebarContent({ onClose, agentBadge }: { onClose?: () => void; agentBa
 export default function Sidebar() {
   const [open, setOpen] = useState(false)
   const [agentBadge, setAgentBadge] = useState(0)
+  const [contactsBadge, setContactsBadge] = useState(0)
   const pathname = usePathname()
 
   useEffect(() => {
@@ -118,22 +125,24 @@ export default function Sidebar() {
       const lastSeen = localStorage.getItem(LAST_SEEN_KEY)
       const since = lastSeen ?? new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
-      const { count } = await supabase
-        .from('agent_activity')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .gt('created_at', since)
+      const [{ count: activityCount }, { count: newLeadsCount }] = await Promise.all([
+        supabase.from('agent_activity').select('id', { count: 'exact', head: true }).eq('user_id', user.id).gt('created_at', since),
+        supabase.from('contacts').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'new'),
+      ])
 
-      setAgentBadge(count ?? 0)
+      setAgentBadge(activityCount ?? 0)
+      setContactsBadge(newLeadsCount ?? 0)
     }
     load()
   }, [])
 
-  // Mark agents as seen when user visits /dashboard/agents
   useEffect(() => {
     if (pathname === AGENTS_HREF) {
       localStorage.setItem(LAST_SEEN_KEY, new Date().toISOString())
       setAgentBadge(0)
+    }
+    if (pathname === '/dashboard/contacts') {
+      setContactsBadge(0)
     }
   }, [pathname])
 
@@ -141,7 +150,7 @@ export default function Sidebar() {
     <>
       {/* Desktop sidebar */}
       <aside className="hidden md:flex w-56 border-r border-op-border bg-white flex-col h-screen sticky top-0 shrink-0">
-        <SidebarContent agentBadge={agentBadge} />
+        <SidebarContent agentBadge={agentBadge} contactsBadge={contactsBadge} />
       </aside>
 
       {/* Mobile hamburger button */}
@@ -161,7 +170,7 @@ export default function Sidebar() {
             onClick={() => setOpen(false)}
           />
           <aside className="md:hidden fixed left-0 top-0 h-full w-56 bg-white z-50 border-r border-op-border">
-            <SidebarContent agentBadge={agentBadge} onClose={() => setOpen(false)} />
+            <SidebarContent agentBadge={agentBadge} contactsBadge={contactsBadge} onClose={() => setOpen(false)} />
           </aside>
         </>
       )}

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { CheckCircle2, Loader2 } from 'lucide-react'
+import { CheckCircle2, Loader2, ChevronsRight } from 'lucide-react'
 
 interface StaleContact { id: string; name: string; email: string | null; created_at: string }
 interface ColdContact  { id: string; name: string; email: string | null; updated_at: string }
@@ -17,6 +17,7 @@ export default function AttentionFeed({
   const [newLeads, setNewLeads] = useState(initialNewLeads)
   const [coldContacts, setColdContacts] = useState(initialColdContacts)
   const [dismissing, setDismissing] = useState<string | null>(null)
+  const [markingAll, setMarkingAll] = useState(false)
 
   const markDone = async (id: string, type: 'new' | 'cold') => {
     setDismissing(id)
@@ -33,13 +34,51 @@ export default function AttentionFeed({
     }
   }
 
-  if (newLeads.length === 0 && coldContacts.length === 0) return null
+  const markAllDone = async () => {
+    setMarkingAll(true)
+    await Promise.allSettled([
+      ...newLeads.map((c) =>
+        fetch(`/api/contacts/${c.id}/complete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ finalStatus: 'completed' }),
+        })
+      ),
+      ...coldContacts.map((c) =>
+        fetch(`/api/contacts/${c.id}/complete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ finalStatus: 'completed' }),
+        })
+      ),
+    ])
+    setNewLeads([])
+    setColdContacts([])
+    setMarkingAll(false)
+  }
+
+  const total = newLeads.length + coldContacts.length
+  if (total === 0) return null
 
   return (
     <div className="card border-2 border-op-amber/30 bg-amber-50/20 mb-6">
-      <div className="flex items-center gap-2 mb-3">
-        <span className="w-2 h-2 rounded-full bg-op-amber animate-pulse" />
-        <h2 className="text-sm font-bold text-op-navy">Needs your attention</h2>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-op-amber animate-pulse" />
+          <h2 className="text-sm font-bold text-op-navy">Needs your attention</h2>
+        </div>
+        {total >= 3 && (
+          <button
+            onClick={markAllDone}
+            disabled={markingAll}
+            className="flex items-center gap-1.5 text-xs font-semibold text-op-muted hover:text-op-navy transition-colors"
+          >
+            {markingAll
+              ? <Loader2 size={11} className="animate-spin" />
+              : <ChevronsRight size={11} />}
+            Mark all done
+          </button>
+        )}
       </div>
       <div className="flex flex-col gap-2">
         {newLeads.map((c) => (

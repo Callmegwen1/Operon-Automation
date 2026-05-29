@@ -62,6 +62,20 @@ const statusLabel: Record<string, string> = {
 const inputClass =
   'w-full border border-op-border rounded-lg px-4 py-2.5 text-sm text-op-body placeholder-op-muted focus:outline-none focus:ring-2 focus:ring-op-navy/20 focus:border-op-navy transition-all bg-white'
 
+const AVATAR_COLORS = [
+  'bg-op-navy', 'bg-purple-600', 'bg-op-green', 'bg-op-amber',
+  'bg-rose-500', 'bg-cyan-600',  'bg-indigo-500',
+]
+function Avatar({ name }: { name: string }) {
+  const initial = name.trim()[0]?.toUpperCase() ?? '?'
+  const color   = AVATAR_COLORS[name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % AVATAR_COLORS.length]
+  return (
+    <div className={`w-9 h-9 ${color} text-white rounded-full flex items-center justify-center text-sm font-bold shrink-0`}>
+      {initial}
+    </div>
+  )
+}
+
 const sourceOptions = [
   'Google Search',
   'Google Maps',
@@ -318,9 +332,7 @@ function ContactRow({ contact, onMarkDone, onReviewRequest, sending, completing 
 
   return (
     <div className={`card flex flex-col sm:flex-row sm:items-center gap-4 ${busy ? 'opacity-60 pointer-events-none' : ''}`}>
-      <div className="w-9 h-9 rounded-full bg-op-bg flex items-center justify-center shrink-0">
-        <User size={16} className="text-op-muted" />
-      </div>
+      <Avatar name={contact.name} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <Link href={`/dashboard/contacts/${contact.id}`} className="font-semibold text-op-navy text-sm hover:text-op-navy/70 transition-colors">

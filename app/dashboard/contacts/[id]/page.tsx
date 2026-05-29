@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
-  ArrowLeft, Loader2, Save, Star, Mail, Trash2, Bot, BarChart2,
+  ArrowLeft, Loader2, Star, Mail, Trash2, Bot, BarChart2,
   CheckCircle2, AlertTriangle, MessageSquare, Smile, Meh, Frown, X, FileText,
+  Copy, Check, Phone,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -142,6 +143,20 @@ function timeAgo(iso: string): string {
 const inputClass =
   'w-full border border-op-border rounded-lg px-4 py-2.5 text-sm text-op-body placeholder-op-muted focus:outline-none focus:ring-2 focus:ring-op-navy/20 focus:border-op-navy transition-all bg-white'
 
+const AVATAR_COLORS = [
+  'bg-op-navy', 'bg-purple-600', 'bg-op-green', 'bg-op-amber',
+  'bg-rose-500', 'bg-cyan-600',  'bg-indigo-500',
+]
+function Avatar({ name, size = 'lg' }: { name: string; size?: 'sm' | 'lg' }) {
+  const initial = name.trim()[0]?.toUpperCase() ?? '?'
+  const color   = AVATAR_COLORS[name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % AVATAR_COLORS.length]
+  return (
+    <div className={`${size === 'lg' ? 'w-12 h-12 text-lg' : 'w-8 h-8 text-sm'} ${color} text-white rounded-full flex items-center justify-center font-bold shrink-0`}>
+      {initial}
+    </div>
+  )
+}
+
 // ── Satisfaction Modal ────────────────────────────────────────
 function SatisfactionModal({ contactName, finalStatus, onConfirm, onCancel, loading }: {
   contactName: string
@@ -151,6 +166,15 @@ function SatisfactionModal({ contactName, finalStatus, onConfirm, onCancel, load
   loading: boolean
 }) {
   const [selected, setSelected] = useState<Satisfaction | null>(null)
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && selected && !loading) onConfirm(selected)
+      if (e.key === 'Escape') onCancel()
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [selected, loading, onConfirm, onCancel])
 
   const options: { value: Satisfaction; icon: React.ReactNode; label: string; description: string; border: string; bg: string }[] = [
     {
@@ -232,6 +256,16 @@ function EstimateModal({ contactName, onConfirm, onCancel, loading }: {
   loading: boolean
 }) {
   const [amount, setAmount] = useState('')
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && !loading) onConfirm(amount)
+      if (e.key === 'Escape') onCancel()
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [amount, loading, onConfirm, onCancel])
+
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
@@ -364,7 +398,9 @@ export default function ContactDetailPage() {
   const [loading, setLoading]       = useState(true)
   const [saving, setSaving]         = useState(false)
   const [saved, setSaved]           = useState(false)
+  const [copiedEmail, setCopiedEmail] = useState(false)
   const [sendingReview, setSendingReview] = useState(false)
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [reviewMsg, setReviewMsg]   = useState('')
   const [showSatisfactionModal, setShowSatisfactionModal] = useState(false)
   const [satisfactionFinalStatus, setSatisfactionFinalStatus] = useState<'completed' | 'won'>('completed')
@@ -409,15 +445,25 @@ export default function ContactDetailPage() {
     load()
   }, [id, router])
 
-  const handleSave = async () => {
-    if (!contact) return
+  const autoSave = useCallback(async (newStatus: string, newNotes: string) => {
     setSaving(true)
     const supabase = createClient()
-    await supabase.from('contacts').update({ status, notes }).eq('id', id)
-    setContact((c) => c ? { ...c, status, notes } : c)
+    await supabase.from('contacts').update({ status: newStatus, notes: newNotes }).eq('id', id)
+    setContact((c) => c ? { ...c, status: newStatus, notes: newNotes } : c)
     setSaving(false)
     setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
+    setTimeout(() => setSaved(false), 2000)
+  }, [id])
+
+  const handleNotesChange = (val: string) => {
+    setNotes(val)
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(() => autoSave(status, val), 1000)
+  }
+
+  const handleStatusChange = (s: string) => {
+    setStatus(s)
+    autoSave(s, notes)
   }
 
   const handleDelete = async () => {
@@ -588,7 +634,9 @@ export default function ContactDetailPage() {
 
         {/* Header */}
         <div className="flex items-start justify-between gap-4 mb-6">
-          <div>
+          <div className="flex items-center gap-3">
+            <Avatar name={contact.name} />
+            <div>
             <h1 className="text-2xl font-bold font-manrope text-op-navy">{contact.name}</h1>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${contact.type === 'lead' ? 'bg-op-navy/10 text-op-navy border-op-navy/20' : 'bg-purple-50 text-purple-600 border-purple-200'}`}>
@@ -604,6 +652,7 @@ export default function ContactDetailPage() {
                 Added {new Date(contact.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
               </span>
             </div>
+          </div>
           </div>
           <div className="flex gap-2 shrink-0 flex-wrap items-start">
             {contact.email && (
@@ -693,21 +742,39 @@ export default function ContactDetailPage() {
               {contact.email && (
                 <div>
                   <p className="text-xs text-op-muted mb-0.5">Email</p>
-                  <p className="text-op-body">{contact.email}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-op-body flex-1 truncate">{contact.email}</p>
+                    <button
+                      onClick={() => { navigator.clipboard.writeText(contact.email); setCopiedEmail(true); setTimeout(() => setCopiedEmail(false), 2000) }}
+                      className="text-op-muted hover:text-op-navy transition-colors shrink-0"
+                      title="Copy email"
+                    >
+                      {copiedEmail ? <Check size={12} className="text-op-green" /> : <Copy size={12} />}
+                    </button>
+                  </div>
                 </div>
               )}
               {contact.phone && (
                 <div>
                   <p className="text-xs text-op-muted mb-0.5">Phone</p>
-                  <p className="text-op-body">{contact.phone}</p>
+                  <a href={`tel:${contact.phone}`} className="flex items-center gap-1.5 text-op-body hover:text-op-navy transition-colors w-fit">
+                    <Phone size={12} className="text-op-muted" />
+                    {contact.phone}
+                  </a>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Status + notes (editable) */}
+          {/* Status + notes (auto-saved) */}
           <div className="card">
-            <h2 className="text-sm font-bold text-op-navy mb-4">Status & Notes</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-bold text-op-navy">Status & Notes</h2>
+              <span className="text-xs h-4 flex items-center gap-1 text-op-muted">
+                {saving && <><Loader2 size={10} className="animate-spin" /> Saving…</>}
+                {saved && !saving && <><Check size={10} className="text-op-green" /> <span className="text-op-green">Saved</span></>}
+              </span>
+            </div>
             <div className="flex flex-col gap-3">
               <div>
                 <label className="block text-xs font-semibold text-op-navy mb-1.5">Status</label>
@@ -715,7 +782,7 @@ export default function ContactDetailPage() {
                   {statusOptions.map((s) => (
                     <button
                       key={s}
-                      onClick={() => setStatus(s)}
+                      onClick={() => handleStatusChange(s)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-semibold border capitalize transition-all ${
                         status === s
                           ? (statusColors[s] ?? 'bg-op-navy text-white border-op-navy')
@@ -734,16 +801,9 @@ export default function ContactDetailPage() {
                   rows={3}
                   placeholder="Add notes about this contact..."
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  onChange={(e) => handleNotesChange(e.target.value)}
                 />
               </div>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className={`btn-primary text-xs px-4 py-2 self-start ${saved ? 'bg-op-green' : ''}`}
-              >
-                {saving ? <Loader2 size={13} className="animate-spin" /> : saved ? '✓ Saved' : <><Save size={13} /> Save Changes</>}
-              </button>
             </div>
           </div>
         </div>
