@@ -18,25 +18,34 @@ import {
   BarChart2,
   Mail,
 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 
 const AGENTS_HREF = '/dashboard/agents'
 const LAST_SEEN_KEY = 'operon_agents_last_seen'
 
 const navItems = [
-  { href: '/dashboard',                      icon: LayoutDashboard, label: 'Overview'        },
-  { href: '/dashboard/command',              icon: Radar,           label: 'Command Center'  },
-  { href: AGENTS_HREF,                       icon: Bot,             label: 'Agents'          },
-  { href: '/dashboard/contacts',             icon: Users,           label: 'Contacts'        },
-  { href: '/dashboard/scans',                icon: History,         label: 'Scans'           },
-  { href: '/dashboard/deliverability',       icon: Mail,            label: 'Email Health'    },
-  { href: '/dashboard/admin/analytics',      icon: BarChart2,       label: 'Analytics'       },
-  { href: '/dashboard/profile',              icon: User,            label: 'Profile'         },
+  { href: '/dashboard',                  icon: LayoutDashboard, label: 'Overview'        },
+  { href: '/dashboard/command',          icon: Radar,           label: 'Command Center'  },
+  { href: AGENTS_HREF,                   icon: Bot,             label: 'Agents'          },
+  { href: '/dashboard/contacts',         icon: Users,           label: 'Contacts'        },
+  { href: '/dashboard/scans',            icon: History,         label: 'Scans'           },
+  { href: '/dashboard/deliverability',   icon: Mail,            label: 'Email Health'    },
+  { href: '/dashboard/admin/analytics',  icon: BarChart2,       label: 'Analytics'       },
+  { href: '/dashboard/profile',          icon: User,            label: 'Profile'         },
 ]
 
-function SidebarContent({ onClose, agentBadge, contactsBadge }: { onClose?: () => void; agentBadge: number; contactsBadge: number }) {
+function SidebarContent({
+  onClose,
+  agentBadge,
+  contactsBadge,
+}: {
+  onClose?: () => void
+  agentBadge: number
+  contactsBadge: number
+}) {
   const pathname = usePathname()
-  const router = useRouter()
+  const router   = useRouter()
 
   const handleLogout = async () => {
     const supabase = createClient()
@@ -46,38 +55,49 @@ function SidebarContent({ onClose, agentBadge, contactsBadge }: { onClose?: () =
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-op-dark">
+
       {/* Logo */}
-      <div className="px-5 py-5 border-b border-op-border">
-        <Link href="/dashboard" className="inline-block">
-          <Image src="/logos/logo-light.png" alt="Operon" width={130} height={32} className="h-8 w-auto" />
+      <div className="px-5 py-5 border-b border-white/[0.07]">
+        <Link href="/dashboard" className="inline-block focus-ring rounded-lg" onClick={onClose}>
+          <Image
+            src="/logos/logo-dark.png"
+            alt="Operon"
+            width={120}
+            height={30}
+            className="h-7 w-auto"
+          />
         </Link>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
+      <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5" aria-label="Dashboard navigation">
         {navItems.map(({ href, icon: Icon, label }) => {
-          const active = pathname === href
+          const active     = pathname === href
           const isAgents   = href === AGENTS_HREF
           const isContacts = href === '/dashboard/contacts'
+
           return (
             <Link
               key={href}
               href={href}
               onClick={onClose}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                active
-                  ? 'bg-op-navy text-white shadow-sm'
-                  : 'text-op-body hover:bg-op-bg hover:text-op-navy'
-              }`}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
+                          font-jakarta transition-all duration-150 group relative
+                          ${active
+                            ? 'bg-op-accent text-white'
+                            : 'text-white/50 hover:text-white hover:bg-white/6'
+                          }`}
             >
-              <Icon size={16} />
+              <Icon size={15} className={active ? 'text-white' : 'text-white/40 group-hover:text-white/70'} />
               <span className="flex-1">{label}</span>
+
               {isAgents && agentBadge > 0 && !active && (
-                <span className="w-2 h-2 rounded-full bg-op-green shrink-0" />
+                <span className="w-2 h-2 rounded-full bg-op-forest shrink-0" aria-hidden="true" />
               )}
               {isContacts && contactsBadge > 0 && !active && (
-                <span className="min-w-[18px] h-[18px] bg-op-amber text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 shrink-0">
+                <span className="min-w-[18px] h-[18px] bg-op-amber text-white text-[10px]
+                                 font-bold rounded-full flex items-center justify-center px-1 shrink-0">
                   {contactsBadge > 9 ? '9+' : contactsBadge}
                 </span>
               )}
@@ -91,20 +111,24 @@ function SidebarContent({ onClose, agentBadge, contactsBadge }: { onClose?: () =
         <Link
           href="/scanner"
           onClick={onClose}
-          className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold text-op-navy bg-slate-50 hover:bg-slate-100 transition-colors"
+          className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold
+                     font-jakarta text-op-accent bg-op-accent/10 hover:bg-op-accent/18
+                     border border-op-accent/20 transition-all"
         >
-          <Zap size={15} />
+          <Zap size={14} />
           Scan My Business
         </Link>
       </div>
 
       {/* Logout */}
-      <div className="px-3 pb-5 pt-3 border-t border-op-border">
+      <div className="px-3 pb-5 pt-3 border-t border-white/[0.07]">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-op-muted hover:text-op-red hover:bg-red-50 transition-all w-full"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
+                     font-jakarta text-white/30 hover:text-white/70 hover:bg-white/5
+                     transition-all w-full"
         >
-          <LogOut size={16} />
+          <LogOut size={15} />
           Sign Out
         </button>
       </div>
@@ -113,8 +137,8 @@ function SidebarContent({ onClose, agentBadge, contactsBadge }: { onClose?: () =
 }
 
 export default function Sidebar() {
-  const [open, setOpen] = useState(false)
-  const [agentBadge, setAgentBadge] = useState(0)
+  const [open, setOpen]               = useState(false)
+  const [agentBadge, setAgentBadge]   = useState(0)
   const [contactsBadge, setContactsBadge] = useState(0)
   const pathname = usePathname()
 
@@ -128,8 +152,10 @@ export default function Sidebar() {
       const since = lastSeen ?? new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
       const [{ count: activityCount }, { count: newLeadsCount }] = await Promise.all([
-        supabase.from('agent_activity').select('id', { count: 'exact', head: true }).eq('user_id', user.id).gt('created_at', since),
-        supabase.from('contacts').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'new'),
+        supabase.from('agent_activity').select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id).gt('created_at', since),
+        supabase.from('contacts').select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id).eq('status', 'new'),
       ])
 
       setAgentBadge(activityCount ?? 0)
@@ -151,31 +177,52 @@ export default function Sidebar() {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-56 border-r border-op-border bg-white flex-col h-screen sticky top-0 shrink-0">
+      <aside className="hidden md:flex w-56 flex-col h-screen sticky top-0 shrink-0">
         <SidebarContent agentBadge={agentBadge} contactsBadge={contactsBadge} />
       </aside>
 
-      {/* Mobile hamburger button */}
+      {/* Mobile hamburger */}
       <button
-        className="md:hidden fixed top-4 left-4 z-50 w-10 h-10 bg-white border border-op-border rounded-lg flex items-center justify-center shadow-sm"
+        className="md:hidden fixed top-4 left-4 z-50 w-10 h-10 bg-op-dark border border-white/10
+                   rounded-xl flex items-center justify-center shadow-card"
         onClick={() => setOpen(!open)}
-        aria-label="Toggle menu"
+        aria-label="Toggle navigation menu"
+        aria-expanded={open}
       >
-        {open ? <X size={18} /> : <Menu size={18} />}
+        {open
+          ? <X size={18} className="text-white/70" />
+          : <Menu size={18} className="text-white/70" />
+        }
       </button>
 
       {/* Mobile drawer */}
-      {open && (
-        <>
-          <div
-            className="md:hidden fixed inset-0 bg-black/20 z-40"
-            onClick={() => setOpen(false)}
-          />
-          <aside className="md:hidden fixed left-0 top-0 h-full w-56 bg-white z-50 border-r border-op-border">
-            <SidebarContent agentBadge={agentBadge} contactsBadge={contactsBadge} onClose={() => setOpen(false)} />
-          </aside>
-        </>
-      )}
+      <AnimatePresence>
+        {open && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden fixed inset-0 bg-black/50 z-40"
+              onClick={() => setOpen(false)}
+            />
+            <motion.aside
+              initial={{ x: -224 }}
+              animate={{ x: 0 }}
+              exit={{ x: -224 }}
+              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+              className="md:hidden fixed left-0 top-0 h-full w-56 z-50"
+            >
+              <SidebarContent
+                agentBadge={agentBadge}
+                contactsBadge={contactsBadge}
+                onClose={() => setOpen(false)}
+              />
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
     </>
   )
 }

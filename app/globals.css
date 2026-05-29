@@ -5,92 +5,185 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   body {
-    @apply bg-op-bg text-op-body font-inter antialiased;
+    @apply bg-op-bg text-op-body font-jakarta antialiased;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-manrope;
+    @apply font-fraunces text-op-ink;
+  }
+
+  /* Respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
 @layer components {
+
+  /* ── Layout ──────────────────────────────────────────────────── */
   .container-wide {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+    @apply max-w-7xl mx-auto px-5 sm:px-8 lg:px-10;
   }
 
   .section-pad {
-    @apply py-20 md:py-32;
+    @apply py-24 md:py-32;
   }
 
+  /* ── Typography ──────────────────────────────────────────────── */
   .eyebrow {
-    @apply text-[11px] font-semibold tracking-[0.15em] uppercase font-inter text-op-muted;
+    @apply text-[11px] font-semibold tracking-[0.18em] uppercase font-jakarta text-op-accent;
   }
 
+  .eyebrow-muted {
+    @apply text-[11px] font-semibold tracking-[0.18em] uppercase font-jakarta text-op-muted;
+  }
+
+  /* ── Buttons ─────────────────────────────────────────────────── */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 bg-op-navy text-white font-semibold font-inter
-           px-6 py-3 rounded-lg text-sm transition-all duration-200
-           hover:bg-[#0F1F2E] active:scale-95 focus-visible:outline-none focus-visible:ring-2
-           focus-visible:ring-op-navy focus-visible:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2
+           bg-op-accent text-white font-semibold font-jakarta
+           px-6 py-3 rounded-xl text-sm transition-all duration-200
+           hover:bg-op-accent-dk active:scale-95
+           focus-visible:outline-none focus-visible:ring-2
+           focus-visible:ring-op-accent focus-visible:ring-offset-2
+           touch-manipulation;
+  }
+
+  .btn-primary-dark {
+    @apply inline-flex items-center justify-center gap-2
+           bg-op-accent text-white font-semibold font-jakarta
+           px-6 py-3 rounded-xl text-sm transition-all duration-200
+           hover:bg-op-accent-dk active:scale-95
+           focus-visible:outline-none focus-visible:ring-2
+           focus-visible:ring-op-accent focus-visible:ring-offset-0
+           touch-manipulation;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 bg-white text-op-navy font-semibold font-inter
-           border border-op-border px-6 py-3 rounded-lg text-sm transition-all duration-200
-           hover:border-op-navy hover:text-op-navy active:scale-95 focus-visible:outline-none
-           focus-visible:ring-2 focus-visible:ring-op-navy focus-visible:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2
+           bg-op-surface text-op-ink font-semibold font-jakarta
+           border border-op-border px-6 py-3 rounded-xl text-sm transition-all duration-200
+           hover:border-op-ink hover:shadow-card active:scale-95
+           focus-visible:outline-none focus-visible:ring-2
+           focus-visible:ring-op-ink focus-visible:ring-offset-2
+           touch-manipulation;
   }
 
-  .btn-outline-white {
-    @apply inline-flex items-center justify-center gap-2 bg-transparent text-white font-semibold font-inter
-           border border-white/40 px-6 py-3 rounded-lg text-sm transition-all duration-200
-           hover:bg-white/10 active:scale-95;
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2
+           text-op-muted font-medium font-jakarta
+           px-4 py-2.5 rounded-xl text-sm transition-all duration-200
+           hover:text-op-ink hover:bg-op-surface-2 active:scale-95
+           focus-visible:outline-none focus-visible:ring-2
+           focus-visible:ring-op-ink focus-visible:ring-offset-2
+           touch-manipulation;
   }
 
+  /* ── Cards ───────────────────────────────────────────────────── */
   .card {
-    @apply bg-op-card rounded-xl border border-op-border shadow-card p-6;
+    @apply bg-op-surface rounded-2xl border border-op-border shadow-card p-6;
   }
 
   .card-hover {
-    @apply card transition-shadow duration-200 hover:shadow-card-hover;
+    @apply card transition-all duration-300 cursor-pointer
+           hover:shadow-card-hover hover:-translate-y-0.5;
+  }
+
+  .card-dark {
+    @apply bg-op-dark-2 rounded-2xl border border-white/8 p-6;
+  }
+
+  /* ── Badges ──────────────────────────────────────────────────── */
+  .badge {
+    @apply inline-flex items-center gap-1.5 text-xs font-semibold font-jakarta
+           px-2.5 py-1 rounded-full;
   }
 
   .badge-amber {
-    @apply inline-flex items-center gap-1 bg-amber-50 text-op-amber border border-amber-200
-           text-xs font-semibold font-inter px-2.5 py-1 rounded-full;
+    @apply badge bg-amber-50 text-op-amber border border-amber-200/60;
   }
 
   .badge-green {
-    @apply inline-flex items-center gap-1 bg-green-50 text-op-green border border-green-200
-           text-xs font-semibold font-inter px-2.5 py-1 rounded-full;
+    @apply badge bg-emerald-50 text-op-forest border border-emerald-200/60;
+  }
+
+  .badge-accent {
+    @apply badge bg-orange-50 text-op-accent border border-orange-200/60;
   }
 
   .badge-blue {
-    @apply inline-flex items-center gap-1 bg-blue-50 text-op-blue border border-blue-200
-           text-xs font-semibold font-inter px-2.5 py-1 rounded-full;
+    @apply badge bg-sky-50 text-op-teal border border-sky-200/60;
   }
 
   .badge-navy {
-    @apply inline-flex items-center gap-1 bg-op-navy/10 text-op-navy border border-op-navy/20
-           text-xs font-semibold font-inter px-2.5 py-1 rounded-full;
+    @apply badge bg-op-surface-2 text-op-ink border border-op-border;
   }
 
   .badge-red {
-    @apply inline-flex items-center gap-1 bg-red-50 text-op-red border border-red-200
-           text-xs font-semibold font-inter px-2.5 py-1 rounded-full;
+    @apply badge bg-red-50 text-op-red border border-red-200/60;
+  }
+
+  /* ── Grain overlay ───────────────────────────────────────────── */
+  .grain-overlay {
+    position: relative;
+  }
+
+  .grain-overlay::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    border-radius: inherit;
+  }
+
+  /* ── Dividers ────────────────────────────────────────────────── */
+  .section-divider {
+    @apply border-t border-op-border;
+  }
+
+  /* ── Focus ring ──────────────────────────────────────────────── */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2
+           focus-visible:ring-op-accent focus-visible:ring-offset-2;
   }
 }
 
-@media print {
-  body {
-    background: white !important;
-  }
+/* ── Scrollbar (webkit) ───────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #C8BFB8;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #A09288;
+}
 
+/* ── Selection ────────────────────────────────────────────────── */
+::selection {
+  background: rgba(212, 98, 42, 0.18);
+  color: #1A1008;
+}
+
+@media print {
+  body { background: white !important; }
   .card {
     box-shadow: none !important;
     break-inside: avoid;
-    border-color: #e5e7eb !important;
+    border-color: #E4DDD5 !important;
   }
 }

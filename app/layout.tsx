@@ -1,21 +1,23 @@
 import type { Metadata } from 'next'
-import { Manrope, Inter } from 'next/font/google'
+import { Fraunces, Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import LayoutWrapper from '@/components/LayoutWrapper'
 import PostHogProvider from '@/components/analytics/PostHogProvider'
 import MetaPixel from '@/components/analytics/MetaPixel'
 import { Analytics } from '@vercel/analytics/react'
 
-const manrope = Manrope({
+const fraunces = Fraunces({
   subsets: ['latin'],
-  variable: '--font-manrope',
+  variable: '--font-fraunces',
   display: 'swap',
+  axes: ['SOFT', 'WONK', 'opsz'],
 })
 
-const inter = Inter({
+const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-jakarta',
   display: 'swap',
+  weight: ['400', '500', '600', '700', '800'],
 })
 
 export const metadata: Metadata = {
@@ -48,7 +50,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${manrope.variable} ${inter.variable}`}>
+    <html lang="en" className={`${fraunces.variable} ${jakarta.variable}`}>
       <body>
         <MetaPixel />
         <PostHogProvider>
