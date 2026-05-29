@@ -35,7 +35,12 @@ export async function GET(req: NextRequest) {
   // Fan out over all users in parallel — prevents timeout with many users
   const results = await Promise.allSettled(
     agents.map(async (agent) => {
-      const cfg = (agent.config ?? {}) as { fromName?: string; replyToEmail?: string }
+      const cfg = (agent.config ?? {}) as {
+        fromName?: string
+        replyToEmail?: string
+        reactivationOpener?: string
+        reactivationBody?: string
+      }
 
       const [{ data: business }, { data: dormantContacts }, { data: recentlySent }] = await Promise.all([
         supabase.from('businesses').select('name, industry').eq('user_id', agent.user_id).single(),
@@ -84,8 +89,8 @@ export async function GET(req: NextRequest) {
               businessName,
               fromName,
               replyToEmail,
-              opener:         copy.opener,
-              body:           copy.body,
+              opener:         cfg.reactivationOpener ?? copy.opener,
+              body:           cfg.reactivationBody   ?? copy.body,
               unsubscribeUrl: unsubUrl,
             })
 

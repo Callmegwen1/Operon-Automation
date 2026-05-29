@@ -17,6 +17,10 @@ interface AgentConfig {
   reviewLink?: string
   reportEmail?: string
   personalNote?: string
+  estimateOpener?: string
+  estimateBody?: string
+  reactivationOpener?: string
+  reactivationBody?: string
 }
 
 interface WizardProps {
@@ -775,11 +779,11 @@ function ReviewRequestWizard({ userId, initialConfig, onComplete }: {
         </div>
       )}
 
-      {/* Step 3 — confirm + activate */}
+      {/* Step 3 — email preview + activate */}
       {step === 3 && (
-        <div className="flex-1 flex flex-col items-center text-center">
+        <div className="flex-1 flex flex-col">
           {activationDone ? (
-            <>
+            <div className="flex flex-col items-center text-center">
               <div className="w-16 h-16 rounded-2xl bg-op-green flex items-center justify-center mb-5">
                 <CheckCircle2 size={28} className="text-white" />
               </div>
@@ -796,30 +800,53 @@ function ReviewRequestWizard({ userId, initialConfig, onComplete }: {
               <button onClick={() => onComplete(config)} className="btn-primary w-full justify-center text-sm">
                 Done
               </button>
-            </>
+            </div>
           ) : (
             <>
-              <div className="w-16 h-16 rounded-2xl bg-op-amber flex items-center justify-center mb-5">
-                <Star size={28} className="text-white" />
+              <h2 className="text-xl font-bold font-manrope text-op-navy mb-1">Preview your review request email</h2>
+              <p className="text-sm text-op-muted mb-4">This is what your customers receive when you click the ⭐ Review button on any contact.</p>
+
+              {/* Email preview */}
+              <div className="border border-op-border rounded-xl overflow-hidden mb-5 shadow-sm">
+                <div className="bg-op-bg border-b border-op-border px-4 py-2">
+                  <p className="text-xs text-op-muted">
+                    <span className="font-semibold text-op-navy">Subject:</span> How did we do? — {config.fromName || 'Your Business'}
+                  </p>
+                </div>
+                <div className="bg-white">
+                  <div className="bg-op-navy px-4 py-3">
+                    <p className="text-white font-bold text-sm">{config.fromName || 'Your Business'}</p>
+                  </div>
+                  <div className="px-4 py-4 flex flex-col gap-2.5 text-sm text-op-body text-center">
+                    <p className="text-2xl">⭐⭐⭐⭐⭐</p>
+                    <p className="text-left">Hi <span className="font-semibold">Sarah</span>,</p>
+                    <p className="leading-relaxed text-op-body/80 text-left">
+                      Thank you for choosing <strong>{config.fromName || 'Your Business'}</strong>. It was a pleasure working with you.
+                    </p>
+                    <p className="leading-relaxed text-op-body/80 text-left">
+                      If you have a moment, a quick review would mean a lot to us — it helps other people find us and takes about 2 minutes.
+                    </p>
+                    <div className="my-1">
+                      <span className="inline-block bg-op-navy text-white text-xs font-bold px-5 py-2.5 rounded-lg">
+                        Leave a Review →
+                      </span>
+                    </div>
+                    <p className="text-sm text-left">Thank you,<br /><strong>{config.fromName || 'Your Name'}</strong></p>
+                  </div>
+                </div>
               </div>
-              <h2 className="text-xl font-bold font-manrope text-op-navy mb-2">Ready to collect reviews!</h2>
-              <p className="text-sm text-op-muted mb-6 max-w-sm">
-                Go to any customer in Contacts and click the ⭐ Review button. We'll send you a test email the moment you activate so you can see exactly what your customers will receive.
-              </p>
-              <div className="w-full text-left bg-op-bg border border-op-border rounded-xl px-4 py-4 mb-6">
-                <p className="text-xs font-bold text-op-navy mb-2">How to use it</p>
-                <p className="text-xs text-op-muted leading-relaxed">
-                  Contacts → find a customer → click ⭐ Review → done. The email goes out immediately with a direct link to your review page.
-                </p>
-              </div>
+
               {saveError && (
                 <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-2.5 text-sm text-op-red mb-3">
                   {saveError}
                 </div>
               )}
-              <button onClick={handleFinish} disabled={saving} className="btn-primary w-full justify-center text-sm">
-                {saving ? <Loader2 size={15} className="animate-spin" /> : <><CheckCircle2 size={15} /> Activate Agent</>}
-              </button>
+              <div className="flex gap-3">
+                <button onClick={() => setStep(2)} className="btn-secondary flex items-center gap-1.5 shrink-0"><ArrowLeft size={14} /> Back</button>
+                <button onClick={handleFinish} disabled={saving} className="btn-primary flex-1 justify-center text-sm">
+                  {saving ? <Loader2 size={15} className="animate-spin" /> : <><CheckCircle2 size={15} /> Activate Agent</>}
+                </button>
+              </div>
             </>
           )}
         </div>
@@ -966,16 +993,24 @@ function WeeklyReportWizard({ userId, initialConfig, onComplete }: {
 
 // ─── Estimate Recovery Wizard ──────────────────────────────────────────────
 
+const ESTIMATE_DEFAULT_OPENER = "Thanks for the opportunity to put together an estimate for you."
+const ESTIMATE_DEFAULT_BODY   = "I've put together pricing based on what we discussed. Take a look when you get a chance — happy to answer any questions or adjust the scope if needed."
+
 function EstimateRecoveryWizard({ userId, initialConfig, onComplete }: {
   userId: string
   initialConfig: AgentConfig
   onComplete: (config: AgentConfig) => void
 }) {
   const [step, setStep] = useState(0)
-  const [config, setConfig] = useState<AgentConfig>(initialConfig)
+  const [config, setConfig] = useState<AgentConfig>({
+    estimateOpener: ESTIMATE_DEFAULT_OPENER,
+    estimateBody:   ESTIMATE_DEFAULT_BODY,
+    ...initialConfig,
+  })
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [activationDone, setActivationDone] = useState(false)
+  const totalSteps = 3
 
   useEffect(() => {
     const supabase = createClient()
@@ -1018,16 +1053,18 @@ function EstimateRecoveryWizard({ userId, initialConfig, onComplete }: {
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 mb-8">
-        <StepDot active={step === 0} done={step > 0} />
-        <StepDot active={step === 1} done={step > 1} />
-        <span className="text-xs text-op-muted ml-2">Step {step + 1} of 2</span>
+        {Array.from({ length: totalSteps }).map((_, i) => (
+          <StepDot key={i} active={i === step} done={i < step} />
+        ))}
+        <span className="text-xs text-op-muted ml-2">Step {step + 1} of {totalSteps}</span>
       </div>
 
+      {/* Step 0 — your details */}
       {step === 0 && (
         <div className="flex-1">
           <h2 className="text-xl font-bold font-manrope text-op-navy mb-1">Set up Estimate Recovery</h2>
           <p className="text-sm text-op-muted mb-6">
-            When you send an estimate to a lead, a 3-email follow-up sequence starts automatically — Day 0, Day 1, and Day 3. Industry-specific copy is included.
+            When you send an estimate to a lead, a 3-email follow-up sequence starts automatically — Day 0, Day 1, and Day 3.
           </p>
           <div className="flex flex-col gap-4">
             <div>
@@ -1048,7 +1085,7 @@ function EstimateRecoveryWizard({ userId, initialConfig, onComplete }: {
                 value={config.replyToEmail ?? ''}
                 onChange={(e) => setConfig((c) => ({ ...c, replyToEmail: e.target.value }))}
               />
-              <p className="text-xs text-op-muted mt-1.5">Customers who reply to the estimate email will reach this address directly.</p>
+              <p className="text-xs text-op-muted mt-1.5">Customers who reply to the estimate email will reach you directly.</p>
             </div>
           </div>
           <button
@@ -1061,7 +1098,68 @@ function EstimateRecoveryWizard({ userId, initialConfig, onComplete }: {
         </div>
       )}
 
+      {/* Step 1 — customize message + live preview */}
       {step === 1 && (
+        <div className="flex-1">
+          <h2 className="text-xl font-bold font-manrope text-op-navy mb-1">Customize your estimate email</h2>
+          <p className="text-sm text-op-muted mb-4">This is what your leads receive when you click "Send Estimate." The amount is entered at send time — just set the message here once.</p>
+          <div className="flex flex-col gap-3 mb-4">
+            <div>
+              <label className="block text-xs font-bold text-op-navy mb-1.5">Opening line</label>
+              <textarea
+                className={`${inputClass} resize-none`}
+                rows={2}
+                value={config.estimateOpener ?? ''}
+                onChange={(e) => setConfig((c) => ({ ...c, estimateOpener: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-op-navy mb-1.5">Main message</label>
+              <textarea
+                className={`${inputClass} resize-none`}
+                rows={3}
+                value={config.estimateBody ?? ''}
+                onChange={(e) => setConfig((c) => ({ ...c, estimateBody: e.target.value }))}
+              />
+              <p className="text-xs text-op-muted mt-1">The estimate amount you enter at send time will appear below this message.</p>
+            </div>
+          </div>
+          {/* Live email preview */}
+          <div className="border border-op-border rounded-xl overflow-hidden mb-5 shadow-sm text-left">
+            <div className="bg-op-bg border-b border-op-border px-4 py-2">
+              <p className="text-xs text-op-muted">
+                <span className="font-semibold text-op-navy">Subject:</span> Your estimate from {config.fromName || 'Your Business'}
+              </p>
+            </div>
+            <div className="bg-white">
+              <div className="bg-op-navy px-4 py-3">
+                <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5">Estimate</p>
+                <p className="text-white font-bold text-sm">{config.fromName || 'Your Business'}</p>
+              </div>
+              <div className="px-4 py-4 flex flex-col gap-2.5 text-sm text-op-body">
+                <p>Hi <span className="font-semibold">Sarah</span>,</p>
+                <p className="leading-relaxed text-op-body/80">{config.estimateOpener || '—'}</p>
+                <p className="leading-relaxed text-op-body/80">{config.estimateBody || '—'}</p>
+                <div className="bg-slate-50 border-l-4 border-op-navy rounded-r-lg px-3 py-2.5">
+                  <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5">Estimate Total</p>
+                  <p className="text-op-navy font-extrabold text-lg">$1,200</p>
+                  <p className="text-[10px] text-op-muted">(amount you enter at send time)</p>
+                </div>
+                <p className="text-sm">— <strong>{config.fromName || 'Your Name'}</strong></p>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <button onClick={() => setStep(0)} className="btn-secondary flex items-center gap-1.5 shrink-0"><ArrowLeft size={14} /> Back</button>
+            <button onClick={() => setStep(2)} className="btn-primary flex-1 justify-center">
+              Looks good <ArrowRight size={15} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 2 — activate */}
+      {step === 2 && (
         <div className="flex-1 flex flex-col items-center text-center">
           {activationDone ? (
             <>
@@ -1070,7 +1168,7 @@ function EstimateRecoveryWizard({ userId, initialConfig, onComplete }: {
               </div>
               <h2 className="text-xl font-bold font-manrope text-op-navy mb-2">Estimate Recovery is Live!</h2>
               <p className="text-sm text-op-muted mb-5 max-w-sm">
-                Go to any lead in Contacts and click <strong>Send Estimate</strong>. The follow-up sequence starts automatically.
+                Go to any lead in Contacts and click <strong>Send Estimate</strong>. Enter the amount — the follow-up sequence starts automatically.
               </p>
               <button onClick={() => onComplete(config)} className="btn-primary w-full justify-center text-sm">
                 Done
@@ -1083,14 +1181,14 @@ function EstimateRecoveryWizard({ userId, initialConfig, onComplete }: {
               </div>
               <h2 className="text-xl font-bold font-manrope text-op-navy mb-2">Ready to recover more estimates</h2>
               <p className="text-sm text-op-muted mb-6 max-w-sm">
-                Once activated, open any lead and click <strong>Send Estimate</strong>. The 3-email sequence handles the follow-up for you.
+                Once activated, open any lead and click <strong>Send Estimate</strong>. Enter the amount — we handle the rest.
               </p>
               <div className="w-full text-left bg-op-bg border border-op-border rounded-xl px-4 py-4 mb-6 flex flex-col gap-2">
                 {[
                   'Day 0 — estimate email sent immediately',
                   'Day 1 — gentle check-in (auto-scheduled)',
                   'Day 3 — final follow-up (auto-scheduled)',
-                  'Industry-specific copy — no generic emails',
+                  'Your message, your voice — not a generic template',
                 ].map((item) => (
                   <div key={item} className="flex items-center gap-2 text-xs text-op-body">
                     <CheckCircle2 size={13} className="text-op-green shrink-0" />
@@ -1104,7 +1202,7 @@ function EstimateRecoveryWizard({ userId, initialConfig, onComplete }: {
                 </div>
               )}
               <div className="flex gap-3 w-full">
-                <button onClick={() => setStep(0)} className="btn-secondary flex items-center gap-1.5 shrink-0"><ArrowLeft size={14} /> Back</button>
+                <button onClick={() => setStep(1)} className="btn-secondary flex items-center gap-1.5 shrink-0"><ArrowLeft size={14} /> Back</button>
                 <button onClick={handleFinish} disabled={saving} className="btn-primary flex-1 justify-center text-sm">
                   {saving ? <Loader2 size={15} className="animate-spin" /> : <><CheckCircle2 size={15} /> Activate Agent</>}
                 </button>
@@ -1119,15 +1217,24 @@ function EstimateRecoveryWizard({ userId, initialConfig, onComplete }: {
 
 // ─── Reactivation Wizard ───────────────────────────────────────────────────
 
+const REACTIVATION_DEFAULT_OPENER = "It's been a while since we've seen you, and we wanted to reach out."
+const REACTIVATION_DEFAULT_BODY   = "We'd love the chance to work together again. If there's anything we can help with, reply to this email or give us a call — we're here."
+
 function ReactivationWizard({ userId, initialConfig, onComplete }: {
   userId: string
   initialConfig: AgentConfig
   onComplete: (config: AgentConfig) => void
 }) {
   const [step, setStep] = useState(0)
-  const [config, setConfig] = useState<AgentConfig>(initialConfig)
+  const [config, setConfig] = useState<AgentConfig>({
+    reactivationOpener: REACTIVATION_DEFAULT_OPENER,
+    reactivationBody:   REACTIVATION_DEFAULT_BODY,
+    ...initialConfig,
+  })
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [activationDone, setActivationDone] = useState(false)
+  const totalSteps = 3
 
   useEffect(() => {
     const supabase = createClient()
@@ -1142,8 +1249,6 @@ function ReactivationWizard({ userId, initialConfig, onComplete }: {
       }))
     })
   }, [userId])
-
-  const [saveError, setSaveError] = useState('')
 
   const handleFinish = async () => {
     setSaving(true)
@@ -1172,16 +1277,18 @@ function ReactivationWizard({ userId, initialConfig, onComplete }: {
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 mb-8">
-        <StepDot active={step === 0} done={step > 0} />
-        <StepDot active={step === 1} done={step > 1} />
-        <span className="text-xs text-op-muted ml-2">Step {step + 1} of 2</span>
+        {Array.from({ length: totalSteps }).map((_, i) => (
+          <StepDot key={i} active={i === step} done={i < step} />
+        ))}
+        <span className="text-xs text-op-muted ml-2">Step {step + 1} of {totalSteps}</span>
       </div>
 
+      {/* Step 0 — your details */}
       {step === 0 && (
         <div className="flex-1">
           <h2 className="text-xl font-bold font-manrope text-op-navy mb-1">Set up Customer Reactivation</h2>
           <p className="text-sm text-op-muted mb-6">
-            Every Sunday, we'll automatically reach out to customers who haven't booked in 60+ days with a personalized win-back message.
+            Every Sunday, we'll automatically reach out to customers who haven't booked in 60+ days with a win-back message in your voice.
           </p>
           <div className="flex flex-col gap-4">
             <div>
@@ -1202,7 +1309,7 @@ function ReactivationWizard({ userId, initialConfig, onComplete }: {
                 value={config.replyToEmail ?? ''}
                 onChange={(e) => setConfig((c) => ({ ...c, replyToEmail: e.target.value }))}
               />
-              <p className="text-xs text-op-muted mt-1.5">Customers who reply to the reactivation email will reach this address directly.</p>
+              <p className="text-xs text-op-muted mt-1.5">Customers who reply will reach you directly.</p>
             </div>
           </div>
           <button
@@ -1215,7 +1322,61 @@ function ReactivationWizard({ userId, initialConfig, onComplete }: {
         </div>
       )}
 
+      {/* Step 1 — customize message + live preview */}
       {step === 1 && (
+        <div className="flex-1">
+          <h2 className="text-xl font-bold font-manrope text-op-navy mb-1">Customize your win-back message</h2>
+          <p className="text-sm text-op-muted mb-4">This is what dormant customers receive every Sunday. Make it sound like you — not a marketing template.</p>
+          <div className="flex flex-col gap-3 mb-4">
+            <div>
+              <label className="block text-xs font-bold text-op-navy mb-1.5">Opening line</label>
+              <textarea
+                className={`${inputClass} resize-none`}
+                rows={2}
+                value={config.reactivationOpener ?? ''}
+                onChange={(e) => setConfig((c) => ({ ...c, reactivationOpener: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-op-navy mb-1.5">Main message</label>
+              <textarea
+                className={`${inputClass} resize-none`}
+                rows={3}
+                value={config.reactivationBody ?? ''}
+                onChange={(e) => setConfig((c) => ({ ...c, reactivationBody: e.target.value }))}
+              />
+            </div>
+          </div>
+          {/* Live email preview */}
+          <div className="border border-op-border rounded-xl overflow-hidden mb-5 shadow-sm text-left">
+            <div className="bg-op-bg border-b border-op-border px-4 py-2">
+              <p className="text-xs text-op-muted">
+                <span className="font-semibold text-op-navy">Subject:</span> We miss you — {config.fromName || 'Your Business'}
+              </p>
+            </div>
+            <div className="bg-white">
+              <div className="bg-op-navy px-4 py-3">
+                <p className="text-white font-bold text-sm">{config.fromName || 'Your Business'}</p>
+              </div>
+              <div className="px-4 py-4 flex flex-col gap-2.5 text-sm text-op-body">
+                <p>Hi <span className="font-semibold">Maria</span>,</p>
+                <p className="leading-relaxed text-op-body/80">{config.reactivationOpener || '—'}</p>
+                <p className="leading-relaxed text-op-body/80">{config.reactivationBody || '—'}</p>
+                <p className="text-sm">— <strong>{config.fromName || 'Your Name'}</strong></p>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <button onClick={() => setStep(0)} className="btn-secondary flex items-center gap-1.5 shrink-0"><ArrowLeft size={14} /> Back</button>
+            <button onClick={() => setStep(2)} className="btn-primary flex-1 justify-center">
+              Looks good <ArrowRight size={15} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 2 — activate */}
+      {step === 2 && (
         <div className="flex-1 flex flex-col items-center text-center">
           {activationDone ? (
             <>
@@ -1243,7 +1404,7 @@ function ReactivationWizard({ userId, initialConfig, onComplete }: {
                 {[
                   'Runs automatically every Sunday at 10:00 AM',
                   'Only contacts customers inactive 60+ days',
-                  'Industry-specific copy — not a generic blast',
+                  'Your message, your voice — not a generic blast',
                   'One-click unsubscribe included in every email',
                 ].map((item) => (
                   <div key={item} className="flex items-center gap-2 text-xs text-op-body">
@@ -1258,7 +1419,7 @@ function ReactivationWizard({ userId, initialConfig, onComplete }: {
                 </div>
               )}
               <div className="flex gap-3 w-full">
-                <button onClick={() => setStep(0)} className="btn-secondary flex items-center gap-1.5 shrink-0"><ArrowLeft size={14} /> Back</button>
+                <button onClick={() => setStep(1)} className="btn-secondary flex items-center gap-1.5 shrink-0"><ArrowLeft size={14} /> Back</button>
                 <button onClick={handleFinish} disabled={saving} className="btn-primary flex-1 justify-center text-sm">
                   {saving ? <Loader2 size={15} className="animate-spin" /> : <><CheckCircle2 size={15} /> Activate Agent</>}
                 </button>

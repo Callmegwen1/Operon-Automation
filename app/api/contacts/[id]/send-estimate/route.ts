@@ -51,6 +51,8 @@ export async function POST(
     const cfg = (agent.config ?? {}) as {
       fromName?: string
       replyToEmail?: string
+      estimateOpener?: string
+      estimateBody?: string
     }
 
     const businessName = business?.name ?? 'Our Business'
@@ -85,8 +87,8 @@ export async function POST(
       businessName,
       fromName,
       replyToEmail,
-      opener:         copy.day0Opener,
-      body:           copy.day0Body,
+      opener:         cfg.estimateOpener ?? copy.day0Opener,
+      body:           cfg.estimateBody   ?? copy.day0Body,
       amount,
       unsubscribeUrl: unsubUrl,
     })
