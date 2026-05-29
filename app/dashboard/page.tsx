@@ -6,6 +6,7 @@ import { generateLeaks } from '@/lib/leaks'
 import { calculateSubScores } from '@/lib/scanner/subscores'
 import MarkFixedButton from '@/components/dashboard/MarkFixedButton'
 import WelcomeModal from '@/components/dashboard/WelcomeModal'
+import AttentionFeed from '@/components/dashboard/AttentionFeed'
 
 type Impact = 'low' | 'medium' | 'high'
 
@@ -204,45 +205,10 @@ export default async function DashboardPage({
       )}
 
       {/* Needs attention today */}
-      {((newStaleLeads && newStaleLeads.length > 0) || (coldContacts && coldContacts.length > 0)) && (
-        <div className="card border-2 border-op-amber/30 bg-amber-50/20 mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="w-2 h-2 rounded-full bg-op-amber animate-pulse" />
-            <h2 className="text-sm font-bold text-op-navy">Needs your attention</h2>
-          </div>
-          <div className="flex flex-col gap-2">
-            {(newStaleLeads ?? []).map((c: { id: string; name: string; email: string | null; created_at: string }) => (
-              <Link
-                key={c.id}
-                href={`/dashboard/contacts/${c.id}`}
-                className="flex items-center justify-between gap-3 bg-white rounded-xl border border-op-border px-4 py-3 hover:border-op-navy/40 transition-all"
-              >
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-op-navy truncate">{c.name}</p>
-                  <p className="text-xs text-op-amber font-medium">New lead — no follow-up yet</p>
-                </div>
-                <ArrowRight size={14} className="text-op-muted shrink-0" />
-              </Link>
-            ))}
-            {(coldContacts ?? []).map((c: { id: string; name: string; email: string | null; updated_at: string }) => {
-              const days = Math.floor((Date.now() - new Date(c.updated_at).getTime()) / 86400000)
-              return (
-                <Link
-                  key={c.id}
-                  href={`/dashboard/contacts/${c.id}`}
-                  className="flex items-center justify-between gap-3 bg-white rounded-xl border border-op-border px-4 py-3 hover:border-op-navy/40 transition-all"
-                >
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-op-navy truncate">{c.name}</p>
-                    <p className="text-xs text-op-muted">Contacted {days}d ago — no update</p>
-                  </div>
-                  <ArrowRight size={14} className="text-op-muted shrink-0" />
-                </Link>
-              )
-            })}
-          </div>
-        </div>
-      )}
+      <AttentionFeed
+        initialNewLeads={(newStaleLeads ?? []) as { id: string; name: string; email: string | null; created_at: string }[]}
+        initialColdContacts={(coldContacts ?? []) as { id: string; name: string; email: string | null; updated_at: string }[]}
+      />
 
       {/* Re-scan reminder */}
       {showRescanBanner && (

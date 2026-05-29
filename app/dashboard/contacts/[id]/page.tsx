@@ -29,6 +29,20 @@ interface Activity {
   created_at: string
 }
 
+interface AgentMessage {
+  id: string
+  agent_type: string
+  subject: string | null
+  channel: string
+  status: string
+  sent_at: string
+  template_id: string | null
+}
+
+type TimelineEntry =
+  | { kind: 'activity'; data: Activity }
+  | { kind: 'message';  data: AgentMessage }
+
 type Satisfaction = 'happy' | 'not_sure' | 'unhappy'
 
 const statusOptions = [
@@ -74,11 +88,39 @@ const statusLabel: Record<string, string> = {
 
 function activityLabel(a: Activity): string {
   const d = a.details ?? {}
-  if (a.action === 'review_request_sent')         return 'Review request sent (3-email sequence)'
-  if (a.action === 'private_feedback_sent')        return 'Private feedback request sent'
-  if (a.action === 'review_blocked_unhappy_customer') return 'Review blocked — follow-up task created'
-  if (a.action === 'lead_followup_scheduled')      return `Follow-up sequence started (email ${d.email_number ?? '1'})`
+  if (a.action === 'review_request_sent')              return 'Review request sent (3-email sequence)'
+  if (a.action === 'private_feedback_sent')             return 'Private feedback request sent'
+  if (a.action === 'review_blocked_unhappy_customer')   return 'Review blocked — follow-up task created'
+  if (a.action === 'lead_followup_scheduled')           return `Follow-up sequence started (email ${d.email_number ?? '1'})`
+  if (a.action === 'reactivation_email_sent')           return 'Reactivation email sent'
+  if (a.action === 'estimate_sent')                     return 'Estimate email sent'
   return a.action.replace(/_/g, ' ')
+}
+
+function messageLabel(m: AgentMessage): string {
+  const tid = m.template_id ?? ''
+  if (tid === 'estimate_day0')           return 'Estimate sent — Day 0'
+  if (tid === 'estimate_day1')           return 'Estimate follow-up sent — Day 1'
+  if (tid === 'estimate_day3')           return 'Estimate follow-up sent — Day 3'
+  if (tid === 'reactivation_winback')    return 'Reactivation email sent'
+  if (tid.startsWith('review_request'))  return 'Review request sent'
+  if (tid.startsWith('review_reminder')) return 'Review reminder sent'
+  if (tid === 'private_feedback')        return 'Private feedback request sent'
+  if (m.agent_type === 'lead_followup')  return m.subject ? `Follow-up email: "${m.subject}"` : 'Follow-up email sent'
+  return m.subject ? `Email sent: "${m.subject}"` : 'Email sent'
+}
+
+function timelineTime(e: TimelineEntry): number {
+  return new Date(e.kind === 'activity' ? e.data.created_at : e.data.sent_at).getTime()
+}
+
+function TimelineIcon({ entry }: { entry: TimelineEntry }) {
+  if (entry.kind === 'message') return <Mail size={14} className="text-op-navy" />
+  const type = entry.data.agent_type
+  if (type === 'review_request') return <Star size={14} className="text-op-amber" />
+  if (type === 'lead_followup')  return <Mail size={14} className="text-op-navy" />
+  if (type === 'weekly_report')  return <BarChart2 size={14} className="text-op-green" />
+  return <Bot size={14} className="text-op-muted" />
 }
 
 function AgentIcon({ type }: { type: string }) {
@@ -318,6 +360,7 @@ export default function ContactDetailPage() {
   const router = useRouter()
   const [contact, setContact]       = useState<Contact | null>(null)
   const [activity, setActivity]     = useState<Activity[]>([])
+  const [agentMessages, setAgentMessages] = useState<AgentMessage[]>([])
   const [loading, setLoading]       = useState(true)
   const [saving, setSaving]         = useState(false)
   const [saved, setSaved]           = useState(false)
@@ -340,13 +383,18 @@ export default function ContactDetailPage() {
   useEffect(() => {
     const load = async () => {
       const supabase = createClient()
-      const [{ data: c }, { data: acts }, { data: estimateAgent }] = await Promise.all([
+      const [{ data: c }, { data: acts }, { data: msgs }, { data: estimateAgent }] = await Promise.all([
         supabase.from('contacts').select('*').eq('id', id).single(),
         supabase
           .from('agent_activity')
           .select('*')
           .filter('details->>contact_id', 'eq', id)
           .order('created_at', { ascending: false }),
+        supabase
+          .from('agent_messages')
+          .select('id, agent_type, subject, channel, status, sent_at, template_id')
+          .eq('contact_id', id)
+          .order('sent_at', { ascending: false }),
         supabase.from('agents').select('enabled').eq('type', 'estimate_followup').single(),
       ])
       if (!c) { router.push('/dashboard/contacts'); return }
@@ -354,6 +402,7 @@ export default function ContactDetailPage() {
       setStatus(c.status)
       setNotes(c.notes ?? '')
       setActivity((acts ?? []) as Activity[])
+      setAgentMessages((msgs ?? []) as AgentMessage[])
       setEstimateAgentEnabled(estimateAgent?.enabled === true)
       setLoading(false)
     }
@@ -700,26 +749,57 @@ export default function ContactDetailPage() {
         </div>
 
         {/* Activity timeline */}
-        <div className="mt-6">
-          <h2 className="text-sm font-bold text-op-navy mb-4">Agent Activity</h2>
-          {activity.length === 0 ? (
-            <div className="card text-center py-8">
-              <p className="text-sm text-op-muted">No agent activity for this contact yet.</p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {activity.map((a) => (
-                <div key={a.id} className="card py-3 px-4 flex items-start gap-3">
-                  <span className="shrink-0 mt-0.5"><AgentIcon type={a.agent_type} /></span>
-                  <div className="flex-1">
-                    <p className="text-sm text-op-body">{activityLabel(a)}</p>
-                    <p className="text-xs text-op-muted mt-0.5">{timeAgo(a.created_at)}</p>
-                  </div>
+        {(() => {
+          const timeline: TimelineEntry[] = [
+            ...activity.map((a) => ({ kind: 'activity' as const, data: a })),
+            ...agentMessages.map((m) => ({ kind: 'message' as const, data: m })),
+          ].sort((a, b) => timelineTime(b) - timelineTime(a))
+
+          return (
+            <div className="mt-6">
+              <h2 className="text-sm font-bold text-op-navy mb-4">
+                Operon Activity
+                {timeline.length > 0 && (
+                  <span className="ml-2 text-xs font-normal text-op-muted">({timeline.length} events)</span>
+                )}
+              </h2>
+              {timeline.length === 0 ? (
+                <div className="card text-center py-8">
+                  <p className="text-sm text-op-muted">No agent activity for this contact yet.</p>
                 </div>
-              ))}
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {timeline.map((entry) => {
+                    const label = entry.kind === 'activity' ? activityLabel(entry.data) : messageLabel(entry.data)
+                    const time  = entry.kind === 'activity' ? entry.data.created_at : entry.data.sent_at
+                    const isEmail = entry.kind === 'message'
+                    return (
+                      <div
+                        key={`${entry.kind}-${entry.data.id}`}
+                        className={`card py-3 px-4 flex items-start gap-3 ${isEmail ? 'border-op-navy/10' : ''}`}
+                      >
+                        <span className="shrink-0 mt-0.5">
+                          <TimelineIcon entry={entry} />
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-op-body">{label}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <p className="text-xs text-op-muted">{timeAgo(time)}</p>
+                            {isEmail && (
+                              <span className="text-[10px] bg-op-navy/5 text-op-muted px-1.5 py-0.5 rounded-full font-medium">
+                                email
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          )
+        })()}
 
         {/* Danger zone */}
         <div className="mt-8 pt-6 border-t border-op-border">
