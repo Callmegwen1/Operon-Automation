@@ -18,7 +18,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
       {showMarketing && <Header />}
       {children}
       {showMarketing && <Footer />}
-      {showMarketing && <OpeWidget />}
+      {!isAuth && <OpeWidget />}
     </>
   )
 }

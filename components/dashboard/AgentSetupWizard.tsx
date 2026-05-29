@@ -131,6 +131,7 @@ function LeadFollowupWizard({ userId, initialConfig, onComplete }: {
   const [importError, setImportError] = useState('')
   const [config, setConfig] = useState<AgentConfig>(initialConfig)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [activationDone, setActivationDone] = useState(false)
   const [verifyUrl, setVerifyUrl] = useState('')
   const [verifying, setVerifying] = useState(false)
@@ -191,16 +192,24 @@ function LeadFollowupWizard({ userId, initialConfig, onComplete }: {
 
   const handleFinish = async () => {
     setSaving(true)
-    await fetch('/api/agents/config', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'lead_followup', config }),
-    })
-    await fetch('/api/agents/toggle', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'lead_followup', enabled: true }),
-    })
+    setSaveError('')
+    const [r1, r2] = await Promise.all([
+      fetch('/api/agents/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'lead_followup', config }),
+      }),
+      fetch('/api/agents/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'lead_followup', enabled: true }),
+      }),
+    ])
+    if (!r1.ok || !r2.ok) {
+      setSaveError('Something went wrong saving your settings. Please refresh and try again.')
+      setSaving(false)
+      return
+    }
     await fetch('/api/agents/test', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -447,15 +456,14 @@ function LeadFollowupWizard({ userId, initialConfig, onComplete }: {
               <p className="text-xs text-op-muted mt-1">Included in the email so leads can call you directly.</p>
             </div>
             <div>
-              <label className="block text-xs font-bold text-op-navy mb-1.5">Personal note <span className="text-op-muted font-normal">(optional)</span></label>
+              <label className="block text-xs font-bold text-op-navy mb-1.5">Your message to leads</label>
               <textarea
                 className={`${inputClass} resize-none`}
-                rows={2}
-                placeholder="e.g. We specialize in last-minute jobs and same-day quotes — just call us!"
-                value={config.personalNote ?? ''}
+                rows={3}
+                value={config.personalNote ?? "Thanks for reaching out! We received your message and will get back to you very shortly."}
                 onChange={(e) => setConfig((c) => ({ ...c, personalNote: e.target.value }))}
               />
-              <p className="text-xs text-op-muted mt-1">Added at the bottom of the first email — a great place for a human touch.</p>
+              <p className="text-xs text-op-muted mt-1">This is the message leads see in your first follow-up email. Edit it to match your voice.</p>
             </div>
           </div>
           <div className="flex gap-3 mt-6">
@@ -516,19 +524,21 @@ function LeadFollowupWizard({ userId, initialConfig, onComplete }: {
                       Just wanted to make sure your message to <strong>{config.fromName || 'Your Business'}</strong> didn't get missed.
                     </p>
                     <p className="leading-relaxed text-op-body/80">
-                      {config.fromName || 'The team'} will be in touch with you shortly. In the meantime, feel free to reach us directly:
+                      {config.personalNote || "Thanks for reaching out! We received your message and will get back to you very shortly."}
                     </p>
                     {config.phone && (
                       <p className="font-bold text-op-navy">📞 {config.phone}</p>
-                    )}
-                    {config.personalNote && (
-                      <p className="leading-relaxed text-op-body/80 pt-3 border-t border-op-border">{config.personalNote}</p>
                     )}
                     <p className="pt-1">Talk soon,<br /><strong>{config.fromName || 'Your Name'}</strong></p>
                   </div>
                 </div>
               </div>
 
+              {saveError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-2.5 text-sm text-op-red mb-1">
+                  {saveError}
+                </div>
+              )}
               <div className="flex gap-3">
                 <button onClick={() => setStep(2)} className="btn-secondary flex items-center gap-1.5 shrink-0"><ArrowLeft size={14} /> Edit</button>
                 <button onClick={handleFinish} disabled={saving} className="btn-primary flex-1 justify-center text-sm">
@@ -608,6 +618,7 @@ function ReviewRequestWizard({ userId, initialConfig, onComplete }: {
   const [platform, setPlatform] = useState<ReviewPlatform | null>(null)
   const [config, setConfig] = useState<AgentConfig>(initialConfig)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [activationDone, setActivationDone] = useState(false)
   const totalSteps = 4
   const platformInfo = REVIEW_PLATFORMS.find((p) => p.id === platform)
@@ -628,16 +639,24 @@ function ReviewRequestWizard({ userId, initialConfig, onComplete }: {
 
   const handleFinish = async () => {
     setSaving(true)
-    await fetch('/api/agents/config', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'review_request', config }),
-    })
-    await fetch('/api/agents/toggle', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'review_request', enabled: true }),
-    })
+    setSaveError('')
+    const [r1, r2] = await Promise.all([
+      fetch('/api/agents/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'review_request', config }),
+      }),
+      fetch('/api/agents/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'review_request', enabled: true }),
+      }),
+    ])
+    if (!r1.ok || !r2.ok) {
+      setSaveError('Something went wrong saving your settings. Please refresh and try again.')
+      setSaving(false)
+      return
+    }
     await fetch('/api/agents/test', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -793,6 +812,11 @@ function ReviewRequestWizard({ userId, initialConfig, onComplete }: {
                   Contacts → find a customer → click ⭐ Review → done. The email goes out immediately with a direct link to your review page.
                 </p>
               </div>
+              {saveError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-2.5 text-sm text-op-red mb-3">
+                  {saveError}
+                </div>
+              )}
               <button onClick={handleFinish} disabled={saving} className="btn-primary w-full justify-center text-sm">
                 {saving ? <Loader2 size={15} className="animate-spin" /> : <><CheckCircle2 size={15} /> Activate Agent</>}
               </button>
@@ -814,6 +838,7 @@ function WeeklyReportWizard({ userId, initialConfig, onComplete }: {
   const [config, setConfig] = useState<AgentConfig>(initialConfig)
   const [step, setStep] = useState(0)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [activationDone, setActivationDone] = useState(false)
 
   useEffect(() => {
@@ -827,16 +852,24 @@ function WeeklyReportWizard({ userId, initialConfig, onComplete }: {
 
   const handleFinish = async () => {
     setSaving(true)
-    await fetch('/api/agents/config', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'weekly_report', config }),
-    })
-    await fetch('/api/agents/toggle', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'weekly_report', enabled: true }),
-    })
+    setSaveError('')
+    const [r1, r2] = await Promise.all([
+      fetch('/api/agents/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'weekly_report', config }),
+      }),
+      fetch('/api/agents/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'weekly_report', enabled: true }),
+      }),
+    ])
+    if (!r1.ok || !r2.ok) {
+      setSaveError('Something went wrong saving your settings. Please refresh and try again.')
+      setSaving(false)
+      return
+    }
     await fetch('/api/agents/test', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -915,6 +948,11 @@ function WeeklyReportWizard({ userId, initialConfig, onComplete }: {
                   </div>
                 ))}
               </div>
+              {saveError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-2.5 text-sm text-op-red mb-3">
+                  {saveError}
+                </div>
+              )}
               <button onClick={handleFinish} disabled={saving} className="btn-primary w-full justify-center text-sm">
                 {saving ? <Loader2 size={15} className="animate-spin" /> : <><CheckCircle2 size={15} /> Activate Agent</>}
               </button>
@@ -936,6 +974,7 @@ function EstimateRecoveryWizard({ userId, initialConfig, onComplete }: {
   const [step, setStep] = useState(0)
   const [config, setConfig] = useState<AgentConfig>(initialConfig)
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [activationDone, setActivationDone] = useState(false)
 
   useEffect(() => {
@@ -954,16 +993,24 @@ function EstimateRecoveryWizard({ userId, initialConfig, onComplete }: {
 
   const handleFinish = async () => {
     setSaving(true)
-    await fetch('/api/agents/config', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'estimate_followup', config }),
-    })
-    await fetch('/api/agents/toggle', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'estimate_followup', enabled: true }),
-    })
+    setSaveError('')
+    const [r1, r2] = await Promise.all([
+      fetch('/api/agents/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'estimate_followup', config }),
+      }),
+      fetch('/api/agents/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'estimate_followup', enabled: true }),
+      }),
+    ])
+    if (!r1.ok || !r2.ok) {
+      setSaveError('Something went wrong saving your settings. Please refresh and try again.')
+      setSaving(false)
+      return
+    }
     setSaving(false)
     setActivationDone(true)
   }
@@ -1051,6 +1098,11 @@ function EstimateRecoveryWizard({ userId, initialConfig, onComplete }: {
                   </div>
                 ))}
               </div>
+              {saveError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-2.5 text-sm text-op-red mb-3 w-full">
+                  {saveError}
+                </div>
+              )}
               <div className="flex gap-3 w-full">
                 <button onClick={() => setStep(0)} className="btn-secondary flex items-center gap-1.5 shrink-0"><ArrowLeft size={14} /> Back</button>
                 <button onClick={handleFinish} disabled={saving} className="btn-primary flex-1 justify-center text-sm">
@@ -1091,18 +1143,28 @@ function ReactivationWizard({ userId, initialConfig, onComplete }: {
     })
   }, [userId])
 
+  const [saveError, setSaveError] = useState('')
+
   const handleFinish = async () => {
     setSaving(true)
-    await fetch('/api/agents/config', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'reactivation', config }),
-    })
-    await fetch('/api/agents/toggle', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'reactivation', enabled: true }),
-    })
+    setSaveError('')
+    const [r1, r2] = await Promise.all([
+      fetch('/api/agents/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'reactivation', config }),
+      }),
+      fetch('/api/agents/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'reactivation', enabled: true }),
+      }),
+    ])
+    if (!r1.ok || !r2.ok) {
+      setSaveError('Something went wrong saving your settings. Please refresh and try again.')
+      setSaving(false)
+      return
+    }
     setSaving(false)
     setActivationDone(true)
   }
@@ -1190,6 +1252,11 @@ function ReactivationWizard({ userId, initialConfig, onComplete }: {
                   </div>
                 ))}
               </div>
+              {saveError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-2.5 text-sm text-op-red mb-3 w-full">
+                  {saveError}
+                </div>
+              )}
               <div className="flex gap-3 w-full">
                 <button onClick={() => setStep(0)} className="btn-secondary flex items-center gap-1.5 shrink-0"><ArrowLeft size={14} /> Back</button>
                 <button onClick={handleFinish} disabled={saving} className="btn-primary flex-1 justify-center text-sm">

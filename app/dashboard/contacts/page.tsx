@@ -178,6 +178,7 @@ function AddContactForm({ onAdd, onCancel }: {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [limitData, setLimitData] = useState<{ current: number; limit: number; plan: string } | null>(null)
 
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }))
 
@@ -186,16 +187,27 @@ function AddContactForm({ onAdd, onCancel }: {
     if (!form.name) return
     setLoading(true)
     setError('')
+    setLimitData(null)
     const res = await fetch('/api/contacts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form),
     })
     const data = await res.json()
-    if (!res.ok) { setError(data.error ?? 'Something went wrong'); setLoading(false); return }
+    if (!res.ok) {
+      if (data.limitReached === 'contacts') {
+        setLimitData({ current: data.current, limit: data.limit, plan: data.plan })
+      } else {
+        setError(data.error ?? 'Something went wrong')
+      }
+      setLoading(false)
+      return
+    }
     onAdd(data.contact)
     setLoading(false)
   }
+
+  const planLabel: Record<string, string> = { starter: 'Starter', growth: 'Growth', pro: 'Pro', free: 'Free' }
 
   return (
     <div className="card border-2 border-op-navy/20 mb-6">
@@ -239,6 +251,20 @@ function AddContactForm({ onAdd, onCancel }: {
             <p className="text-sm text-op-red">{error}</p>
           </div>
         )}
+        {limitData && (
+          <div className="sm:col-span-2 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+            <AlertTriangle size={15} className="text-op-amber shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-op-amber">
+                Contact limit reached — {limitData.current}/{limitData.limit} on your {planLabel[limitData.plan] ?? limitData.plan} plan
+              </p>
+              <p className="text-xs text-amber-700 mt-0.5">
+                <Link href="/pricing" className="underline font-semibold hover:text-amber-900">Upgrade your plan →</Link>
+                {' '}to add more contacts.
+              </p>
+            </div>
+          </div>
+        )}
         <div className="sm:col-span-2 flex gap-3">
           <button type="submit" disabled={loading} className="btn-primary text-sm px-5 py-2.5">
             {loading ? <Loader2 size={14} className="animate-spin" /> : 'Add Contact'}
@@ -246,6 +272,34 @@ function AddContactForm({ onAdd, onCancel }: {
           <button type="button" onClick={onCancel} className="btn-secondary text-sm px-5 py-2.5">Cancel</button>
         </div>
       </form>
+    </div>
+  )
+}
+
+// ── Limit Banner ─────────────────────────────────────────────────
+type LimitData = { limitReached: string; current: number; limit: number; plan: string }
+function LimitBanner({ data, onDismiss }: { data: LimitData; onDismiss: () => void }) {
+  const planLabel: Record<string, string> = { starter: 'Starter', growth: 'Growth', pro: 'Pro', free: 'Free' }
+  const label = planLabel[data.plan] ?? data.plan
+  const messages: Record<string, string> = {
+    contacts:      `Contact limit reached — ${data.current}/${data.limit} on your ${label} plan`,
+    emails:        `Monthly email limit reached on your ${label} plan`,
+    agent_actions: `Monthly agent action limit reached on your ${label} plan`,
+  }
+  const heading = messages[data.limitReached] ?? `Plan limit reached on your ${label} plan`
+  return (
+    <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-5">
+      <AlertTriangle size={16} className="text-op-amber shrink-0 mt-0.5" />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-op-amber">{heading}</p>
+        <p className="text-xs text-amber-700 mt-0.5">
+          <Link href="/pricing" className="underline font-semibold hover:text-amber-900">Upgrade your plan →</Link>
+          {' '}to unlock more capacity.
+        </p>
+      </div>
+      <button onClick={onDismiss} className="text-op-amber hover:text-amber-700 transition-colors shrink-0 mt-0.5">
+        <X size={15} />
+      </button>
     </div>
   )
 }
@@ -349,9 +403,12 @@ export default function ContactsPage() {
   const [view, setView]                   = useState<ViewMode>('list')
   const [importing, setImporting]         = useState(false)
   const [importResult, setImportResult]   = useState<{ count: number } | null>(null)
+  const [importError, setImportError]     = useState('')
   const [importFollowup, setImportFollowup] = useState(false)
   const [importReview, setImportReview]   = useState(false)
   const [showImportOptions, setShowImportOptions] = useState(false)
+  const [upgradeRequired, setUpgradeRequired] = useState<LimitData | null>(null)
+  const [sentError, setSentError]         = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -394,8 +451,8 @@ export default function ContactsPage() {
     if (!completeRes.ok) {
       setSatisfactionLoading(false)
       setCompletingContact(null)
-      setSentMsg(completeData.error ?? 'Failed to update contact')
-      setTimeout(() => setSentMsg(''), 5000)
+      setSentError(completeData.error ?? 'Failed to update contact')
+      setTimeout(() => setSentError(''), 5000)
       return
     }
 
@@ -425,7 +482,12 @@ export default function ContactsPage() {
           setSentMsg(`${contact.name} marked complete — review blocked, follow-up task created.`)
         }
       } else {
-        setSentMsg(`${contact.name} marked complete.${reviewData.error ? ` (${reviewData.error})` : ''}`)
+        if (reviewData.limitReached) {
+          setUpgradeRequired({ limitReached: reviewData.limitReached, current: reviewData.current, limit: reviewData.limit, plan: reviewData.plan })
+          setSentMsg(`${contact.name} marked complete.`)
+        } else {
+          setSentMsg(`${contact.name} marked complete.${reviewData.error ? ` (${reviewData.error})` : ''}`)
+        }
       }
     } else {
       setSentMsg(`${contact.name} marked as complete.`)
@@ -451,10 +513,13 @@ export default function ContactsPage() {
         c.id === contact.id ? { ...c, status: 'review_requested' } : c
       ))
       setSentMsg(`Review request sent to ${contact.name}!`)
+      setTimeout(() => setSentMsg(''), 5000)
+    } else if (data.limitReached) {
+      setUpgradeRequired({ limitReached: data.limitReached, current: data.current, limit: data.limit, plan: data.plan })
     } else {
-      setSentMsg(data.error ?? 'Failed to send review request')
+      setSentError(data.error ?? 'Failed to send review request')
+      setTimeout(() => setSentError(''), 5000)
     }
-    setTimeout(() => setSentMsg(''), 5000)
   }
 
   const handleCSVImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -476,10 +541,15 @@ export default function ContactsPage() {
       const supabase = createClient()
       const { data: fresh } = await supabase.from('contacts').select('*').order('created_at', { ascending: false })
       setContacts((fresh as Contact[]) ?? [])
+      setTimeout(() => setImportResult(null), 6000)
+    } else if (data.limitReached) {
+      setUpgradeRequired({ limitReached: data.limitReached, current: data.current, limit: data.limit, plan: data.plan })
+    } else {
+      setImportError(data.error ?? 'Import failed. Please check your CSV and try again.')
+      setTimeout(() => setImportError(''), 6000)
     }
     setImporting(false)
     if (fileRef.current) fileRef.current.value = ''
-    setTimeout(() => setImportResult(null), 6000)
   }
 
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
@@ -630,6 +700,11 @@ export default function ContactsPage() {
           </div>
         )}
 
+        {/* Plan limit banner */}
+        {upgradeRequired && (
+          <LimitBanner data={upgradeRequired} onDismiss={() => setUpgradeRequired(null)} />
+        )}
+
         {/* Import success */}
         {importResult && (
           <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-5 text-sm text-op-green font-semibold">
@@ -638,10 +713,26 @@ export default function ContactsPage() {
           </div>
         )}
 
-        {/* Action feedback */}
+        {/* Import error */}
+        {importError && (
+          <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-5 text-sm text-op-red font-semibold">
+            <AlertTriangle size={15} />
+            {importError}
+          </div>
+        )}
+
+        {/* Action success feedback */}
         {sentMsg && (
           <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-4 text-sm text-op-green font-semibold">
             {sentMsg}
+          </div>
+        )}
+
+        {/* Action error feedback */}
+        {sentError && (
+          <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-4 text-sm text-op-red font-semibold">
+            <AlertTriangle size={15} />
+            {sentError}
           </div>
         )}
 

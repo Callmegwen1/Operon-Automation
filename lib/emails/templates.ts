@@ -53,13 +53,12 @@ export function leadFollowup1({
       <tr><td style="background:#ffffff;border-radius:0 0 12px 12px;padding:36px;">
         <p style="margin:0 0 16px;color:#334155;font-size:15px;">Hi ${leadName},</p>
         <p style="margin:0 0 16px;color:#334155;font-size:15px;line-height:1.6;">
-          Just wanted to make sure your message to <strong>${businessName}</strong> didn't get missed.
-        </p>
-        <p style="margin:0 0 16px;color:#334155;font-size:15px;line-height:1.6;">
-          ${fromName} will be in touch with you shortly${service ? ` about ${service}` : ''}. In the meantime, feel free to reach us directly:
+          ${personalNote
+            ? personalNote
+            : `Just wanted to make sure your message to <strong>${businessName}</strong> didn't get missed. ${fromName} will be in touch with you shortly${service ? ` about ${service}` : ''}.`
+          }
         </p>
         ${phone ? `<p style="margin:0 0 16px;font-size:15px;font-weight:700;color:#102A43;">📞 ${phone}</p>` : ''}
-        ${personalNote ? `<p style="margin:0 0 16px;color:#334155;font-size:15px;line-height:1.6;padding-top:16px;border-top:1px solid #E5E7EB;">${personalNote}</p>` : ''}
         <p style="margin:0;color:#334155;font-size:15px;">Talk soon,<br><strong>${fromName}</strong><br><span style="color:#64748B;">${businessName}</span></p>
       </td></tr>`, unsubscribeUrl),
   }
@@ -463,6 +462,7 @@ export function intelligentLeadAlert({
   requiresOwnerAttention,
   contactId,
   appUrl,
+  sequenceActive = false,
 }: {
   businessName: string
   leadName: string
@@ -479,6 +479,7 @@ export function intelligentLeadAlert({
   requiresOwnerAttention: boolean
   contactId?: string
   appUrl?: string
+  sequenceActive?: boolean
 }): { subject: string; html: string } {
   const isUrgent = urgency === 'urgent' || urgency === 'high'
   const headerBg = isUrgent ? '#7F1D1D' : '#102A43'
@@ -532,6 +533,7 @@ export function intelligentLeadAlert({
           </td></tr>
         </table>` : ''}
 
+        ${sequenceActive ? `
         <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8FAFC;border-radius:8px;margin-bottom:24px;">
           <tr><td style="padding:14px 18px;">
             <p style="margin:0 0 4px;color:#64748B;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">System Status</p>
@@ -539,7 +541,7 @@ export function intelligentLeadAlert({
             <p style="margin:0 0 2px;color:#334155;font-size:13px;">📋 Playbook: <strong>${playbook.replace(/_/g, ' ')}</strong></p>
             <p style="margin:0;color:#334155;font-size:13px;">✉️ Follow-up sequence started automatically</p>
           </td></tr>
-        </table>
+        </table>` : ''}
 
         <div style="text-align:center;margin-bottom:${contactId && appUrl ? '20px' : '0'};">
           <a href="${dashboardUrl}" style="display:inline-block;background:#1A2E4A;color:#ffffff;font-size:14px;font-weight:700;padding:14px 32px;border-radius:8px;text-decoration:none;">

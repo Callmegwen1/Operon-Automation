@@ -76,7 +76,7 @@ const PLANS = [
       'Review Growth System',
       'Estimate Recovery Autopilot',
       'Customer Reactivation Autopilot',
-      'AI-powered Weekly Revenue Briefing',
+      'Weekly Revenue Briefing',
       'Scanner history & trend tracking',
       'Owner tasks + outcome tracking',
       'Integration health monitoring',
@@ -113,7 +113,7 @@ const PLANS = [
 const FAQ = [
   {
     q: 'What are "monthly agent actions"?',
-    a: 'An agent action is any automated step your system takes on your behalf — sending a follow-up email, scheduling a reminder, requesting a review, or firing a reactivation message. We use this term instead of technical jargon like API calls or AI calls. Most businesses on the Starter plan use well under 100 actions per month. Growth covers the majority of active small businesses.',
+    a: 'An agent action is any automated step your system takes on your behalf — sending a follow-up email, scheduling a reminder, requesting a review, or firing a reactivation message. We use this term instead of technical jargon like API calls. Most businesses on the Starter plan use well under 100 actions per month. Growth covers the majority of active small businesses.',
   },
   {
     q: 'Is the setup fee required?',
@@ -307,7 +307,7 @@ export default function PricingPage() {
             {[
               {
                 title: 'Lead Recovery Autopilot',
-                desc: 'AI classifies every new lead by urgency and intent, then fires a personalized follow-up sequence — within minutes.',
+                desc: 'Reads every new lead, gauges urgency and intent, and sends a personalized follow-up sequence — within minutes.',
                 color: 'border-op-navy',
                 dot: 'bg-op-navy',
               },

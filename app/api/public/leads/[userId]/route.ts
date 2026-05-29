@@ -160,6 +160,7 @@ async function processLeadAsync(ctx: LeadContext): Promise<void> {
       requiresOwnerAttention: classification.requiresOwnerAttention,
       contactId:              contact.id,
       appUrl,
+      sequenceActive:         true,
     })
 
     const e1ScheduledAt = minutesFromNow(playbook.email1DelayMinutes)
