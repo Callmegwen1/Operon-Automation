@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft, Loader2, Save, Star, Mail, Trash2, Bot, BarChart2,
-  CheckCircle2, MessageSquare, Smile, Meh, Frown, X, FileText,
+  CheckCircle2, AlertTriangle, MessageSquare, Smile, Meh, Frown, X, FileText,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -250,6 +250,8 @@ export default function ContactDetailPage() {
   const [showEstimateModal, setShowEstimateModal] = useState(false)
   const [estimateLoading, setEstimateLoading] = useState(false)
   const [actionMsg, setActionMsg]   = useState('')
+  const [actionIsError, setActionIsError] = useState(false)
+  const [reviewIsError, setReviewIsError] = useState(false)
   const [status, setStatus]         = useState('')
   const [notes, setNotes]           = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -309,8 +311,12 @@ export default function ContactDetailPage() {
     if (res.ok) {
       setContact((c) => c ? { ...c, status: 'review_requested' } : c)
       setStatus('review_requested')
+      setReviewIsError(false)
+      setReviewMsg('Review request sent — 3-email sequence started!')
+    } else {
+      setReviewIsError(true)
+      setReviewMsg(data.error ?? 'Failed to send')
     }
-    setReviewMsg(res.ok ? 'Review request sent — 3-email sequence started!' : (data.error ?? 'Failed to send'))
     setTimeout(() => setReviewMsg(''), 5000)
   }
 
@@ -335,6 +341,7 @@ export default function ContactDetailPage() {
     if (!completeRes.ok) {
       setSatisfactionLoading(false)
       setShowSatisfactionModal(false)
+      setActionIsError(true)
       setActionMsg(completeData.error ?? 'Failed to update contact')
       setTimeout(() => setActionMsg(''), 5000)
       return
@@ -352,6 +359,7 @@ export default function ContactDetailPage() {
       const reviewData = await reviewRes.json()
 
       if (reviewRes.ok) {
+        setActionIsError(false)
         if (reviewData.action === 'review_sequence_started') {
           setContact((c) => c ? { ...c, status: 'review_requested' } : c)
           setStatus('review_requested')
@@ -364,9 +372,11 @@ export default function ContactDetailPage() {
           setActionMsg('Marked complete — review blocked, follow-up task created.')
         }
       } else {
-        setActionMsg(`Marked complete.${reviewData.error ? ` (${reviewData.error})` : ''}`)
+        setActionIsError(true)
+        setActionMsg(`Marked complete, but review failed.${reviewData.error ? ` (${reviewData.error})` : ''}`)
       }
     } else {
+      setActionIsError(false)
       setActionMsg('Contact marked as complete.')
     }
 
@@ -388,8 +398,10 @@ export default function ContactDetailPage() {
     if (res.ok) {
       setContact((c) => c ? { ...c, status: 'contacted' } : c)
       setStatus('contacted')
+      setActionIsError(false)
       setActionMsg('Estimate sent — 3-email follow-up sequence started.')
     } else {
+      setActionIsError(true)
       setActionMsg(data.error ?? 'Failed to send estimate')
     }
     setTimeout(() => setActionMsg(''), 7000)
@@ -501,14 +513,24 @@ export default function ContactDetailPage() {
         </div>
 
         {reviewMsg && (
-          <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-4 text-sm text-op-green font-semibold">
+          <div className={`rounded-xl px-4 py-3 mb-4 text-sm font-semibold flex items-center gap-2 ${
+            reviewIsError
+              ? 'bg-red-50 border border-red-200 text-op-red'
+              : 'bg-green-50 border border-green-200 text-op-green'
+          }`}>
+            {reviewIsError ? <AlertTriangle size={14} /> : <CheckCircle2 size={14} />}
             {reviewMsg}
           </div>
         )}
 
         {actionMsg && (
-          <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-4 text-sm text-op-green font-semibold flex items-center gap-2">
-            <CheckCircle2 size={14} /> {actionMsg}
+          <div className={`rounded-xl px-4 py-3 mb-4 text-sm font-semibold flex items-center gap-2 ${
+            actionIsError
+              ? 'bg-red-50 border border-red-200 text-op-red'
+              : 'bg-green-50 border border-green-200 text-op-green'
+          }`}>
+            {actionIsError ? <AlertTriangle size={14} /> : <CheckCircle2 size={14} />}
+            {actionMsg}
           </div>
         )}
 
