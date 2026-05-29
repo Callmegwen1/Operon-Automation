@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
           currentPeriodEnd: (sub as { current_period_end?: number }).current_period_end ?? null,
         })
 
-        // Internal analytics — purchase event (no PII, user_id is safe UUID)
+        // Internal analytics — non-blocking
         try {
           await supabase.from('analytics_events').insert({
             event_name:   'purchase_completed',
@@ -92,12 +92,11 @@ export async function POST(req: NextRequest) {
         break
       }
 
-      // ── Plan change or renewal ─────────────────────────────────
+      // ── Plan change, renewal, or trial conversion ──────────────
       case 'customer.subscription.updated': {
         const sub = event.data.object as Stripe.Subscription & { current_period_end: number }
         const customerId = sub.customer as string
 
-        // Look up user_id from existing subscription record
         const { data: existing } = await supabase
           .from('subscriptions')
           .select('user_id')
@@ -110,11 +109,11 @@ export async function POST(req: NextRequest) {
         const plan    = PLAN_FROM_PRICE[priceId] ?? 'starter'
 
         await upsertSubscription(supabase, {
-          userId:          existing.user_id,
+          userId:           existing.user_id,
           customerId,
-          subscriptionId:  sub.id,
+          subscriptionId:   sub.id,
           plan,
-          status:          sub.status,
+          status:           sub.status,
           currentPeriodEnd: sub.current_period_end ?? null,
         })
         break
@@ -130,7 +129,7 @@ export async function POST(req: NextRequest) {
         break
       }
 
-      // ── Payment failure ────────────────────────────────────────
+      // ── Payment failure → mark past_due ───────────────────────
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice
         const subId   = typeof invoice.subscription === 'string' ? invoice.subscription : null
@@ -142,9 +141,25 @@ export async function POST(req: NextRequest) {
         }
         break
       }
+
+      // ── Payment success → clear past_due back to active ───────
+      case 'invoice.payment_succeeded': {
+        const invoice = event.data.object as Stripe.Invoice
+        const subId   = typeof invoice.subscription === 'string' ? invoice.subscription : null
+        // Only update if billing_reason is not 'subscription_create' (that's handled by checkout.session.completed)
+        if (subId && (invoice as { billing_reason?: string }).billing_reason !== 'subscription_create') {
+          await supabase
+            .from('subscriptions')
+            .update({ status: 'active', updated_at: new Date().toISOString() })
+            .eq('stripe_subscription_id', subId)
+        }
+        break
+      }
     }
   } catch (err) {
+    // Return 500 so Stripe retries the event — all our writes are idempotent
     console.error(`Stripe webhook handler error for ${event.type}:`, err)
+    return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 })
   }
 
   return NextResponse.json({ received: true })

@@ -72,7 +72,7 @@ const PLANS = [
     primary: true,
     setupNote: { label: 'Optional assisted setup', price: '$499 one-time' },
     features: [
-      '14-day free trial — no credit card required',
+      '14-day free trial included',
       'Lead Recovery Autopilot',
       'Review Growth System',
       'Estimate Recovery Autopilot',
@@ -445,7 +445,7 @@ export default function PricingPage() {
               className="inline-flex items-center justify-center gap-2 bg-transparent text-white font-semibold border border-white/30 px-8 py-4 rounded-lg hover:bg-white/10 transition-colors text-sm"
             />
           </div>
-          <p className="mt-6 text-white/40 text-xs">14-day free trial on Growth. No contracts. Cancel anytime.</p>
+          <p className="mt-6 text-white/40 text-xs">14-day free trial on Growth. Card required, not charged until day 15. Cancel anytime.</p>
         </div>
       </section>
     </>
