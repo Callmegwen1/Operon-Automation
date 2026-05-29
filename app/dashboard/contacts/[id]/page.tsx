@@ -234,6 +234,85 @@ function EstimateModal({ contactName, onConfirm, onCancel, loading }: {
   )
 }
 
+// ── What Happened Modal ───────────────────────────────────────
+function WhatHappenedModal({ contact, estimateEnabled, onClose, onMarkDone, onEstimate, onReview }: {
+  contact: Contact
+  estimateEnabled: boolean
+  onClose: () => void
+  onMarkDone: (status: 'completed' | 'won') => void
+  onEstimate: () => void
+  onReview: () => void
+}) {
+  const isLead = contact.type === 'lead'
+
+  const options = [
+    {
+      label: 'Job completed',
+      description: "Mark it done and send a review request if the customer is happy.",
+      icon: <CheckCircle2 size={18} className="text-op-green" />,
+      border: 'border-op-border hover:border-op-green',
+      action: () => onMarkDone('completed'),
+    },
+    {
+      label: 'Deal closed — we won it',
+      description: "Log it as a win. You'll have a chance to request a review.",
+      icon: <Star size={18} className="text-op-amber" />,
+      border: 'border-op-border hover:border-op-amber',
+      action: () => onMarkDone('won'),
+    },
+    ...(isLead && estimateEnabled ? [{
+      label: 'Send them an estimate',
+      description: "Email the quote and start a 3-email follow-up automatically.",
+      icon: <FileText size={18} className="text-op-navy" />,
+      border: 'border-op-border hover:border-op-navy',
+      action: () => { onClose(); onEstimate() },
+    }] : []),
+    ...(contact.email ? [{
+      label: 'Request a review',
+      description: "Send a direct review request email to this contact.",
+      icon: <Star size={18} className="text-op-amber" />,
+      border: 'border-op-border hover:border-op-amber',
+      action: () => { onClose(); onReview() },
+    }] : []),
+  ]
+
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
+        <div className="flex items-start justify-between p-5 pb-4 border-b border-op-border">
+          <div>
+            <h2 className="font-bold text-op-navy font-manrope">What happened with {contact.name}?</h2>
+            <p className="text-xs text-op-muted mt-0.5">Pick what fits — we'll update everything automatically.</p>
+          </div>
+          <button onClick={onClose} className="text-op-muted hover:text-op-navy transition-colors ml-3 shrink-0">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="p-4 flex flex-col gap-2.5">
+          {options.map((opt) => (
+            <button
+              key={opt.label}
+              onClick={opt.action}
+              className={`flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all ${opt.border}`}
+            >
+              <span className="shrink-0 mt-0.5">{opt.icon}</span>
+              <div>
+                <p className="text-sm font-semibold text-op-navy">{opt.label}</p>
+                <p className="text-xs text-op-muted mt-0.5">{opt.description}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+        <div className="px-4 pb-4">
+          <button onClick={onClose} className="btn-secondary w-full text-sm justify-center">
+            Nothing yet — go back
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ContactDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
@@ -256,6 +335,7 @@ export default function ContactDetailPage() {
   const [notes, setNotes]           = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [estimateAgentEnabled, setEstimateAgentEnabled] = useState(false)
+  const [showWhatHappened, setShowWhatHappened] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -423,6 +503,16 @@ export default function ContactDetailPage() {
 
   return (
     <main className="flex-1 p-6 md:p-8 overflow-auto">
+      {showWhatHappened && contact && (
+        <WhatHappenedModal
+          contact={contact}
+          estimateEnabled={estimateAgentEnabled}
+          onClose={() => setShowWhatHappened(false)}
+          onMarkDone={(status) => { setShowWhatHappened(false); handleMarkDone(status) }}
+          onEstimate={() => setShowEstimateModal(true)}
+          onReview={() => { setShowWhatHappened(false); handleReviewRequest() }}
+        />
+      )}
       {showSatisfactionModal && contact && (
         <SatisfactionModal
           contactName={contact.name}
@@ -466,39 +556,22 @@ export default function ContactDetailPage() {
               </span>
             </div>
           </div>
-          <div className="flex gap-2 shrink-0 flex-wrap">
+          <div className="flex gap-2 shrink-0 flex-wrap items-start">
             {contact.email && (
               <a href={`mailto:${contact.email}`} className="btn-secondary text-xs px-3 py-2 flex items-center gap-1.5">
                 <Mail size={12} /> Email
               </a>
             )}
-            {/* Send Estimate — available for leads when estimate agent is enabled */}
-            {contact.email && estimateAgentEnabled && contact.type === 'lead' && (
+            {/* Single action button — replaces the previous multi-button cluster */}
+            {!isDone && (
               <button
-                onClick={() => setShowEstimateModal(true)}
-                className="btn-secondary text-xs px-3 py-2 flex items-center gap-1.5"
+                onClick={() => setShowWhatHappened(true)}
+                className="btn-primary text-xs px-3 py-2 flex items-center gap-1.5"
               >
-                <FileText size={12} /> Send Estimate
+                <CheckCircle2 size={12} /> What happened? →
               </button>
             )}
-            {/* Mark Done / Won Deal — available until job is finished */}
-            {!isDone && (
-              <div className="flex flex-col items-end gap-0.5">
-                <button
-                  onClick={() => handleMarkDone('completed')}
-                  className="btn-primary text-xs px-3 py-2 flex items-center gap-1.5"
-                >
-                  <CheckCircle2 size={12} /> Mark Done
-                </button>
-                <button
-                  onClick={() => handleMarkDone('won')}
-                  className="text-[10px] text-op-muted hover:text-op-green transition-colors px-1"
-                >
-                  Won deal ↑
-                </button>
-              </div>
-            )}
-            {/* Manual review request for completed contacts that haven't been asked yet */}
+            {/* Review request for done contacts not yet reviewed */}
             {contact.email && isDone && !isReviewStatus && (
               <button
                 onClick={handleReviewRequest}

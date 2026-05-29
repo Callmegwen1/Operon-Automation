@@ -186,12 +186,13 @@ function TasksPanel({ tasks, onDismiss }: { tasks: AgentTask[]; onDismiss: (id: 
 }
 
 // ── Agent Card ────────────────────────────────────────────────
-function AgentCard({ meta, row, activity, userId, industry, onUpdate, reviewMetrics }: {
+function AgentCard({ meta, row, activity, userId, industry, isNext, onUpdate, reviewMetrics }: {
   meta: typeof SYSTEM_META[number]
   row: AgentRow
   activity: ActivityEntry[]
   userId: string
   industry: string
+  isNext: boolean
   onUpdate: (type: AgentType, updates: Partial<AgentRow>) => void
   reviewMetrics?: ReviewMetrics | null
 }) {
@@ -289,7 +290,7 @@ function AgentCard({ meta, row, activity, userId, industry, onUpdate, reviewMetr
 
   return (
     <>
-      <div className={`card border-2 transition-all ${row.enabled ? 'border-op-navy/20' : 'border-op-border'}`}>
+      <div className={`card border-2 transition-all ${row.enabled ? 'border-op-navy/20' : isNext ? 'border-op-navy/40 bg-op-navy/[0.02]' : 'border-op-border'}`}>
         {/* Header */}
         <div className="flex items-start gap-4">
           <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${row.enabled ? meta.activeBg : 'bg-op-bg'}`}>
@@ -313,6 +314,11 @@ function AgentCard({ meta, row, activity, userId, industry, onUpdate, reviewMetr
                   {industry}
                 </span>
               )}
+              {isNext && !row.enabled && (
+                <span className="text-[10px] font-bold text-op-green bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
+                  Start here →
+                </span>
+              )}
             </div>
             <p className={`text-xs font-semibold mt-0.5 ${meta.color}`}>{meta.tagline}</p>
             <p className="text-sm text-op-muted mt-1 leading-relaxed">{meta.description}</p>
@@ -324,9 +330,9 @@ function AgentCard({ meta, row, activity, userId, industry, onUpdate, reviewMetr
         {!row.enabled && (
           <button
             onClick={() => setShowWizard(true)}
-            className="btn-primary w-full mt-5 justify-center text-sm"
+            className={`w-full mt-5 justify-center text-sm ${isNext ? 'btn-primary' : 'btn-secondary'}`}
           >
-            <Zap size={15} /> Set Up &amp; Activate
+            <Zap size={15} /> {isNext ? 'Set Up Now →' : 'Set Up & Activate'}
           </button>
         )}
 
@@ -652,26 +658,56 @@ export default function AgentsPage() {
             </span>
           )}
         </div>
-        <p className="text-sm text-op-muted mb-8">
+        <p className="text-sm text-op-muted mb-5">
           Pre-built revenue recovery systems{industry ? ` tuned for ${industry}` : ''}. Activate one and it runs itself.
         </p>
+
+        {/* Progress bar */}
+        {(() => {
+          const activeCount = SYSTEM_META.filter((m) => agents[m.type].enabled).length
+          const total = SYSTEM_META.length
+          return (
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-op-navy">
+                  {activeCount} of {total} revenue systems active
+                </span>
+                {activeCount === total && (
+                  <span className="text-xs font-bold text-op-green flex items-center gap-1">
+                    <CheckCircle2 size={12} /> Fully automated
+                  </span>
+                )}
+              </div>
+              <div className="w-full h-1.5 bg-op-border rounded-full">
+                <div
+                  className="h-1.5 rounded-full bg-op-navy transition-all duration-700"
+                  style={{ width: `${(activeCount / total) * 100}%` }}
+                />
+              </div>
+            </div>
+          )
+        })()}
 
         {/* Tasks panel */}
         <TasksPanel tasks={tasks} onDismiss={handleDismissTask} />
 
         <div className="flex flex-col gap-5">
-          {SYSTEM_META.map((meta) => (
-            <AgentCard
-              key={meta.type}
-              meta={meta}
-              row={agents[meta.type]}
-              activity={activityByType[meta.type] ?? []}
-              userId={userId}
-              industry={industry}
-              onUpdate={handleUpdate}
-              reviewMetrics={meta.type === 'review_request' ? reviewMetrics : null}
-            />
-          ))}
+          {(() => {
+            const firstInactiveType = SYSTEM_META.find((m) => !agents[m.type].enabled)?.type ?? null
+            return SYSTEM_META.map((meta) => (
+              <AgentCard
+                key={meta.type}
+                meta={meta}
+                row={agents[meta.type]}
+                activity={activityByType[meta.type] ?? []}
+                userId={userId}
+                industry={industry}
+                isNext={meta.type === firstInactiveType}
+                onUpdate={handleUpdate}
+                reviewMetrics={meta.type === 'review_request' ? reviewMetrics : null}
+              />
+            ))
+          })()}
 
           <div className="mt-4">
             <p className="text-xs font-semibold text-op-muted uppercase tracking-wide mb-4">Coming Soon</p>

@@ -60,6 +60,9 @@ export default async function DashboardPage({
   const sevenDaysAgo  = new Date(Date.now() - 7  * 24 * 60 * 60 * 1000).toISOString()
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
 
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+  const threeDaysAgo       = new Date(Date.now() - 3  * 24 * 60 * 60 * 1000).toISOString()
+
   const [
     { data: scans },
     { data: business },
@@ -69,6 +72,8 @@ export default async function DashboardPage({
     { count: leadsThisWeek },
     { count: followupsActive },
     { count: reviewsSent },
+    { data: newStaleLeads },
+    { data: coldContacts },
   ] = await Promise.all([
     supabase.from('scans').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(2),
     supabase.from('businesses').select('*').eq('user_id', user.id).single(),
@@ -78,6 +83,10 @@ export default async function DashboardPage({
     supabase.from('contacts').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('type', 'lead').gt('created_at', sevenDaysAgo),
     supabase.from('contacts').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'contacted'),
     supabase.from('agent_activity').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('agent_type', 'review_request').gt('created_at', thirtyDaysAgo),
+    // New leads that came in over 24h ago with no follow-up yet
+    supabase.from('contacts').select('id, name, email, created_at').eq('user_id', user.id).eq('type', 'lead').eq('status', 'new').lt('created_at', twentyFourHoursAgo).order('created_at', { ascending: false }).limit(5),
+    // Leads still 'contacted' but no update in 3+ days
+    supabase.from('contacts').select('id, name, email, updated_at').eq('user_id', user.id).eq('status', 'contacted').lt('updated_at', threeDaysAgo).order('updated_at', { ascending: false }).limit(5),
   ])
 
   const scan     = scans?.[0] ?? null
@@ -194,6 +203,47 @@ export default async function DashboardPage({
         </div>
       )}
 
+      {/* Needs attention today */}
+      {((newStaleLeads && newStaleLeads.length > 0) || (coldContacts && coldContacts.length > 0)) && (
+        <div className="card border-2 border-op-amber/30 bg-amber-50/20 mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="w-2 h-2 rounded-full bg-op-amber animate-pulse" />
+            <h2 className="text-sm font-bold text-op-navy">Needs your attention</h2>
+          </div>
+          <div className="flex flex-col gap-2">
+            {(newStaleLeads ?? []).map((c: { id: string; name: string; email: string | null; created_at: string }) => (
+              <Link
+                key={c.id}
+                href={`/dashboard/contacts/${c.id}`}
+                className="flex items-center justify-between gap-3 bg-white rounded-xl border border-op-border px-4 py-3 hover:border-op-navy/40 transition-all"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-op-navy truncate">{c.name}</p>
+                  <p className="text-xs text-op-amber font-medium">New lead — no follow-up yet</p>
+                </div>
+                <ArrowRight size={14} className="text-op-muted shrink-0" />
+              </Link>
+            ))}
+            {(coldContacts ?? []).map((c: { id: string; name: string; email: string | null; updated_at: string }) => {
+              const days = Math.floor((Date.now() - new Date(c.updated_at).getTime()) / 86400000)
+              return (
+                <Link
+                  key={c.id}
+                  href={`/dashboard/contacts/${c.id}`}
+                  className="flex items-center justify-between gap-3 bg-white rounded-xl border border-op-border px-4 py-3 hover:border-op-navy/40 transition-all"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-op-navy truncate">{c.name}</p>
+                    <p className="text-xs text-op-muted">Contacted {days}d ago — no update</p>
+                  </div>
+                  <ArrowRight size={14} className="text-op-muted shrink-0" />
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Re-scan reminder */}
       {showRescanBanner && (
         <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-6 flex-wrap">
@@ -221,7 +271,7 @@ export default async function DashboardPage({
             {([
               { done: hasProfile, label: 'Complete your business profile', href: '/dashboard/profile', icon: User },
               { done: hasScan,    label: 'Run your Revenue Leak Scan',     href: '/scanner',           icon: Zap  },
-              { done: hasAgent,   label: 'Activate an autopilot agent',    href: '/dashboard/agents',  icon: Bot  },
+              { done: hasAgent,   label: 'Activate an autopilot agent',    href: '/dashboard/setup',   icon: Bot  },
             ] as { done: boolean; label: string; href: string; icon: React.ElementType }[]).map(({ done, label, href, icon: Icon }) => (
               <Link
                 key={label}
@@ -426,7 +476,7 @@ export default async function DashboardPage({
               <Bot size={24} className="text-op-muted mx-auto mb-2" />
               <p className="text-sm font-semibold text-op-navy mb-1">No activity yet</p>
               <p className="text-xs text-op-muted mb-3">Activate an agent to start automating.</p>
-              <Link href="/dashboard/agents" className="btn-primary text-xs px-4 py-2 mx-auto">
+              <Link href="/dashboard/setup" className="btn-primary text-xs px-4 py-2 mx-auto">
                 Set Up Agents
               </Link>
             </div>

@@ -1251,6 +1251,59 @@ export default function ResultsDisplay() {
         )}
       </div>
 
+      {/* Activate These Systems */}
+      {(() => {
+        const SYSTEM_META: Record<string, { icon: React.ElementType; description: string }> = {
+          'Lead Recovery Autopilot':         { icon: Phone,    description: 'Follows up with every new lead within minutes — automatically.' },
+          'Review Growth System':            { icon: Star,     description: 'Requests reviews after completed jobs without you lifting a finger.' },
+          'Estimate Recovery Autopilot':     { icon: FileText, description: 'Follows up on unsent or viewed estimates that never became jobs.' },
+          'Customer Reactivation Autopilot': { icon: Users,    description: 'Re-engages customers who haven\'t booked in 60+ days.' },
+          'Lead Capture System':             { icon: Globe,    description: 'Captures and routes leads from your website 24/7.' },
+        }
+        const systems = Array.from(
+          new Set(majorLeaks.map((l) => LEAK_TO_SYSTEM[l.leakType]?.name).filter(Boolean))
+        ) as string[]
+        if (systems.length === 0) return null
+        return (
+          <div className="card border-2 border-op-navy/25 mb-8 print:hidden">
+            <div className="flex items-center gap-2 mb-1">
+              <Zap size={15} className="text-op-navy" />
+              <h3 className="font-bold text-op-navy text-sm">Your scan identified {systems.length} revenue {systems.length === 1 ? 'system' : 'systems'} to activate</h3>
+            </div>
+            <p className="text-xs text-op-muted mb-4">
+              These are pre-built{scan.industry ? ` for ${scan.industry}` : ''} and go live in under 5 minutes.
+            </p>
+            <div className="space-y-2 mb-5">
+              {systems.map((name) => {
+                const meta = SYSTEM_META[name]
+                const Icon = meta?.icon ?? CheckCircle2
+                return (
+                  <div key={name} className="flex items-start gap-3 p-3 bg-op-bg rounded-xl border border-op-border">
+                    <Icon size={15} className="text-op-navy mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold text-op-navy leading-tight">{name}</p>
+                      {meta && <p className="text-xs text-op-muted mt-0.5">{meta.description}</p>}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            {isLoggedIn ? (
+              <Link href="/dashboard/agents" className="btn-primary w-full justify-center">
+                Activate in Your Dashboard <ArrowRight size={16} />
+              </Link>
+            ) : (
+              <div className="space-y-2">
+                <Link href="/login?redirect=/dashboard/agents" className="btn-primary w-full justify-center">
+                  Sign Up Free to Activate <ArrowRight size={16} />
+                </Link>
+                <p className="text-center text-xs text-op-muted">No credit card required · Takes 2 minutes</p>
+              </div>
+            )}
+          </div>
+        )
+      })()}
+
       {/* CTA */}
       <div className="flex flex-col sm:flex-row gap-3 mb-5 print:hidden">
         <Link href="/revenue-autopilot" className="btn-primary flex-1 justify-center py-4">

@@ -31,6 +31,7 @@ interface WizardProps {
   initialConfig: AgentConfig
   onComplete: (config: AgentConfig) => void
   onClose: () => void
+  inline?: boolean
 }
 
 // ─── shared helpers ────────────────────────────────────────────────────────
@@ -1448,38 +1449,62 @@ function ReactivationWizard({ userId, initialConfig, onComplete }: {
 
 // ─── Main export ───────────────────────────────────────────────────────────
 
-export default function AgentSetupWizard({ type, userId, initialConfig, onComplete, onClose }: WizardProps) {
+function WizardHeader({ type, onClose, hideClose }: { type: AgentType; onClose: () => void; hideClose?: boolean }) {
+  return (
+    <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-op-border shrink-0">
+      <div className="flex items-center gap-3">
+        {type === 'lead_followup'      && <Mail size={18} className="text-op-navy" />}
+        {type === 'review_request'     && <Star size={18} className="text-op-amber" />}
+        {type === 'weekly_report'      && <BarChart2 size={18} className="text-op-green" />}
+        {type === 'estimate_followup'  && <FileText size={18} className="text-op-navy" />}
+        {type === 'reactivation'       && <Users size={18} className="text-purple-600" />}
+        <p className="text-sm font-bold text-op-navy">
+          {type === 'lead_followup'     && 'Set up Lead Follow-Up Agent'}
+          {type === 'review_request'    && 'Set up Review Request Agent'}
+          {type === 'weekly_report'     && 'Set up Weekly Owner Report'}
+          {type === 'estimate_followup' && 'Set up Estimate Recovery'}
+          {type === 'reactivation'      && 'Set up Customer Reactivation'}
+        </p>
+      </div>
+      {!hideClose && (
+        <button onClick={onClose} className="text-op-muted hover:text-op-navy transition-colors">
+          <X size={18} />
+        </button>
+      )}
+    </div>
+  )
+}
+
+function WizardBody({ type, userId, initialConfig, onComplete }: Omit<WizardProps, 'onClose' | 'inline'>) {
+  return (
+    <>
+      {type === 'lead_followup'     && <LeadFollowupWizard userId={userId} initialConfig={initialConfig} onComplete={onComplete} />}
+      {type === 'review_request'    && <ReviewRequestWizard userId={userId} initialConfig={initialConfig} onComplete={onComplete} />}
+      {type === 'weekly_report'     && <WeeklyReportWizard userId={userId} initialConfig={initialConfig} onComplete={onComplete} />}
+      {type === 'estimate_followup' && <EstimateRecoveryWizard userId={userId} initialConfig={initialConfig} onComplete={onComplete} />}
+      {type === 'reactivation'      && <ReactivationWizard userId={userId} initialConfig={initialConfig} onComplete={onComplete} />}
+    </>
+  )
+}
+
+export default function AgentSetupWizard({ type, userId, initialConfig, onComplete, onClose, inline }: WizardProps) {
+  if (inline) {
+    return (
+      <div className="bg-white rounded-2xl w-full border border-op-border shadow-sm flex flex-col">
+        <WizardHeader type={type} onClose={onClose} hideClose />
+        <div className="p-6 flex-1">
+          <WizardBody type={type} userId={userId} initialConfig={initialConfig} onComplete={onComplete} />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
-        {/* Modal header */}
-        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-op-border shrink-0">
-          <div className="flex items-center gap-3">
-            {type === 'lead_followup'      && <Mail size={18} className="text-op-navy" />}
-            {type === 'review_request'     && <Star size={18} className="text-op-amber" />}
-            {type === 'weekly_report'      && <BarChart2 size={18} className="text-op-green" />}
-            {type === 'estimate_followup'  && <FileText size={18} className="text-op-navy" />}
-            {type === 'reactivation'       && <Users size={18} className="text-purple-600" />}
-            <p className="text-sm font-bold text-op-navy">
-              {type === 'lead_followup'     && 'Set up Lead Follow-Up Agent'}
-              {type === 'review_request'    && 'Set up Review Request Agent'}
-              {type === 'weekly_report'     && 'Set up Weekly Owner Report'}
-              {type === 'estimate_followup' && 'Set up Estimate Recovery'}
-              {type === 'reactivation'      && 'Set up Customer Reactivation'}
-            </p>
-          </div>
-          <button onClick={onClose} className="text-op-muted hover:text-op-navy transition-colors">
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* Wizard content */}
+        <WizardHeader type={type} onClose={onClose} />
         <div className="p-6 flex-1">
-          {type === 'lead_followup'     && <LeadFollowupWizard userId={userId} initialConfig={initialConfig} onComplete={onComplete} />}
-          {type === 'review_request'    && <ReviewRequestWizard userId={userId} initialConfig={initialConfig} onComplete={onComplete} />}
-          {type === 'weekly_report'     && <WeeklyReportWizard userId={userId} initialConfig={initialConfig} onComplete={onComplete} />}
-          {type === 'estimate_followup' && <EstimateRecoveryWizard userId={userId} initialConfig={initialConfig} onComplete={onComplete} />}
-          {type === 'reactivation'      && <ReactivationWizard userId={userId} initialConfig={initialConfig} onComplete={onComplete} />}
+          <WizardBody type={type} userId={userId} initialConfig={initialConfig} onComplete={onComplete} />
         </div>
       </div>
     </div>
