@@ -17,7 +17,7 @@ const industries = [
     icon: Home,
     name: 'Home Services',
     leaks: ['Missed calls from homeowners', 'Estimates sent, never followed up', 'No review system after jobs', 'Unpaid invoices sitting open', 'No customer reactivation for repeat jobs'],
-    how: 'Operon auto-responds to missed calls, follows up on quotes, collects reviews after each job, sends invoice reminders, and reactivates past homeowners.',
+    how: 'Operon auto-responds to missed calls, follows up on quotes, collects reviews after each job, and reactivates past homeowners.',
   },
   {
     icon: Sparkles,
@@ -59,7 +59,7 @@ const industries = [
     icon: Building2,
     name: 'Contractors',
     leaks: ['Estimates sitting without follow-up', 'Seasonal demand not captured', 'No referral system', 'Poor Google review presence', 'Unpaid invoices dragging on'],
-    how: 'Multi-touch estimate follow-up, review collection after project completion, invoice reminders, and referral request automation.',
+    how: 'Multi-touch estimate follow-up, review collection after project completion, and referral request automation.',
   },
   {
     icon: TrendingUp,

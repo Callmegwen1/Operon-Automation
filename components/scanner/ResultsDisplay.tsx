@@ -771,7 +771,7 @@ export default function ResultsDisplay() {
     ? `We scanned ${scan.businessName ? `${scan.businessName}'s website` : 'your website'} live and found`
     : 'Based on your answers, we identified'
   const scanSummarySuffix = websiteAnalysis?.accessible
-    ? 'that may be costing you customers each month.'
+    ? 'worth reviewing.'
     : 'worth reviewing.'
 
   return (
@@ -917,11 +917,13 @@ export default function ResultsDisplay() {
             <Zap size={16} className="text-white" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-op-navy">Save your results and track your fixes</p>
-            <p className="text-xs text-op-muted mt-0.5">Create a free account to access your Revenue Autopilot dashboard.</p>
+            <p className="text-sm font-semibold text-op-navy">
+              Save{scan.businessName ? ` ${scan.businessName}'s` : ' your'} results and activate fixes
+            </p>
+            <p className="text-xs text-op-muted mt-0.5">Create a free account — your scan is saved automatically.</p>
           </div>
           <Link href={`/signup${id ? `?fromScan=${id}` : ''}`} className="btn-primary text-xs px-4 py-2 shrink-0">
-            Create Free Account <ArrowRight size={13} />
+            Save & Activate <ArrowRight size={13} />
           </Link>
         </div>
       ) : null}
@@ -930,19 +932,19 @@ export default function ResultsDisplay() {
       {confidence !== 'low' && totalOpportunity && totalOpportunity.low > 0 && (
         <div className="card mb-6 border-2 border-op-amber/30 bg-amber-50/30">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <TrendingDown size={16} className="text-op-amber" />
-            <h3 className="font-bold font-manrope text-op-navy">Estimated Monthly Revenue at Risk</h3>
+            <TrendingUp size={16} className="text-op-green" />
+            <h3 className="font-bold font-manrope text-op-navy">Estimated Recovery Opportunity</h3>
             <span className={`ml-auto text-xs px-2.5 py-0.5 rounded-full font-semibold ${confidence === 'high' ? 'bg-green-50 text-op-green border border-green-200' : 'bg-amber-50 text-op-amber border border-amber-200'}`}>
               {confidence === 'high' ? 'Based on your inputs' : 'Based on industry averages'}
             </span>
           </div>
-          <p className="text-3xl font-extrabold font-manrope text-op-red mb-2">
+          <p className="text-3xl font-extrabold font-manrope text-op-navy mb-2">
             {formatImpact(totalOpportunity)}
           </p>
           <p className="text-xs text-op-muted leading-relaxed">
-            Estimated combined monthly revenue slipping through your {majorLeaks.length} open leaks,
+            Estimated monthly recovery opportunity across your {majorLeaks.length} open leaks,
             based on {avgJobValue > 0 ? `your $${avgJobValue.toLocaleString()} average job value` : 'industry averages'} and {scan.industry} close rates.
-            Fixing even one leak meaningfully moves the number.
+            Addressing even one leak can meaningfully move the number.
           </p>
           <p className="text-xs text-op-muted/70 mt-2 italic">
             Estimates are based on your answers, visible website signals, and industry averages. They show opportunity size, not guaranteed revenue recovered.
@@ -1289,13 +1291,16 @@ export default function ResultsDisplay() {
               })}
             </div>
             {isLoggedIn ? (
-              <Link href="/dashboard/agents" className="btn-primary w-full justify-center">
-                Activate in Your Dashboard <ArrowRight size={16} />
+              <Link href="/dashboard/setup" className="btn-primary w-full justify-center">
+                Set Up These Systems <ArrowRight size={16} />
               </Link>
             ) : (
               <div className="space-y-2">
-                <Link href="/login?redirect=/dashboard/agents" className="btn-primary w-full justify-center">
-                  Sign Up Free to Activate <ArrowRight size={16} />
+                <Link
+                  href={`/signup${id ? `?fromScan=${id}` : ''}`}
+                  className="btn-primary w-full justify-center"
+                >
+                  Activate {systems[0] ?? 'These Systems'} Free <ArrowRight size={16} />
                 </Link>
                 <p className="text-center text-xs text-op-muted">No credit card required · Takes 2 minutes</p>
               </div>
@@ -1306,9 +1311,15 @@ export default function ResultsDisplay() {
 
       {/* CTA */}
       <div className="flex flex-col sm:flex-row gap-3 mb-5 print:hidden">
-        <Link href="/revenue-autopilot" className="btn-primary flex-1 justify-center py-4">
-          Activate Revenue Autopilot <ArrowRight size={17} />
-        </Link>
+        {isLoggedIn ? (
+          <Link href="/dashboard/setup" className="btn-primary flex-1 justify-center py-4">
+            Set Up Your Recovery Systems <ArrowRight size={17} />
+          </Link>
+        ) : (
+          <Link href={`/signup${id ? `?fromScan=${id}` : ''}`} className="btn-primary flex-1 justify-center py-4">
+            Fix {majorLeaks[0]?.title ?? 'Your Top Leak'} Free <ArrowRight size={17} />
+          </Link>
+        )}
         <Link href="/contact" className="btn-secondary flex-1 justify-center py-4">
           Request Setup Help
         </Link>

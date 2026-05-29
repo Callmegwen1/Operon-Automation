@@ -67,11 +67,12 @@ const PLANS = [
     badge: 'Most Popular',
     popular: true,
     description: 'All four core recovery systems running at once — the fastest path to measurable revenue recovery.',
-    cta: 'Start Growing',
+    cta: 'Start Free Trial',
     ctaHref: '/signup',
     primary: true,
     setupNote: { label: 'Optional assisted setup', price: '$499 one-time' },
     features: [
+      '14-day free trial — no credit card required',
       'Lead Recovery Autopilot',
       'Review Growth System',
       'Estimate Recovery Autopilot',
@@ -126,10 +127,6 @@ const FAQ = [
   {
     q: 'Does Operon require a CRM or any special software?',
     a: "No. Operon is the system — it comes with a built-in contact manager, activity log, and dashboard. You don't need to connect anything to get started. If you already use a CRM or job management tool, we can integrate with it (see below), but it's never required.",
-  },
-  {
-    q: 'How does SMS work? Is it included in the monthly price?',
-    a: 'SMS messaging is available on Growth and Pro plans for urgent lead scenarios (emergency service, urgent home service). SMS is delivered via Twilio and billed based on usage — it is not bundled in the monthly plan price. Most businesses send fewer than 50 SMS messages per month, which costs a few dollars. We show usage transparently in your dashboard.',
   },
   {
     q: 'Can Operon integrate with my existing tools?',
@@ -260,11 +257,10 @@ export default function PricingPage() {
                   </span>
                 </div>
                 <p className="text-sm text-op-muted leading-relaxed mb-4 max-w-2xl">
-                  For businesses with high SMS volume, complex workflows, multi-location setups, CRM or job software integrations, or dedicated support requirements.
+                  For businesses with complex workflows, multi-location setups, CRM or job software integrations, or dedicated support requirements.
                 </p>
                 <ul className="flex flex-wrap gap-x-6 gap-y-2">
                   {[
-                    'SMS-heavy or multi-channel workflows',
                     'Multi-location support',
                     'CRM & job software integrations',
                     'Custom workflow design',
@@ -340,6 +336,63 @@ export default function PricingPage() {
         </div>
       </section>
 
+      {/* ROI scenarios */}
+      <section className="section-pad bg-op-bg border-t border-op-border">
+        <div className="container-wide max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <SectionHeader
+              eyebrow="What Recovery Looks Like"
+              title="Illustrative scenarios by"
+              titleHighlight="plan."
+              description="These examples are based on industry averages and common outcomes — not guaranteed results. Your numbers depend on your business, lead volume, and how actively you use the platform."
+              center
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {[
+              {
+                plan: 'Starter',
+                color: 'border-op-border',
+                dot: 'bg-op-muted',
+                business: 'Cleaning company, 15 leads/month',
+                scenario: 'Activates Lead Recovery Autopilot. Catches 4 leads per month that previously went unanswered over the weekend.',
+                outcome: '4 extra jobs per month at $180 average → ~$720/month recovered',
+                note: 'Based on 25% conversion on recovered leads at industry average job value.',
+              },
+              {
+                plan: 'Growth',
+                color: 'border-op-navy',
+                dot: 'bg-op-navy',
+                business: 'HVAC contractor, 30 leads/month',
+                scenario: 'All four systems active. Recovers cold leads, closes 3 stale estimates, and gets 8 new Google reviews in the first month.',
+                outcome: '~$1,800–$2,600/month in recovered revenue + review momentum',
+                note: 'Combination of lead recovery, estimate close rate improvement, and review-driven organic growth.',
+              },
+              {
+                plan: 'Pro',
+                color: 'border-op-border',
+                dot: 'bg-op-muted',
+                business: 'Med spa, 80 leads/month',
+                scenario: 'High-volume lead follow-up, reactivation of dormant members, and weekly briefing for the team.',
+                outcome: '~$4,000–$7,000/month in estimated recovery across all systems',
+                note: 'Higher job values and lead volume amplify recovery — even a 5% improvement moves significantly.',
+              },
+            ].map(({ plan, color, dot, business, scenario, outcome, note }) => (
+              <div key={plan} className={`rounded-2xl border ${color} bg-white p-6`}>
+                <div className={`w-2 h-2 rounded-full ${dot} mb-3`} />
+                <p className="text-[10px] font-bold uppercase tracking-widest text-op-muted mb-1">{plan} Plan</p>
+                <p className="text-sm font-semibold text-op-navy mb-3 leading-snug">{business}</p>
+                <p className="text-xs text-op-muted leading-relaxed mb-3">{scenario}</p>
+                <div className="bg-green-50 border border-green-100 rounded-lg px-3 py-2.5 mb-3">
+                  <p className="text-xs font-semibold text-op-green leading-relaxed">{outcome}</p>
+                </div>
+                <p className="text-[10px] text-op-muted/70 leading-relaxed italic">{note}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* FAQ */}
       <section className="section-pad bg-op-bg border-t border-op-border">
         <div className="container-wide max-w-2xl mx-auto">
@@ -388,11 +441,11 @@ export default function PricingPage() {
             </Link>
             <CheckoutButton
               plan="growth"
-              label="Start Growth Autopilot"
+              label="Start 14-Day Free Trial"
               className="inline-flex items-center justify-center gap-2 bg-transparent text-white font-semibold border border-white/30 px-8 py-4 rounded-lg hover:bg-white/10 transition-colors text-sm"
             />
           </div>
-          <p className="mt-6 text-white/40 text-xs">No contracts. No setup required. Cancel anytime.</p>
+          <p className="mt-6 text-white/40 text-xs">14-day free trial on Growth. No contracts. Cancel anytime.</p>
         </div>
       </section>
     </>

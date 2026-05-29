@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <LegalPage title="Privacy Policy" lastUpdated="May 20, 2025">
+    <LegalPage title="Privacy Policy" lastUpdated="May 29, 2026">
       <h2>1. Introduction</h2>
       <p>
         Operon Automation (&quot;Operon,&quot; &quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) operates the website operonauto.com and the Revenue Autopilot platform. This Privacy Policy explains how we collect, use, disclose, and protect your information when you use our services.
@@ -43,6 +43,23 @@ export default function PrivacyPage() {
         <li>Analyze how our services are used to improve the experience</li>
         <li>Comply with legal obligations</li>
       </ul>
+
+      <h2>3a. Your Contact Data and Our Role as Data Processor</h2>
+      <p>
+        When you use Operon Automation to manage contacts and send automated emails, you act as the data controller for your contacts&apos; personal information. Operon Automation acts as a data processor — we process that data only on your instructions and only to deliver the services you have configured.
+      </p>
+      <p>
+        You are responsible for:
+      </p>
+      <ul>
+        <li>Having a lawful basis for processing your contacts&apos; personal data (e.g., consent or legitimate interest)</li>
+        <li>Providing any required disclosures to your contacts about how their information is used</li>
+        <li>Ensuring your contact lists comply with applicable privacy and email laws</li>
+        <li>Responding to your contacts&apos; data access, correction, or deletion requests</li>
+      </ul>
+      <p>
+        If you receive a request from one of your contacts to access, correct, or delete their data within Operon, please contact us at ceo@operonauto.com and we will assist you in fulfilling that request.
+      </p>
 
       <h2>4. Sharing Your Information</h2>
       <p>

@@ -109,29 +109,62 @@ export default function SetupPage() {
 
   if (done || queue.length === 0) {
     const activatedCount = SETUP_ORDER.filter((m) => agents && agents[m.type].enabled).length
+    const activatedTypes = SETUP_ORDER.filter((m) => agents && agents[m.type].enabled)
+
+    const NEXT_ACTION: Partial<Record<AgentType, string>> = {
+      lead_followup:    'The next new contact you add will receive an automated follow-up within minutes.',
+      review_request:   'Mark any contact as done and a review request sequence will go out automatically.',
+      estimate_followup:'Send an estimate from any contact page — a 3-touch follow-up starts immediately.',
+      reactivation:     'This Sunday, dormant contacts will receive a personalized win-back message.',
+      weekly_report:    'You\'ll receive your first Weekly Revenue Briefing this coming Monday.',
+    }
+
     return (
-      <div className="max-w-lg mx-auto px-4 py-16 text-center">
-        <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-5">
-          <CheckCircle2 size={32} className="text-op-green" />
+      <div className="max-w-lg mx-auto px-4 py-12">
+        {/* Success header */}
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-5">
+            <CheckCircle2 size={32} className="text-op-green" />
+          </div>
+          <h1 className="text-2xl font-extrabold text-op-navy mb-2">
+            {activatedCount === SETUP_ORDER.length ? 'All systems live.' : 'Your automation is live.'}
+          </h1>
+          <p className="text-op-muted text-sm leading-relaxed">
+            {activatedCount} revenue system{activatedCount !== 1 ? 's' : ''} now running in the background.{' '}
+            {activatedCount < SETUP_ORDER.length && 'Activate the rest any time from Agents.'}
+          </p>
         </div>
-        <h1 className="text-2xl font-extrabold text-op-navy mb-2">
-          {activatedCount === SETUP_ORDER.length ? 'All systems live.' : 'You\'re set up.'}
-        </h1>
-        <p className="text-op-muted text-sm mb-8 leading-relaxed">
-          {activatedCount} of {SETUP_ORDER.length} revenue systems are now running.{' '}
-          {activatedCount < SETUP_ORDER.length && 'You can activate the rest any time from the Agents page.'}
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="btn-primary"
-          >
+
+        {/* What happens next */}
+        {activatedTypes.length > 0 && (
+          <div className="card border border-op-navy/15 bg-op-navy/[0.02] mb-6">
+            <p className="text-xs font-bold text-op-muted uppercase tracking-wide mb-4">What happens next</p>
+            <div className="flex flex-col gap-4">
+              {activatedTypes.map((m) => {
+                const Icon = m.icon
+                const next = NEXT_ACTION[m.type]
+                if (!next) return null
+                return (
+                  <div key={m.type} className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-op-navy/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <Icon size={14} className="text-op-navy" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-op-navy mb-0.5">{m.name}</p>
+                      <p className="text-xs text-op-muted leading-relaxed">{next}</p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button onClick={() => router.push('/dashboard')} className="btn-primary flex-1">
             Go to Dashboard <ArrowRight size={16} />
           </button>
-          <button
-            onClick={() => router.push('/dashboard/agents')}
-            className="btn-secondary"
-          >
+          <button onClick={() => router.push('/dashboard/agents')} className="btn-secondary flex-1">
             View All Agents
           </button>
         </div>

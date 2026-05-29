@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <LegalPage title="Terms of Service" lastUpdated="May 20, 2025">
+    <LegalPage title="Terms of Service" lastUpdated="May 29, 2026">
       <p>
         Please read these Terms of Service carefully before using Operon Automation services. By accessing or using our website or services, you agree to be bound by these terms.
       </p>
@@ -38,14 +38,31 @@ export default function TermsPage() {
         <li>Comply with all applicable laws and regulations</li>
       </ul>
 
+      <h2>4a. Email Sending and Contact Lists</h2>
+      <p>
+        Operon Automation provides tools that send emails on your behalf to contacts you manage. You are solely responsible for:
+      </p>
+      <ul>
+        <li>Ensuring you have obtained proper consent from every contact before adding them to Operon and sending them automated messages</li>
+        <li>The accuracy, completeness, and legality of your contact lists</li>
+        <li>The content of any messages sent through our platform, including that content is truthful and not misleading</li>
+        <li>Complying with all applicable email and communications laws including CAN-SPAM, GDPR, CASL, and any other regulations that apply to your location or your contacts&apos; locations</li>
+        <li>Honoring unsubscribe and opt-out requests promptly</li>
+      </ul>
+      <p>
+        Operon Automation acts as a data processor on your behalf. You are the data controller responsible for the lawful basis of processing your contacts&apos; information. We provide the infrastructure; you own the relationship and legal responsibility for your communications.
+      </p>
+
       <h2>5. Prohibited Uses</h2>
       <p>You may not use our services to:</p>
       <ul>
         <li>Violate any applicable law or regulation</li>
-        <li>Send unsolicited communications (spam)</li>
+        <li>Send unsolicited communications (spam) or contact people without their consent</li>
+        <li>Add contacts to your account without their knowledge or consent</li>
         <li>Collect or harvest personal information without authorization</li>
         <li>Impersonate any person or entity</li>
         <li>Interfere with or disrupt our services</li>
+        <li>Send communications that are false, misleading, or deceptive</li>
       </ul>
 
       <h2>6. Intellectual Property</h2>

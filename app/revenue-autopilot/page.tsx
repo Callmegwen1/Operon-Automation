@@ -48,8 +48,8 @@ const agents = [
     icon: DollarSign,
     title: 'Invoice Reminder Agent',
     desc: 'Sends friendly payment reminders so you collect faster without awkward conversations.',
-    badge: 'Active',
-    badgeColor: 'badge-blue',
+    badge: 'Coming Soon',
+    badgeColor: 'badge-amber',
   },
   {
     icon: Users,
@@ -80,7 +80,7 @@ const howSteps = [
   { num: '01', title: 'Connect your business', desc: 'Answer the scanner questions so Autopilot understands your business and current systems.' },
   { num: '02', title: 'Review your Leak Score', desc: 'See a detailed breakdown of every area where revenue may be slipping away.' },
   { num: '03', title: 'Activate recommended agents', desc: 'Turn on the Autopilot Agents that match your top leaks — one click to activate.' },
-  { num: '04', title: 'Recover missed opportunities', desc: 'Agents run automatically, following up on leads, chasing invoices, and growing reviews.' },
+  { num: '04', title: 'Recover missed opportunities', desc: 'Agents run automatically, following up on leads, requesting reviews, and reactivating past customers.' },
   { num: '05', title: 'Track recovery every week', desc: 'The Weekly Owner Report shows what is running and what has been recovered.' },
 ]
 
@@ -132,7 +132,7 @@ export default function RevenueAutopilotPage() {
             {[
               { icon: AlertTriangle, color: 'text-op-amber', bg: 'bg-amber-50', title: 'Revenue Leak Detection', desc: 'Operon scans your business for common revenue leaks — missed calls, cold leads, missing reviews, uncollected invoices, and more.' },
               { icon: TrendingUp,    color: 'text-op-navy',  bg: 'bg-slate-50',  title: 'Revenue Leak Score', desc: 'Get a single score out of 100 showing how much revenue may be at risk, with a breakdown by category.' },
-              { icon: Zap,           color: 'text-op-green', bg: 'bg-green-50', title: 'Autopilot Agents', desc: 'Activate intelligent agents that handle follow-up, review requests, invoice reminders, and customer reactivation automatically.' },
+              { icon: Zap,           color: 'text-op-green', bg: 'bg-green-50', title: 'Autopilot Agents', desc: 'Activate intelligent agents that handle follow-up, review requests, and customer reactivation automatically.' },
               { icon: BarChart2,     color: 'text-op-navy',  bg: 'bg-slate-50',  title: 'Revenue Trend Tracking', desc: 'Watch recovered revenue grow over time as your Autopilot Agents work in the background.' },
               { icon: Users,         color: 'text-op-green', bg: 'bg-green-50', title: 'Customer Reactivation', desc: 'Identify past customers who have gone quiet and bring them back with targeted re-engagement sequences.' },
               { icon: FileText,      color: 'text-op-muted', bg: 'bg-slate-50', title: 'Weekly Owner Report', desc: 'A plain-language weekly summary of what ran, what recovered, and what needs your attention — delivered every Monday.' },

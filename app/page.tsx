@@ -52,7 +52,7 @@ const autopilotFeatures = [
   'Revenue Leak Dashboard with clear visibility',
   'Automated lead follow-up and call recovery',
   'Review request and reputation system',
-  'Estimate and invoice follow-up agents',
+  'Estimate follow-up and customer reactivation agents',
   'Weekly Owner Report — what ran, what recovered',
 ]
 
@@ -287,6 +287,60 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ─── TESTIMONIALS ─────────────────────────────────────── */}
+      {/* Replace these quotes with real beta customer quotes before launch */}
+      <section className="bg-[#FAFAFA] section-pad border-t border-op-border">
+        <div className="container-wide">
+          <p className="eyebrow mb-4">Early Results</p>
+          <h2 className="text-3xl md:text-[2.5rem] font-extrabold font-manrope text-op-primary leading-tight mb-10">
+            What business owners say.
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {[
+              {
+                quote: 'I had no idea how many leads were falling through the cracks on weekends. Within the first week, the system followed up on 6 inquiries I would have missed. Two of them booked.',
+                name: 'Marcus T.',
+                business: 'Home Services · Phoenix, AZ',
+                initial: 'M',
+              },
+              {
+                quote: 'The review system alone paid for itself. We went from 14 Google reviews to 38 in about six weeks. I just mark jobs done and the emails go out automatically.',
+                name: 'Sarah K.',
+                business: 'Cleaning Company · Austin, TX',
+                initial: 'S',
+              },
+              {
+                quote: 'I was skeptical because I\'ve tried automation tools before. This one actually works without me having to babysit it. The weekly report tells me everything I need to know in two minutes.',
+                name: 'David R.',
+                business: 'HVAC Contractor · Nashville, TN',
+                initial: 'D',
+              },
+            ].map(({ quote, name, business, initial }) => (
+              <div key={name} className="card flex flex-col gap-5">
+                <div className="relative flex-1">
+                  <span
+                    className="absolute -top-3 -left-1 text-[52px] font-serif leading-none text-op-amber/15 select-none pointer-events-none"
+                    aria-hidden="true"
+                  >
+                    &ldquo;
+                  </span>
+                  <p className="text-sm text-op-body leading-relaxed pt-3 relative">{quote}</p>
+                </div>
+                <div className="flex items-center gap-3 pt-3 border-t border-op-border">
+                  <div className="w-9 h-9 rounded-full bg-op-navy text-white flex items-center justify-center text-sm font-bold shrink-0">
+                    {initial}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-op-navy leading-tight">{name}</p>
+                    <p className="text-xs text-op-muted">{business}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ─── REVENUE AUTOPILOT ────────────────────────────────── */}
       <section className="bg-white section-pad">
         <div className="container-wide">
@@ -345,6 +399,39 @@ export default function HomePage() {
                 <p className="text-xs text-op-muted leading-relaxed">{desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── AFTER SIGNUP ─────────────────────────────────────── */}
+      <section className="bg-white section-pad border-t border-op-border">
+        <div className="container-wide max-w-2xl mx-auto">
+          <p className="eyebrow mb-4">After You Sign Up</p>
+          <h2 className="text-2xl md:text-3xl font-extrabold font-manrope text-op-primary leading-tight mb-8">
+            Your first automation is live within 10 minutes.
+          </h2>
+          <div className="flex flex-col gap-5">
+            {[
+              { step: '1', title: 'Import or add your first contact', desc: 'Paste in a contact, upload a CSV, or connect your existing form. No special tech required.' },
+              { step: '2', title: 'Activate your top agent', desc: 'Based on your scan results, Revenue Autopilot recommends which system to turn on first. One click.' },
+              { step: '3', title: 'Your automation runs', desc: 'The agent handles follow-up, review requests, or reactivation on your behalf — while you get on with your day.' },
+              { step: '4', title: 'Get your first weekly report', desc: 'Every Monday you receive a plain-language summary: what ran, what recovered, what needs attention.' },
+            ].map(({ step, title, desc }) => (
+              <div key={step} className="flex items-start gap-5">
+                <div className="w-8 h-8 rounded-full bg-op-navy text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                  {step}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-op-navy mb-1">{title}</p>
+                  <p className="text-xs text-op-muted leading-relaxed">{desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-8">
+            <Link href="/scanner" className="btn-primary text-sm inline-flex">
+              Get Started Free <ArrowRight size={15} />
+            </Link>
           </div>
         </div>
       </section>

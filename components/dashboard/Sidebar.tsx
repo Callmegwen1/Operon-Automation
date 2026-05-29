@@ -16,6 +16,7 @@ import {
   History,
   Radar,
   BarChart2,
+  Mail,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -28,6 +29,7 @@ const navItems = [
   { href: AGENTS_HREF,                       icon: Bot,             label: 'Agents'          },
   { href: '/dashboard/contacts',             icon: Users,           label: 'Contacts'        },
   { href: '/dashboard/scans',                icon: History,         label: 'Scans'           },
+  { href: '/dashboard/deliverability',       icon: Mail,            label: 'Email Health'    },
   { href: '/dashboard/admin/analytics',      icon: BarChart2,       label: 'Analytics'       },
   { href: '/dashboard/profile',              icon: User,            label: 'Profile'         },
 ]

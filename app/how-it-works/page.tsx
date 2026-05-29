@@ -35,7 +35,7 @@ const steps = [
     icon: Zap,
     title: 'Activate recommended fixes',
     detail: 'Revenue Autopilot recommends the exact agents to activate for your specific leaks. Each agent is pre-built — no complex setup, no code, no learning curve.',
-    what: ['Lead Follow-Up Agent', 'Review Request Agent', 'Estimate Follow-Up Agent', 'Invoice Reminder Agent', 'Customer Reactivation Agent'],
+    what: ['Lead Follow-Up Agent', 'Review Request Agent', 'Estimate Follow-Up Agent', 'Customer Reactivation Agent', 'Weekly Owner Report Agent'],
     color: 'bg-green-50 border-green-200 text-op-green',
     iconBg: 'bg-op-green',
   },
