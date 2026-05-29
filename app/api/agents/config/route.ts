@@ -12,10 +12,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing type or config' }, { status: 400 })
     }
 
-    await supabase.from('agents').upsert(
+    const { error } = await supabase.from('agents').upsert(
       { user_id: user.id, type, config, updated_at: new Date().toISOString() },
       { onConflict: 'user_id,type' }
     )
+
+    if (error) {
+      console.error('Agent config upsert error:', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
 
     return NextResponse.json({ success: true })
   } catch (err) {

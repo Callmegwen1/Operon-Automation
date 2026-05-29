@@ -8,7 +8,7 @@
 create table public.agents (
   id         uuid primary key default gen_random_uuid(),
   user_id    uuid references auth.users(id) on delete cascade not null,
-  type       text not null check (type in ('lead_followup', 'review_request', 'weekly_report')),
+  type       text not null check (type in ('lead_followup', 'review_request', 'weekly_report', 'estimate_followup', 'reactivation')),
   enabled    boolean default false,
   config     jsonb default '{}',
   created_at timestamptz default now(),
