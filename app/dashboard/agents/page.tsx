@@ -19,6 +19,10 @@ interface AgentConfig {
   reviewLink?: string
   reportEmail?: string
   personalNote?: string
+  estimateOpener?: string
+  estimateBody?: string
+  reactivationOpener?: string
+  reactivationBody?: string
 }
 
 interface AgentRow {
@@ -182,11 +186,12 @@ function TasksPanel({ tasks, onDismiss }: { tasks: AgentTask[]; onDismiss: (id: 
 }
 
 // ── Agent Card ────────────────────────────────────────────────
-function AgentCard({ meta, row, activity, userId, onUpdate, reviewMetrics }: {
+function AgentCard({ meta, row, activity, userId, industry, onUpdate, reviewMetrics }: {
   meta: typeof SYSTEM_META[number]
   row: AgentRow
   activity: ActivityEntry[]
   userId: string
+  industry: string
   onUpdate: (type: AgentType, updates: Partial<AgentRow>) => void
   reviewMetrics?: ReviewMetrics | null
 }) {
@@ -265,9 +270,17 @@ function AgentCard({ meta, row, activity, userId, onUpdate, reviewMetrics }: {
       { key: 'fromName',     label: 'Your Name',       placeholder: 'John Smith',                                 multiline: false },
       { key: 'replyToEmail', label: 'Reply-to Email',  placeholder: 'you@yourbusiness.com',                       multiline: false },
     ]
-    if (meta.type === 'estimate_followup' || meta.type === 'reactivation') return [
-      { key: 'fromName',     label: 'Your Name',       placeholder: 'John Smith',                                 multiline: false },
-      { key: 'replyToEmail', label: 'Reply-to Email',  placeholder: 'you@yourbusiness.com',                       multiline: false },
+    if (meta.type === 'estimate_followup') return [
+      { key: 'fromName',       label: 'Your Name',       placeholder: 'John Smith',                              multiline: false },
+      { key: 'replyToEmail',   label: 'Reply-to Email',  placeholder: 'you@yourbusiness.com',                    multiline: false },
+      { key: 'estimateOpener', label: 'Opening line',    placeholder: 'Thanks for the opportunity...',           multiline: true  },
+      { key: 'estimateBody',   label: 'Main message',    placeholder: "I've put together pricing based on...",   multiline: true  },
+    ]
+    if (meta.type === 'reactivation') return [
+      { key: 'fromName',           label: 'Your Name',       placeholder: 'John Smith',                          multiline: false },
+      { key: 'replyToEmail',       label: 'Reply-to Email',  placeholder: 'you@yourbusiness.com',                multiline: false },
+      { key: 'reactivationOpener', label: 'Opening line',    placeholder: "It's been a while...",               multiline: true  },
+      { key: 'reactivationBody',   label: 'Main message',    placeholder: "We'd love the chance to work...",    multiline: true  },
     ]
     return [
       { key: 'reportEmail',  label: 'Send Report To',  placeholder: 'you@yourbusiness.com',                       multiline: false },
@@ -293,6 +306,11 @@ function AgentCard({ meta, row, activity, userId, onUpdate, reviewMetrics }: {
               {meta.badge && (
                 <span className="text-[11px] font-bold text-op-navy bg-op-navy/8 border border-op-navy/20 px-2 py-0.5 rounded-full flex items-center gap-1">
                   <Zap size={10} /> {meta.badge}
+                </span>
+              )}
+              {industry && (meta.type === 'estimate_followup' || meta.type === 'reactivation' || meta.type === 'lead_followup') && (
+                <span className="text-[10px] font-semibold text-purple-600 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-full">
+                  {industry}
                 </span>
               )}
             </div>
@@ -527,6 +545,7 @@ export default function AgentsPage() {
   const [tasks, setTasks]         = useState<AgentTask[]>([])
   const [reviewMetrics, setReviewMetrics] = useState<ReviewMetrics | null>(null)
   const [userId, setUserId]       = useState('')
+  const [industry, setIndustry]   = useState('')
   const [loading, setLoading]     = useState(true)
 
   useEffect(() => {
@@ -534,6 +553,13 @@ export default function AgentsPage() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (user) setUserId(user.id)
+
+      const { data: biz } = await supabase
+        .from('businesses')
+        .select('industry')
+        .eq('user_id', user?.id ?? '')
+        .single()
+      if (biz?.industry) setIndustry(biz.industry)
 
       const [
         { data: agentData },
@@ -618,9 +644,16 @@ export default function AgentsPage() {
   return (
     <main className="flex-1 p-6 md:p-8 overflow-auto">
       <div className="max-w-2xl">
-        <h1 className="text-2xl font-bold font-manrope text-op-navy mb-1">Revenue Systems</h1>
+        <div className="flex items-start justify-between gap-4 mb-1">
+          <h1 className="text-2xl font-bold font-manrope text-op-navy">Revenue Systems</h1>
+          {industry && (
+            <span className="text-xs font-semibold text-purple-600 bg-purple-50 border border-purple-200 px-3 py-1 rounded-full shrink-0 mt-1">
+              {industry}
+            </span>
+          )}
+        </div>
         <p className="text-sm text-op-muted mb-8">
-          Pre-built revenue recovery systems powered by AI. Activate one and it runs itself.
+          Pre-built revenue recovery systems{industry ? ` tuned for ${industry}` : ''}. Activate one and it runs itself.
         </p>
 
         {/* Tasks panel */}
@@ -634,6 +667,7 @@ export default function AgentsPage() {
               row={agents[meta.type]}
               activity={activityByType[meta.type] ?? []}
               userId={userId}
+              industry={industry}
               onUpdate={handleUpdate}
               reviewMetrics={meta.type === 'review_request' ? reviewMetrics : null}
             />

@@ -7,6 +7,8 @@ import {
   Loader2, ExternalLink, FileText,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { getEstimateCopy } from '@/lib/agents/estimate-copy'
+import { getReactivationCopy } from '@/lib/agents/reactivation-copy'
 
 type AgentType = 'lead_followup' | 'review_request' | 'weekly_report' | 'estimate_followup' | 'reactivation'
 
@@ -1001,6 +1003,9 @@ function EstimateRecoveryWizard({ userId, initialConfig, onComplete }: {
   initialConfig: AgentConfig
   onComplete: (config: AgentConfig) => void
 }) {
+  const hasCustomOpener = Boolean(initialConfig.estimateOpener)
+  const hasCustomBody   = Boolean(initialConfig.estimateBody)
+
   const [step, setStep] = useState(0)
   const [config, setConfig] = useState<AgentConfig>({
     estimateOpener: ESTIMATE_DEFAULT_OPENER,
@@ -1016,15 +1021,18 @@ function EstimateRecoveryWizard({ userId, initialConfig, onComplete }: {
     const supabase = createClient()
     Promise.all([
       supabase.auth.getUser(),
-      supabase.from('businesses').select('name').eq('user_id', userId).single(),
+      supabase.from('businesses').select('name, industry').eq('user_id', userId).single(),
     ]).then(([{ data: { user } }, { data: biz }]) => {
+      const copy = getEstimateCopy(biz?.industry ?? '')
       setConfig((c) => ({
         ...c,
-        fromName:     c.fromName     || biz?.name  || '',
-        replyToEmail: c.replyToEmail || user?.email || '',
+        fromName:       c.fromName     || biz?.name  || '',
+        replyToEmail:   c.replyToEmail || user?.email || '',
+        estimateOpener: hasCustomOpener ? c.estimateOpener : copy.day0Opener,
+        estimateBody:   hasCustomBody   ? c.estimateBody   : copy.day0Body,
       }))
     })
-  }, [userId])
+  }, [userId, hasCustomOpener, hasCustomBody])
 
   const handleFinish = async () => {
     setSaving(true)
@@ -1225,6 +1233,9 @@ function ReactivationWizard({ userId, initialConfig, onComplete }: {
   initialConfig: AgentConfig
   onComplete: (config: AgentConfig) => void
 }) {
+  const hasCustomOpener = Boolean(initialConfig.reactivationOpener)
+  const hasCustomBody   = Boolean(initialConfig.reactivationBody)
+
   const [step, setStep] = useState(0)
   const [config, setConfig] = useState<AgentConfig>({
     reactivationOpener: REACTIVATION_DEFAULT_OPENER,
@@ -1240,15 +1251,18 @@ function ReactivationWizard({ userId, initialConfig, onComplete }: {
     const supabase = createClient()
     Promise.all([
       supabase.auth.getUser(),
-      supabase.from('businesses').select('name').eq('user_id', userId).single(),
+      supabase.from('businesses').select('name, industry').eq('user_id', userId).single(),
     ]).then(([{ data: { user } }, { data: biz }]) => {
+      const copy = getReactivationCopy(biz?.industry ?? '')
       setConfig((c) => ({
         ...c,
-        fromName:     c.fromName     || biz?.name  || '',
-        replyToEmail: c.replyToEmail || user?.email || '',
+        fromName:           c.fromName     || biz?.name  || '',
+        replyToEmail:       c.replyToEmail || user?.email || '',
+        reactivationOpener: hasCustomOpener ? c.reactivationOpener : copy.opener,
+        reactivationBody:   hasCustomBody   ? c.reactivationBody   : copy.body,
       }))
     })
-  }, [userId])
+  }, [userId, hasCustomOpener, hasCustomBody])
 
   const handleFinish = async () => {
     setSaving(true)
