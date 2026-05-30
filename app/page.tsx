@@ -27,6 +27,7 @@ import { AnimateIn, FadeIn, StaggerChildren, ScaleIn } from '@/components/ui/Mot
 import MagneticButton from '@/components/ui/MagneticButton'
 import Marquee from '@/components/ui/Marquee'
 import DripDrop from '@/components/ui/DripDrop'
+import CyclingText from '@/components/ui/CyclingText'
 
 export const metadata: Metadata = {
   title: 'Operon Automation | Revenue Recovery for Small Businesses',
@@ -184,8 +185,13 @@ export default function HomePage() {
               <AnimateIn delay={0.14}>
                 <p className="text-base lg:text-lg text-white/50 leading-relaxed mb-10
                                max-w-[440px] mx-auto lg:mx-0 font-jakarta">
-                  Operon scans your business for revenue leaks — missed leads, cold
-                  follow-up, weak reviews — then fixes them automatically.
+                  Right now, revenue is{' '}
+                  <CyclingText
+                    words={['leaking', 'slipping away', 'being missed', 'recoverable', 'fixable']}
+                    className="text-op-accent font-semibold"
+                    wordClassName="text-op-accent font-semibold"
+                  />{' '}
+                  from your business. Operon finds exactly where — then fixes it automatically.
                 </p>
               </AnimateIn>
 
