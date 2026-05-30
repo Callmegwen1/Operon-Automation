@@ -183,15 +183,22 @@ export default function HomePage() {
               </AnimateIn>
 
               <AnimateIn delay={0.14}>
+                {/* Cycling statement — own line, proper height reservation */}
+                <div className="flex items-center gap-2.5 mb-5 justify-center lg:justify-start">
+                  <span className="text-sm text-white/35 font-jakarta">Your revenue is</span>
+                  <span className="relative inline-flex items-center overflow-hidden h-7">
+                    <CyclingText
+                      words={['leaking', 'at risk', 'being missed', 'recoverable', 'fixable']}
+                      className="h-7"
+                      wordClassName="text-sm font-bold font-jakarta text-op-accent whitespace-nowrap"
+                    />
+                  </span>
+                </div>
+
                 <p className="text-base lg:text-lg text-white/50 leading-relaxed mb-10
                                max-w-[440px] mx-auto lg:mx-0 font-jakarta">
-                  Right now, revenue is{' '}
-                  <CyclingText
-                    words={['leaking', 'slipping away', 'being missed', 'recoverable', 'fixable']}
-                    className="text-op-accent font-semibold"
-                    wordClassName="text-op-accent font-semibold"
-                  />{' '}
-                  from your business. Operon finds exactly where — then fixes it automatically.
+                  Operon scans your business for revenue leaks — missed leads, cold
+                  follow-up, weak reviews — then fixes them automatically.
                 </p>
               </AnimateIn>
 
