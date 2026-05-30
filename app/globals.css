@@ -169,10 +169,6 @@
   to   { transform: translateX(0); }
 }
 
-/* ── Custom cursor — hide native on desktop ───────────────────── */
-@media (pointer: fine) {
-  * { cursor: none !important; }
-}
 
 /* ── Scrollbar (webkit) ───────────────────────────────────────── */
 ::-webkit-scrollbar {

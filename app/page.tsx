@@ -26,6 +26,7 @@ import AnimatedCounter from '@/components/ui/AnimatedCounter'
 import { AnimateIn, FadeIn, StaggerChildren, ScaleIn } from '@/components/ui/Motion'
 import MagneticButton from '@/components/ui/MagneticButton'
 import Marquee from '@/components/ui/Marquee'
+import DripDrop from '@/components/ui/DripDrop'
 
 export const metadata: Metadata = {
   title: 'Operon Automation | Revenue Recovery for Small Businesses',
@@ -171,10 +172,12 @@ export default function HomePage() {
                   className="font-fraunces font-black text-white leading-[1.02] tracking-tight mb-8"
                   style={{ fontSize: 'clamp(48px, 6.5vw, 84px)' }}
                 >
-                  Stop losing money<br className="hidden sm:block" /> to leaks you{' '}
-                  <span className="relative text-op-accent italic">
-                    don't see.
-                  </span>
+                  Find and fix the{' '}
+                  <span className="relative inline-block text-op-accent italic">
+                    leaks
+                    <DripDrop />
+                  </span>{' '}
+                  costing you customers.
                 </h1>
               </AnimateIn>
 
