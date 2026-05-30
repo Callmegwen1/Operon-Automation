@@ -58,15 +58,23 @@ function SidebarContent({
     <div className="flex flex-col h-full bg-op-dark">
 
       {/* Logo */}
-      <div className="px-5 py-5 border-b border-white/[0.07]">
-        <Link href="/dashboard" className="inline-block focus-ring rounded-lg" onClick={onClose}>
+      <div className="px-4 py-4 border-b border-white/[0.07]">
+        <Link href="/dashboard"
+              className="inline-flex items-center gap-2.5 focus-ring rounded-lg"
+              onClick={onClose}>
           <Image
             src="/logos/logo-dark.png"
-            alt="Operon"
-            width={120}
+            alt="Operon icon"
+            width={30}
             height={30}
-            className="h-7 w-auto"
+            className="h-[30px] w-[30px] rounded-lg"
           />
+          <div>
+            <p className="text-white font-fraunces font-bold text-sm leading-none">Operon</p>
+            <p className="text-white/25 font-jakarta text-[9px] tracking-[0.1em] uppercase mt-0.5">
+              Automation
+            </p>
+          </div>
         </Link>
       </div>
 

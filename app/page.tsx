@@ -30,6 +30,7 @@ import DripDrop from '@/components/ui/DripDrop'
 import CyclingText from '@/components/ui/CyclingText'
 import RadarFeatures from '@/components/ui/RadarFeatures'
 import { GLSLHills } from '@/components/ui/glsl-hills'
+import DashboardShowcase from '@/components/ui/DashboardShowcase'
 
 export const metadata: Metadata = {
   title: 'Operon Automation | Revenue Recovery for Small Businesses',
@@ -602,6 +603,33 @@ export default function HomePage() {
               </div>
             ))}
           </StaggerChildren>
+        </div>
+      </section>
+
+      {/* ─── PRODUCT SCREENSHOTS ──────────────────────────────────── */}
+      <section className="bg-op-surface-2 section-pad section-divider">
+        <div className="container-wide">
+          <div className="flex flex-col lg:flex-row items-start gap-14 lg:gap-20">
+
+            {/* Left — copy */}
+            <AnimateIn className="flex-none w-full lg:w-[340px]">
+              <p className="eyebrow mb-4">Inside the Dashboard</p>
+              <h2 className="font-fraunces font-bold text-op-ink leading-tight mb-4"
+                  style={{ fontSize: 'clamp(28px, 3.5vw, 42px)' }}>
+                See exactly what your business is doing — and what it isn&apos;t.
+              </h2>
+              <p className="text-sm text-op-muted leading-relaxed font-jakarta">
+                The Revenue Dashboard, Command Center, and Email Health tools give you
+                a complete picture in under two minutes. No spreadsheets. No guesswork.
+              </p>
+            </AnimateIn>
+
+            {/* Right — tabbed screenshot showcase */}
+            <ScaleIn className="flex-1 w-full min-w-0">
+              <DashboardShowcase />
+            </ScaleIn>
+
+          </div>
         </div>
       </section>
 

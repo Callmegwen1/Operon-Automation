@@ -2,6 +2,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowUpRight } from 'lucide-react'
 
+// Dark footer uses the icon mark + text instead of the full wordmark
+// (full wordmark has white bg, reads poorly on op-dark)
+
 const productLinks = [
   { label: 'Revenue Autopilot',    href: '/revenue-autopilot' },
   { label: 'Revenue Leak Scanner', href: '/scanner' },
@@ -26,14 +29,22 @@ export default function Footer() {
 
         {/* Brand — takes 5 cols */}
         <div className="sm:col-span-5">
-          <Link href="/" className="inline-block mb-5">
+          <Link href="/" className="inline-flex items-center gap-3 mb-5 group">
             <Image
               src="/logos/logo-dark.png"
-              alt="Operon Automation"
-              width={140}
+              alt="Operon icon"
+              width={36}
               height={36}
-              className="h-8 w-auto"
+              className="h-9 w-9 rounded-xl"
             />
+            <div>
+              <p className="text-white font-fraunces font-bold text-base leading-none tracking-tight">
+                Operon
+              </p>
+              <p className="text-white/30 font-jakarta text-[10px] tracking-[0.12em] uppercase mt-0.5">
+                Automation
+              </p>
+            </div>
           </Link>
           <p className="text-sm text-white/50 leading-relaxed max-w-[280px] mb-6">
             Revenue recovery systems for small businesses. Find and fix the leaks costing you customers.

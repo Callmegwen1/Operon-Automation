@@ -33,14 +33,25 @@ export const metadata: Metadata = {
     'marketing automation for small business',
   ],
   metadataBase: new URL('https://operonauto.com'),
+  icons: {
+    icon:             '/icon.png',
+    shortcut:         '/icon.png',
+    apple:            '/icon.png',
+  },
   openGraph: {
-    type: 'website',
-    locale: 'en_US',
-    url: 'https://operonauto.com',
-    siteName: 'Operon Automation',
-    title: 'Operon Automation | Revenue Recovery Systems for Small Businesses',
-    description:
-      'Find and fix the leaks costing your business customers. Automation, marketing, and revenue recovery systems for small businesses.',
+    type:        'website',
+    locale:      'en_US',
+    url:         'https://operonauto.com',
+    siteName:    'Operon Automation',
+    title:       'Operon Automation | Revenue Recovery Systems for Small Businesses',
+    description: 'Find and fix the leaks costing your business customers. Automation, marketing, and revenue recovery systems for small businesses.',
+    images: [{ url: '/images/hero-hvac.png', width: 1280, height: 853, alt: 'Operon Dashboard' }],
+  },
+  twitter: {
+    card:        'summary_large_image',
+    title:       'Operon Automation | Revenue Recovery for Small Businesses',
+    description: 'Find and fix the leaks costing your business customers.',
+    images:      ['/images/hero-hvac.png'],
   },
 }
 
