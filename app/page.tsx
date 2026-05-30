@@ -29,6 +29,7 @@ import Marquee from '@/components/ui/Marquee'
 import DripDrop from '@/components/ui/DripDrop'
 import CyclingText from '@/components/ui/CyclingText'
 import RadarFeatures from '@/components/ui/RadarFeatures'
+import { GlowCard } from '@/components/ui/spotlight-card'
 
 export const metadata: Metadata = {
   title: 'Operon Automation | Revenue Recovery for Small Businesses',
@@ -488,46 +489,55 @@ export default function HomePage() {
         </AnimateIn>
       </section>
 
-      {/* ─── TESTIMONIALS ─────────────────────────────────────────── */}
-      <section className="bg-op-bg section-pad section-divider">
+      {/* ─── TESTIMONIALS — GlowCard spotlight effect ─────────────── */}
+      <section className="bg-op-dark section-pad section-divider">
         <div className="container-wide">
           <AnimateIn>
-            <p className="eyebrow mb-4">Early Results</p>
-            <h2 className="font-fraunces font-bold text-op-ink leading-tight mb-14"
+            <p className="eyebrow mb-4 text-op-accent/70">Early Results</p>
+            <h2 className="font-fraunces font-bold text-white leading-tight mb-14"
                 style={{ fontSize: 'clamp(32px, 4vw, 52px)' }}>
               What business owners say.
             </h2>
           </AnimateIn>
           <StaggerChildren className="grid grid-cols-1 md:grid-cols-3 gap-5" stagger={0.1}>
             {testimonials.map(({ quote, name, business, initial }) => (
-              <div key={name} className="card flex flex-col gap-5 hover:shadow-card-hover
-                                        hover:-translate-y-1 transition-all duration-300">
+              <GlowCard
+                key={name}
+                glowColor="orange"
+                customSize
+                className="flex flex-col gap-5 w-full h-auto"
+              >
+                {/* Stars */}
                 <div className="flex gap-0.5">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star key={i} size={13} className="fill-op-amber text-op-amber" />
                   ))}
                 </div>
+
+                {/* Quote */}
                 <div className="relative flex-1">
                   <span aria-hidden="true"
-                        className="absolute -top-3 -left-1 text-[52px] font-fraunces leading-none
-                                   text-op-accent/12 select-none pointer-events-none">
+                        className="absolute -top-3 -left-1 text-[52px] font-fraunces
+                                   leading-none text-op-accent/20 select-none pointer-events-none">
                     &ldquo;
                   </span>
-                  <p className="text-sm text-op-body leading-relaxed pt-3 relative font-jakarta">
+                  <p className="text-sm text-white/60 leading-relaxed pt-3 relative font-jakarta">
                     {quote}
                   </p>
                 </div>
-                <div className="flex items-center gap-3 pt-3 border-t border-op-border">
-                  <div className="w-9 h-9 rounded-xl bg-op-dark text-white flex items-center
+
+                {/* Attribution */}
+                <div className="flex items-center gap-3 pt-3 border-t border-white/8">
+                  <div className="w-9 h-9 rounded-xl bg-white/10 text-white flex items-center
                                   justify-center text-sm font-bold font-fraunces shrink-0">
                     {initial}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-op-ink leading-tight font-jakarta">{name}</p>
-                    <p className="text-xs text-op-muted font-jakarta">{business}</p>
+                    <p className="text-sm font-semibold text-white leading-tight font-jakarta">{name}</p>
+                    <p className="text-xs text-white/40 font-jakarta">{business}</p>
                   </div>
                 </div>
-              </div>
+              </GlowCard>
             ))}
           </StaggerChildren>
         </div>
