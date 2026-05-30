@@ -5,15 +5,17 @@ import Header from './layout/Header'
 import Footer from './layout/Footer'
 import AnalyticsInit from './analytics/AnalyticsInit'
 import OpeWidget from './chat/OpeWidget'
+import Cursor from './ui/Cursor'
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const isApp = pathname?.startsWith('/dashboard')
+  const isApp  = pathname?.startsWith('/dashboard')
   const isAuth = pathname === '/login' || pathname === '/signup'
   const showMarketing = !isApp && !isAuth
 
   return (
     <>
+      <Cursor />
       <AnalyticsInit />
       {showMarketing && <Header />}
       {children}
