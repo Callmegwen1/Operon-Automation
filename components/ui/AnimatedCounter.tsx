@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { type CSSProperties, useEffect, useRef, useState } from 'react'
 
 interface Props {
   value: number
   suffix?: string
   duration?: number
   className?: string
+  style?: CSSProperties
 }
 
 export default function AnimatedCounter({
@@ -14,6 +15,7 @@ export default function AnimatedCounter({
   suffix = '',
   duration = 1400,
   className = '',
+  style,
 }: Props) {
   const [count, setCount] = useState(0)
   const ref = useRef<HTMLSpanElement>(null)
@@ -46,7 +48,7 @@ export default function AnimatedCounter({
   }, [value, duration])
 
   return (
-    <span ref={ref} className={className}>
+    <span ref={ref} className={className} style={style}>
       {count}
       {suffix}
     </span>
