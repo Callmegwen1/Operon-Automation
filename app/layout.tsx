@@ -1,18 +1,18 @@
 import type { Metadata } from 'next'
-import { Instrument_Serif, DM_Sans } from 'next/font/google'
+import { Cormorant_Garamond, DM_Sans } from 'next/font/google'
 import './globals.css'
 import LayoutWrapper from '@/components/LayoutWrapper'
 import PostHogProvider from '@/components/analytics/PostHogProvider'
 import MetaPixel from '@/components/analytics/MetaPixel'
 import { Analytics } from '@vercel/analytics/react'
 
-// Instrument Serif: contemporary editorial serif — clean confidence without
-// Fraunces's optical quirks. Excellent italics for accent moments.
-const fraunces = Instrument_Serif({
+// Cormorant Garamond: luxury-editorial serif with dramatic thick/thin stroke
+// contrast. The italics are especially striking for accent moments like "leaks".
+const fraunces = Cormorant_Garamond({
   subsets:  ['latin'],
   variable: '--font-fraunces',
   display:  'swap',
-  weight:   '400',
+  weight:   ['300', '400', '500', '600', '700'],
   style:    ['normal', 'italic'],
 })
 
