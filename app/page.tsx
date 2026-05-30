@@ -253,13 +253,13 @@ export default function HomePage() {
                   }}
                 />
                 <Image
-                  src="/images/hero.png"
-                  alt="Small business owner reviewing revenue analytics on Operon dashboard"
+                  src="/images/hero-hvac.png"
+                  alt="HVAC contractor reviewing revenue dashboard on Operon"
                   width={1280}
-                  height={854}
+                  height={853}
                   className="w-full h-auto block"
                   priority
-                  quality={90}
+                  quality={92}
                 />
               </div>
 

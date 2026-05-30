@@ -122,8 +122,20 @@ export default function RevenueAutopilotPage() {
                 </div>
               </AnimateIn>
             </div>
-            <ScaleIn className="flex-1 w-full max-w-md">
-              <DashboardMockup />
+            <ScaleIn className="flex-1 w-full max-w-2xl">
+              {/* Dashboard walkthrough video — autoplay muted loop */}
+              <div className="relative rounded-2xl overflow-hidden shadow-card-lg border border-op-border">
+                <video
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  className="w-full h-auto block"
+                  poster="/images/hero-hvac.png"
+                >
+                  <source src="/videos/dashboard-walkthrough.mp4" type="video/mp4" />
+                </video>
+              </div>
             </ScaleIn>
           </div>
         </div>
