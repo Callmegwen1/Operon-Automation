@@ -32,6 +32,7 @@ import RadarFeatures from '@/components/ui/RadarFeatures'
 import { GLSLHills } from '@/components/ui/glsl-hills'
 import DashboardShowcase from '@/components/ui/DashboardShowcase'
 import ImageCard from '@/components/ui/image-card'
+import StickyHowItWorks from '@/components/ui/StickyHowItWorks'
 
 export const metadata: Metadata = {
   title: 'Operon Automation | Revenue Recovery for Small Businesses',
@@ -576,36 +577,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ─── HOW IT WORKS ─────────────────────────────────────────── */}
-      <section id="how-it-works" className="bg-op-bg section-pad section-divider">
-        <div className="container-wide">
-          <AnimateIn>
-            <p className="eyebrow mb-4">How It Works</p>
-            <h2 className="font-fraunces font-bold text-op-ink leading-tight mb-16"
-                style={{ fontSize: 'clamp(28px, 3.5vw, 46px)' }}>
-              Scan once. Autopilot handles the rest.
-            </h2>
-          </AnimateIn>
-          <StaggerChildren
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-6"
-            stagger={0.09}
-          >
-            {howSteps.map(({ num, title, desc }) => (
-              <div key={num} className="flex flex-col group">
-                <span className="font-fraunces font-black leading-none mb-4 select-none
-                                 inline-block transition-transform duration-300
-                                 group-hover:-translate-y-1"
-                      style={{ fontSize: 'clamp(64px, 6vw, 80px)' }}>
-                  <span className="text-op-border">{num[0]}</span>
-                  <span className="text-op-accent">{num[1]}</span>
-                </span>
-                <h3 className="text-sm font-semibold text-op-ink mb-2 font-jakarta">{title}</h3>
-                <p className="text-xs text-op-muted leading-relaxed font-jakarta">{desc}</p>
-              </div>
-            ))}
-          </StaggerChildren>
-        </div>
-      </section>
+      {/* ─── HOW IT WORKS — sticky scroll ─────────────────────────── */}
+      <div id="how-it-works">
+        <StickyHowItWorks />
+      </div>
 
       {/* ─── PRODUCT SCREENSHOTS — ImageCard grid ─────────────────── */}
       <section className="bg-op-bg section-pad section-divider">

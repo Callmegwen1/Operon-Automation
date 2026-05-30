@@ -22,10 +22,25 @@ const companyLinks = [
 
 export default function Footer() {
   return (
-    <footer className="bg-op-dark text-white">
+    <footer className="bg-op-dark text-white relative overflow-hidden">
+
+      {/* Oversized typographic background element */}
+      <div
+        aria-hidden="true"
+        className="absolute bottom-0 left-0 right-0 flex items-end justify-center
+                   pointer-events-none select-none overflow-hidden"
+      >
+        <span
+          className="font-fraunces font-black text-white/[0.035] leading-[0.85]
+                     tracking-tighter whitespace-nowrap"
+          style={{ fontSize: 'clamp(100px, 20vw, 280px)' }}
+        >
+          OPERON
+        </span>
+      </div>
 
       {/* Main footer content */}
-      <div className="container-wide pt-16 pb-12 grid grid-cols-1 sm:grid-cols-12 gap-10">
+      <div className="container-wide pt-16 pb-12 grid grid-cols-1 sm:grid-cols-12 gap-10 relative z-10">
 
         {/* Brand — takes 5 cols */}
         <div className="sm:col-span-5">
@@ -118,7 +133,7 @@ export default function Footer() {
       </div>
 
       {/* Bottom bar */}
-      <div className="border-t border-white/[0.07]">
+      <div className="border-t border-white/[0.07] relative z-10">
         <div className="container-wide py-4 flex flex-col sm:flex-row items-start sm:items-center
                         justify-between gap-2">
           <p className="text-[11px] text-white/20 font-jakarta">

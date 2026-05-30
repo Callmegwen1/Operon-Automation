@@ -6,6 +6,8 @@ import Footer from './layout/Footer'
 import AnalyticsInit from './analytics/AnalyticsInit'
 import OpeWidget from './chat/OpeWidget'
 import Cursor from './ui/Cursor'
+import SmoothScroll from './ui/SmoothScroll'
+import ScrollProgress from './ui/ScrollProgress'
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -15,6 +17,8 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
   return (
     <>
+      <SmoothScroll />
+      <ScrollProgress />
       <Cursor />
       <AnalyticsInit />
       {showMarketing && <Header />}
