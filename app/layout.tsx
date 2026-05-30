@@ -9,10 +9,11 @@ import { Analytics } from '@vercel/analytics/react'
 // Instrument Serif: contemporary editorial serif — clean confidence without
 // Fraunces's optical quirks. Excellent italics for accent moments.
 const fraunces = Instrument_Serif({
-  subsets: ['latin'],
+  subsets:  ['latin'],
   variable: '--font-fraunces',
-  display: 'swap',
-  style: ['normal', 'italic'],
+  display:  'swap',
+  weight:   '400',
+  style:    ['normal', 'italic'],
 })
 
 const jakarta = DM_Sans({
