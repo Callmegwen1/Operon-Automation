@@ -28,6 +28,7 @@ import MagneticButton from '@/components/ui/MagneticButton'
 import Marquee from '@/components/ui/Marquee'
 import DripDrop from '@/components/ui/DripDrop'
 import CyclingText from '@/components/ui/CyclingText'
+import RadarFeatures from '@/components/ui/RadarFeatures'
 
 export const metadata: Metadata = {
   title: 'Operon Automation | Revenue Recovery for Small Businesses',
@@ -321,6 +322,32 @@ export default function HomePage() {
             </Link>
           ))}
         </Marquee>
+      </section>
+
+      {/* ─── RADAR — automation systems visualised ────────────────── */}
+      <section className="bg-op-dark section-divider">
+        <div className="container-wide py-20 md:py-28 flex flex-col lg:flex-row
+                        items-center gap-12 lg:gap-20">
+
+          {/* Left copy */}
+          <AnimateIn className="flex-none w-full lg:w-[400px] text-center lg:text-left">
+            <p className="eyebrow mb-4 text-op-accent/70">Automation Systems</p>
+            <h2 className="font-fraunces font-bold text-white leading-tight mb-4"
+                style={{ fontSize: 'clamp(28px, 3.5vw, 44px)' }}>
+              Six agents working in the background — around the clock.
+            </h2>
+            <p className="text-sm text-white/40 leading-relaxed font-jakarta">
+              Activate the systems that match your revenue leaks. Each agent runs
+              automatically so you never miss a follow-up, review, or reactivation.
+            </p>
+          </AnimateIn>
+
+          {/* Radar visual */}
+          <FadeIn delay={0.2} className="flex-1 flex items-center justify-center">
+            <RadarFeatures />
+          </FadeIn>
+
+        </div>
       </section>
 
       {/* ─── PROBLEM — poster-scale typography ────────────────────── */}
