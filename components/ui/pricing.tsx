@@ -147,7 +147,7 @@ export default function PricingSection() {
       y: 0,
       opacity: 1,
       filter: 'blur(0px)',
-      transition: { delay: i * 0.35, duration: 0.55, ease: 'easeOut' },
+      transition: { delay: i * 0.35, duration: 0.55, ease: [0.22, 1, 0.36, 1] },
     }),
     hidden: { filter: 'blur(8px)', y: -18, opacity: 0 },
   }

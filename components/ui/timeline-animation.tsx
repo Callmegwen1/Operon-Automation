@@ -4,31 +4,32 @@ import { type ElementType, type RefObject } from 'react'
 import { motion, useInView, type Variants } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
+// framer-motion v12 has strict Easing union types that reject plain strings
+// like 'easeOut' when inferred inside a function return. We accept a loose
+// Record here and cast to Variants internally so callers don't get type errors.
+type LooseVariants = Record<string, unknown>
+
 interface TimelineContentProps {
-  /** HTML element or component to render as */
   as?: ElementType
-  /** Stagger index — higher = appears later */
   animationNum: number
-  /** Ref to the scroll container that triggers all children */
   timelineRef: RefObject<HTMLElement | null>
-  /** Optional framer-motion variants override */
-  customVariants?: Variants
+  customVariants?: LooseVariants
   className?: string
   children: React.ReactNode
 }
 
-const defaultVariants: Variants = {
+const defaultVariants: LooseVariants = {
   hidden: { opacity: 0, y: -20, filter: 'blur(8px)' },
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
     filter: 'blur(0px)',
-    transition: { delay: i * 0.35, duration: 0.5, ease: 'easeOut' },
+    transition: { delay: i * 0.35, duration: 0.5, ease: [0.22, 1, 0.36, 1] },
   }),
 }
 
 export function TimelineContent({
-  as: _as,          // retained for API compat but layout handled by motion.div wrapper
+  as: _as,
   animationNum,
   timelineRef,
   customVariants,
@@ -40,7 +41,7 @@ export function TimelineContent({
     margin: '-80px 0px',
   })
 
-  const variants = customVariants ?? defaultVariants
+  const variants = (customVariants ?? defaultVariants) as Variants
 
   return (
     <motion.div
