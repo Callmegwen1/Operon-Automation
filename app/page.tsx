@@ -633,6 +633,45 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ─── PRODUCT VIDEO ────────────────────────────────────────── */}
+      <section className="bg-op-dark section-pad section-divider">
+        <div className="container-wide">
+          <AnimateIn className="text-center mb-10">
+            <p className="eyebrow mb-4 text-op-accent/70">See It in Action</p>
+            <h2 className="font-fraunces font-bold text-white leading-tight max-w-xl mx-auto"
+                style={{ fontSize: 'clamp(28px, 3.5vw, 44px)' }}>
+              Watch the full dashboard walkthrough.
+            </h2>
+          </AnimateIn>
+
+          <ScaleIn>
+            <div className="relative rounded-2xl overflow-hidden border border-white/10
+                            shadow-[0_24px_64px_rgba(0,0,0,0.6)] max-w-4xl mx-auto">
+              {/* Browser chrome */}
+              <div className="flex items-center gap-1.5 px-4 py-3 bg-op-dark-2 border-b border-white/8">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-500/50" />
+                <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/50" />
+                <span className="w-2.5 h-2.5 rounded-full bg-green-500/50" />
+                <div className="flex-1 mx-4 bg-white/8 rounded-md h-5 flex items-center px-3 max-w-[200px]">
+                  <span className="text-[10px] text-white/30 font-jakarta">app.operonauto.com</span>
+                </div>
+              </div>
+              <video
+                autoPlay
+                muted
+                loop
+                playsInline
+                controls
+                className="w-full h-auto block"
+                poster="/images/dashboard-overview.png"
+              >
+                <source src="/videos/dashboard-walkthrough.mp4" type="video/mp4" />
+              </video>
+            </div>
+          </ScaleIn>
+        </div>
+      </section>
+
       {/* ─── AFTER SIGNUP ─────────────────────────────────────────── */}
       <section className="bg-op-surface-2 section-pad section-divider">
         <div className="container-wide max-w-2xl mx-auto">
