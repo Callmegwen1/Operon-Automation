@@ -1,23 +1,25 @@
 import type { Metadata } from 'next'
-import { Fraunces, Plus_Jakarta_Sans } from 'next/font/google'
+import { Instrument_Serif, DM_Sans } from 'next/font/google'
 import './globals.css'
 import LayoutWrapper from '@/components/LayoutWrapper'
 import PostHogProvider from '@/components/analytics/PostHogProvider'
 import MetaPixel from '@/components/analytics/MetaPixel'
 import { Analytics } from '@vercel/analytics/react'
 
-const fraunces = Fraunces({
+// Instrument Serif: contemporary editorial serif — clean confidence without
+// Fraunces's optical quirks. Excellent italics for accent moments.
+const fraunces = Instrument_Serif({
   subsets: ['latin'],
   variable: '--font-fraunces',
   display: 'swap',
-  axes: ['SOFT', 'WONK', 'opsz'],
+  style: ['normal', 'italic'],
 })
 
-const jakarta = Plus_Jakarta_Sans({
+const jakarta = DM_Sans({
   subsets: ['latin'],
   variable: '--font-jakarta',
   display: 'swap',
-  weight: ['400', '500', '600', '700', '800'],
+  weight: ['400', '500', '600', '700'],
 })
 
 export const metadata: Metadata = {
