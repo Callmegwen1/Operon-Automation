@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── shadcn CSS variable bridge ───────────────────────────────── */
+:root {
+  --background:       249 247 244;   /* op-bg   */
+  --foreground:       26 16 8;       /* op-ink  */
+  --card:             255 255 255;
+  --card-foreground:  26 16 8;
+  --muted:            242 238 232;   /* op-surface-2 */
+  --muted-foreground: 122 110 101;   /* op-muted */
+  --border:           228 221 213;   /* op-border */
+  --input:            228 221 213;
+  --ring:             212 98 42;     /* op-accent */
+  --radius:           0.875rem;
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;

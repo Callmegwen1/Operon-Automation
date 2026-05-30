@@ -5,6 +5,7 @@ import SectionHeader from '@/components/ui/SectionHeader'
 import CheckoutButton from '@/components/ui/CheckoutButton'
 import PageTracker from '@/components/analytics/PageTracker'
 import { AnimateIn, StaggerChildren, FadeIn } from '@/components/ui/Motion'
+import PricingSection from '@/components/ui/pricing'
 
 export const metadata: Metadata = {
   title: 'Pricing | Operon Automation',
@@ -136,26 +137,15 @@ export default function PricingPage() {
     <>
       <PageTracker event="pricing_viewed" />
 
-      {/* ─── HERO ─────────────────────────────────────────────────── */}
-      <section className="bg-op-bg pt-20 pb-16 md:pt-28 md:pb-20">
-        <div className="container-wide text-center max-w-2xl mx-auto">
-          <AnimateIn>
-            <p className="eyebrow mb-4">Pricing</p>
-            <h1 className="text-4xl md:text-5xl font-fraunces font-bold text-op-ink leading-tight mb-5">
-              Start with a free scan.{' '}
-              <span className="text-op-accent">Activate the system</span>{' '}
-              that fixes your biggest leak.
-            </h1>
-            <p className="text-base md:text-lg text-op-muted leading-relaxed font-jakarta">
-              Every plan starts from your Revenue Leak Score. No long-term contracts. Cancel anytime.
-            </p>
-          </AnimateIn>
-        </div>
+      {/* ─── PRICING SECTION (animated cards + billing toggle) ───── */}
+      <section className="bg-op-bg section-divider">
+        <PricingSection />
       </section>
 
-      {/* ─── PRICING GRID ─────────────────────────────────────────── */}
-      <section className="pb-24 bg-op-bg">
+      {/* ─── CUSTOM PLAN STRIP ────────────────────────────────────── */}
+      <section className="pb-12 bg-op-bg">
         <div className="container-wide">
+          <div className="hidden">
           <StaggerChildren
             className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 items-start"
             stagger={0.09}
@@ -250,6 +240,7 @@ export default function PricingPage() {
             ))}
           </StaggerChildren>
 
+          </div>
           {/* Custom plan strip */}
           <AnimateIn delay={0.15} className="mt-5">
             <div className="rounded-2xl border border-op-border bg-op-surface p-7 md:p-9">
