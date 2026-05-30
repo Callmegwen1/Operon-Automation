@@ -40,6 +40,15 @@ module.exports = {
         'op-blue':     '#3B6E8C',
         'op-green':    '#2A5F4E',
         'op-card':     '#FFFFFF',
+
+        // ── ImageCard / neobrutalist token bridge ────────────────────
+        // Remapped to Operon palette so they read as editorial, not harsh
+        'main':          'var(--main)',
+        'overlay':       'var(--overlay)',
+        'bw':            'var(--bw)',
+        'blank':         'var(--blank)',
+        'mtext':         'var(--mtext)',
+        'secondaryBlack':'#212121',
       },
 
       fontFamily: {
@@ -64,12 +73,24 @@ module.exports = {
         'card-lg':    '0 16px 48px 0 rgba(26,16,8,.12)',
         'glow-accent':'0 0 40px 0 rgba(212,98,42,.15)',
         'glow-forest':'0 0 40px 0 rgba(42,95,78,.12)',
+        'shadow':     'var(--shadow)',   // ImageCard neobrutalist token
+      },
+      translate: {
+        'boxShadowX':        '4px',
+        'boxShadowY':        '4px',
+        'reverseBoxShadowX': '-4px',
+        'reverseBoxShadowY': '-4px',
+      },
+      fontWeight: {
+        'base':    '500',
+        'heading': '700',
       },
 
       borderRadius: {
-        'xl':  '0.875rem',
-        '2xl': '1.25rem',
-        '3xl': '1.75rem',
+        'base': '5px',      // ImageCard neobrutalist token
+        'xl':   '0.875rem',
+        '2xl':  '1.25rem',
+        '3xl':  '1.75rem',
       },
 
       keyframes: {

@@ -2,6 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── ImageCard / neobrutalist token system ────────────────────── */
+/* Remapped to Operon's warm editorial palette — not the default harsh blacks */
+:root {
+  --main:             #D4622A;          /* op-accent terracotta (was #88aaee blue) */
+  --overlay:          rgba(26,16,8,0.7);/* warm dark overlay */
+  --bw:               #FFFFFF;
+  --blank:            #1A1008;          /* op-ink */
+  --mtext:            #FFFFFF;          /* text on main-colored bg */
+  --border-radius:    5px;
+  --box-shadow-x:     4px;
+  --box-shadow-y:     4px;
+  --reverse-box-shadow-x: -4px;
+  --reverse-box-shadow-y: -4px;
+  --base-font-weight: 500;
+  --heading-font-weight: 700;
+  --shadow:           4px 4px 0px 0px #E4DDD5; /* warm tan offset shadow */
+}
+
 /* ── shadcn CSS variable bridge ───────────────────────────────── */
 :root {
   --background:       249 247 244;   /* op-bg   */

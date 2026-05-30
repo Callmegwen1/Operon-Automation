@@ -31,6 +31,7 @@ import CyclingText from '@/components/ui/CyclingText'
 import RadarFeatures from '@/components/ui/RadarFeatures'
 import { GLSLHills } from '@/components/ui/glsl-hills'
 import DashboardShowcase from '@/components/ui/DashboardShowcase'
+import ImageCard from '@/components/ui/image-card'
 
 export const metadata: Metadata = {
   title: 'Operon Automation | Revenue Recovery for Small Businesses',
@@ -606,30 +607,43 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ─── PRODUCT SCREENSHOTS ──────────────────────────────────── */}
-      <section className="bg-op-surface-2 section-pad section-divider">
+      {/* ─── PRODUCT SCREENSHOTS — ImageCard grid ─────────────────── */}
+      <section className="bg-op-bg section-pad section-divider">
         <div className="container-wide">
-          <div className="flex flex-col lg:flex-row items-start gap-14 lg:gap-20">
+          <AnimateIn className="mb-12">
+            <p className="eyebrow mb-4">Inside the Dashboard</p>
+            <h2 className="font-fraunces font-bold text-op-ink leading-tight max-w-xl"
+                style={{ fontSize: 'clamp(28px, 3.5vw, 44px)' }}>
+              See exactly what your business is doing — and what it isn&apos;t.
+            </h2>
+          </AnimateIn>
 
-            {/* Left — copy */}
-            <AnimateIn className="flex-none w-full lg:w-[340px]">
-              <p className="eyebrow mb-4">Inside the Dashboard</p>
-              <h2 className="font-fraunces font-bold text-op-ink leading-tight mb-4"
-                  style={{ fontSize: 'clamp(28px, 3.5vw, 42px)' }}>
-                See exactly what your business is doing — and what it isn&apos;t.
-              </h2>
-              <p className="text-sm text-op-muted leading-relaxed font-jakarta">
-                The Revenue Dashboard, Command Center, and Email Health tools give you
-                a complete picture in under two minutes. No spreadsheets. No guesswork.
-              </p>
-            </AnimateIn>
-
-            {/* Right — tabbed screenshot showcase */}
-            <ScaleIn className="flex-1 w-full min-w-0">
-              <DashboardShowcase />
-            </ScaleIn>
-
-          </div>
+          <StaggerChildren
+            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+            stagger={0.1}
+          >
+            <ImageCard
+              imageUrl="/images/dashboard-overview.png"
+              caption="Revenue Dashboard"
+              captionSub="Leak Score, open leaks, and health by category at a glance."
+              width={971}
+              height={519}
+            />
+            <ImageCard
+              imageUrl="/images/dashboard-command.png"
+              caption="Command Center"
+              captionSub="Every lead, follow-up, and agent status — updated in real time."
+              width={1511}
+              height={806}
+            />
+            <ImageCard
+              imageUrl="/images/dashboard-email-health.png"
+              caption="Email Health"
+              captionSub="One-click deliverability audit so emails land in inboxes, not spam."
+              width={961}
+              height={519}
+            />
+          </StaggerChildren>
         </div>
       </section>
 
