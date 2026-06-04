@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { stripe, PRICE_IDS } from '@/lib/stripe'
 import type { PlanId } from '@/lib/stripe'
 
+export const dynamic = 'force-dynamic'
+
 const SUBSCRIPTION_PRICES: Record<string, string> = {
   starter: PRICE_IDS.starter,
   growth:  PRICE_IDS.growth,
